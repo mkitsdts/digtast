@@ -1,14 +1,17 @@
 # 数字助理容器
 
-数字助理容器需要与核心中枢保持连接，目前提供的接口有
+digtast 是一个数字助理，可以单独在宿主机工作，也可以接入核心中枢，在云端工作。
+
+为了与核心中枢保持连接，提供有接口
 
 ## 容器相关
-网关层次，只负责 Agent 服务的启动和暂停
+网关层次，负责服务的启动和暂停
 
-StopService       暂停服务
-RestartService    重启服务
-RemoveService     移除服务
-BackupService     备份服务
+StartService      启动服务，注册 APIKey，并开启远程桌面
+StopService       暂停桌面，关闭远程桌面
+RestartService    重启服务，打开远程桌面
+RemoveService     移除服务，删除所有内容
+BackupService     备份服务，备份记忆
 
 ## 会话相关
 会话仅负责维护上下文，仅此而已。
@@ -44,4 +47,4 @@ RemoveTool  在容器里移除 Tool
 2. 记忆：负责整理对话内容
 3. 执行：包含工具管理器，MCP管理器，Skill管理器
 4. 任务：负责记录任务状态，驱动执行层
-5. 网关：解决与主节点的通信传输
+5. 网关：解决与主节点的通信传输，启动桌面传输，ftp传输等功能
