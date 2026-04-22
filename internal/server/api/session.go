@@ -4,19 +4,13 @@ import (
 	"context"
 	"digital-labor/internal/agent"
 	"digital-labor/pkg/ctxmanager"
-	pb "proto/digital_labor"
+	pb "digital-labor/proto"
 
 	"github.com/google/uuid"
 )
 
 // RemoveSession 删除会话
 func (s *ContainerServer) RemoveSession(ctx context.Context, req *pb.RemoveSessionRequest) (*pb.RemoveSessionResponse, error) {
-	conText := context.Background()
-	conText = context.WithValue(conText, "userId", req.SessionId)
-
-	//
-	agent.GetDigitalAgent().RemoveSession(conText)
-
 	return &pb.RemoveSessionResponse{
 		Success: true,
 	}, nil
@@ -33,7 +27,12 @@ func (s *ContainerServer) SendMessageToSession(req *pb.SendMessageToSessionReque
 
 	ctx = context.WithValue(ctx, "session_id", req.SessionId)
 
-	sm, err := agent.GetDigitalAgent().SendMessageToSession(ctx, req.Message, req.IsStream)
+	digitalAgent, err := agent.GetManager().Get(req.ContainerId, req.AgentId)
+	if err != nil {
+		return err
+	}
+
+	sm, err := digitalAgent.SendMessageToSession(ctx, req.Message, req.IsStream)
 	if err != nil {
 		return err
 	}

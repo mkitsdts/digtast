@@ -1,8 +1,8 @@
 package websearch
 
 import (
+	"digital-labor/internal/registry"
 	"digital-labor/pkg/ctxmanager"
-	"digital-labor/pkg/tool"
 	"log/slog"
 
 	"github.com/cloudwego/eino-ext/components/tool/browseruse"
@@ -20,5 +20,5 @@ func NewBrowserTool() *browseruse.Tool {
 }
 
 func init() {
-	tool.RegisterTool(NewBrowserTool())
+	registry.RegisterTool(NewBrowserTool())
 }

@@ -2,7 +2,7 @@ package api
 
 import (
 	"context"
-	pb "proto/digital_labor"
+	pb "digital-labor/proto"
 )
 
 // CreateTool 在容器里创建 Tool

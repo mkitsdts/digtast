@@ -3,13 +3,12 @@ package api
 import (
 	"context"
 	"digital-labor/internal/agent"
-	pb "proto/digital_labor"
+	pb "digital-labor/proto"
 )
 
 // StopService 启动服务
 func (s *ContainerServer) StartService(ctx context.Context, req *pb.StartServiceRequest) (*pb.StartServiceResponse, error) {
-
-	err := agent.InitDigitalAgent(req.Provider, req.Key, req.Url, req.ModelName)
+	_, err := agent.GetManager().Create(req.ContainerId, req.AgentId, req.Provider, req.Key, req.Url, req.ModelName)
 	if err != nil {
 		return nil, err
 	}
@@ -21,7 +20,9 @@ func (s *ContainerServer) StartService(ctx context.Context, req *pb.StartService
 
 // StopService 暂停服务
 func (s *ContainerServer) StopService(ctx context.Context, req *pb.StopServiceRequest) (*pb.StopServiceResponse, error) {
-	// TODO: 实现暂停容器逻辑
+	if err := agent.GetManager().Remove(req.ContainerId, req.AgentId); err != nil {
+		return nil, err
+	}
 	return &pb.StopServiceResponse{
 		Success: true,
 	}, nil
@@ -37,7 +38,9 @@ func (s *ContainerServer) RestartService(ctx context.Context, req *pb.RestartSer
 
 // RemoveService 移除服务
 func (s *ContainerServer) RemoveService(ctx context.Context, req *pb.RemoveServiceRequest) (*pb.RemoveServiceResponse, error) {
-	// TODO: 实现移除容器逻辑
+	if err := agent.GetManager().Remove(req.ContainerId, req.AgentId); err != nil {
+		return nil, err
+	}
 	return &pb.RemoveServiceResponse{
 		Success: true,
 	}, nil
@@ -47,6 +50,6 @@ func (s *ContainerServer) RemoveService(ctx context.Context, req *pb.RemoveServi
 func (s *ContainerServer) BackupService(ctx context.Context, req *pb.BackupServiceRequest) (*pb.BackupServiceResponse, error) {
 	// TODO: 实现备份容器逻辑
 	return &pb.BackupServiceResponse{
-		BackupUrl: "http://backup-server/container-" + req.ServiceId + ".tar.gz",
+		BackupUrl: "http://backup-server/container-" + req.ContainerId + "/agent-" + req.AgentId + ".tar.gz",
 	}, nil
 }

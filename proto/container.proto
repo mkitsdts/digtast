@@ -45,11 +45,12 @@ service ContainerService {
 // --- 消息定义 (遵循唯一性原则) ---
 
 message StartServiceRequest {
-  string service_id = 1;
-  string key = 2;
-  string url = 3;
-  string model_name = 4;
-  string provider = 5;
+  string container_id = 1;
+  string agent_id = 2;
+  string key = 3;
+  string url = 4;
+  string model_name = 5;
+  string provider = 6;
 }
 message StartServiceResponse {
   bool success = 1;
@@ -57,28 +58,32 @@ message StartServiceResponse {
 
 // Service Messages
 message StopServiceRequest {
-  string service_id = 1;
+  string container_id = 1;
+  string agent_id = 2;
 }
 message StopServiceResponse {
   bool success = 1;
 }
 
 message RestartServiceRequest {
-  string service_id = 1;
+  string container_id = 1;
+  string agent_id = 2;
 }
 message RestartServiceResponse {
   bool success = 1;
 }
 
 message RemoveServiceRequest {
-  string service_id = 1;
+  string container_id = 1;
+  string agent_id = 2;
 }
 message RemoveServiceResponse {
   bool success = 1;
 }
 
 message BackupServiceRequest {
-  string service_id = 1;
+  string container_id = 1;
+  string agent_id = 2;
 }
 message BackupServiceResponse {
   string backup_url = 1;
@@ -86,14 +91,18 @@ message BackupServiceResponse {
 
 // Session Messages
 message CompressSessionRequest {
-  string session_id = 1;
+  string container_id = 1;
+  string agent_id = 2;
+  string session_id = 3;
 }
 message CompressSessionResponse {
   string session_id = 1;
 }
 
 message RemoveSessionRequest {
-  string session_id = 1;
+  string container_id = 1;
+  string agent_id = 2;
+  string session_id = 3;
 }
 message RemoveSessionResponse {
   bool success = 1;
@@ -101,9 +110,11 @@ message RemoveSessionResponse {
 
 // Dialogue Messages
 message SendMessageToSessionRequest {
-  string session_id = 1;
-  string message = 2;
-  bool is_stream = 3;
+  string container_id = 1;
+  string agent_id = 2;
+  string session_id = 3;
+  string message = 4;
+  bool is_stream = 5;
 }
 message SendMessageToSessionResponse {
   string delta_content = 1; // 流式返回时的片段内容
@@ -112,21 +123,30 @@ message SendMessageToSessionResponse {
 
 // Task Messages
 message StopTaskRequest {
-  string session_id = 1;
+  string container_id = 1;
+  string agent_id = 2;
+  string task_id = 3;
+  string session_id = 4;
 }
 message StopTaskResponse {
   bool success = 1;
 }
 
 message RestartTaskRequest {
-  string session_id = 1;
+  string container_id = 1;
+  string agent_id = 2;
+  string task_id = 3;
+  string session_id = 4;
 }
 message RestartTaskResponse {
   bool success = 1;
 }
 
 message RemoveTaskRequest {
-  string session_id = 1;
+  string container_id = 1;
+  string agent_id = 2;
+  string task_id = 3;
+  string session_id = 4;
 }
 message RemoveTaskResponse {
   bool success = 1;
@@ -135,22 +155,27 @@ message RemoveTaskResponse {
 // Skill Messages
 message CreateSkillRequest {
   string container_id = 1;
-  string skill_name = 2;
-  map<string, string> metadata = 3;
+  string agent_id = 2;
+  string skill_name = 3;
+  map<string, string> metadata = 4;
 }
 message CreateSkillResponse {
   string skill_id = 1;
 }
 
 message DisableSkillRequest {
-  string skill_id = 1;
+  string container_id = 1;
+  string agent_id = 2;
+  string skill_id = 3;
 }
 message DisableSkillResponse {
   bool success = 1;
 }
 
 message RemoveSkillRequest {
-  string skill_id = 1;
+  string container_id = 1;
+  string agent_id = 2;
+  string skill_id = 3;
 }
 message RemoveSkillResponse {
   bool success = 1;
@@ -159,22 +184,27 @@ message RemoveSkillResponse {
 // Tool Messages
 message CreateToolRequest {
   string container_id = 1;
-  string tool_name = 2;
-  map<string, string> metadata = 3;
+  string agent_id = 2;
+  string tool_name = 3;
+  map<string, string> metadata = 4;
 }
 message CreateToolResponse {
   string tool_id = 1;
 }
 
 message DisableToolRequest {
-  string tool_id = 1;
+  string container_id = 1;
+  string agent_id = 2;
+  string tool_id = 3;
 }
 message DisableToolResponse {
   bool success = 1;
 }
 
 message RemoveToolRequest {
-  string tool_id = 1;
+  string container_id = 1;
+  string agent_id = 2;
+  string tool_id = 3;
 }
 message RemoveToolResponse {
   bool success = 1;
@@ -183,22 +213,27 @@ message RemoveToolResponse {
 // MCP Messages
 message CreateMCPRequest {
   string container_id = 1;
-  string mcp_name = 2;
-  map<string, string> metadata = 3;
+  string agent_id = 2;
+  string mcp_name = 3;
+  map<string, string> metadata = 4;
 }
 message CreateMCPResponse {
   string mcp_id = 1;
 }
 
 message DisableMCPRequest {
-  string mcp_id = 1;
+  string container_id = 1;
+  string agent_id = 2;
+  string mcp_id = 3;
 }
 message DisableMCPResponse {
   bool success = 1;
 }
 
 message RemoveMCPRequest {
-  string mcp_id = 1;
+  string container_id = 1;
+  string agent_id = 2;
+  string mcp_id = 3;
 }
 message RemoveMCPResponse {
   bool success = 1;

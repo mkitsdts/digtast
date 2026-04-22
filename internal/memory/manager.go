@@ -1,15 +1,22 @@
 package memory
 
-type Manager struct {
-	mate *Mate
+type SessionReader interface {
+	Messages(sessionID string) ([]string, error)
 }
 
-func NewManager(userID string) (*Manager, error) {
+type Manager struct {
+	mate    *Mate
+	session SessionReader
+}
+
+func NewManager(sessionReader SessionReader) (*Manager, error) {
 	var err error
 
-	mg := &Manager{}
+	mg := &Manager{
+		session: sessionReader,
+	}
 
-	if mg.mate, err = NewMateMemory(); err != nil {
+	if mg.mate, err = NewMateMemory(sessionReader); err != nil {
 		return nil, err
 	}
 

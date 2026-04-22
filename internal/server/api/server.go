@@ -1,6 +1,6 @@
 package api
 
-import pb "proto/digital_labor"
+import pb "digital-labor/proto"
 
 type ContainerServer struct {
 	pb.UnimplementedContainerServiceServer

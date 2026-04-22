@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        (unknown)
-// source: container.proto
+// source: proto/container.proto
 
 package labor_v1
 
@@ -23,18 +23,19 @@ const (
 
 type StartServiceRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ServiceId     string                 `protobuf:"bytes,1,opt,name=service_id,json=serviceId,proto3" json:"service_id,omitempty"`
-	Key           string                 `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
-	Url           string                 `protobuf:"bytes,3,opt,name=url,proto3" json:"url,omitempty"`
-	ModelName     string                 `protobuf:"bytes,4,opt,name=model_name,json=modelName,proto3" json:"model_name,omitempty"`
-	Provider      string                 `protobuf:"bytes,5,opt,name=provider,proto3" json:"provider,omitempty"`
+	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
+	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
+	Key           string                 `protobuf:"bytes,3,opt,name=key,proto3" json:"key,omitempty"`
+	Url           string                 `protobuf:"bytes,4,opt,name=url,proto3" json:"url,omitempty"`
+	ModelName     string                 `protobuf:"bytes,5,opt,name=model_name,json=modelName,proto3" json:"model_name,omitempty"`
+	Provider      string                 `protobuf:"bytes,6,opt,name=provider,proto3" json:"provider,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *StartServiceRequest) Reset() {
 	*x = StartServiceRequest{}
-	mi := &file_container_proto_msgTypes[0]
+	mi := &file_proto_container_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -46,7 +47,7 @@ func (x *StartServiceRequest) String() string {
 func (*StartServiceRequest) ProtoMessage() {}
 
 func (x *StartServiceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[0]
+	mi := &file_proto_container_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -59,12 +60,19 @@ func (x *StartServiceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartServiceRequest.ProtoReflect.Descriptor instead.
 func (*StartServiceRequest) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{0}
+	return file_proto_container_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *StartServiceRequest) GetServiceId() string {
+func (x *StartServiceRequest) GetContainerId() string {
 	if x != nil {
-		return x.ServiceId
+		return x.ContainerId
+	}
+	return ""
+}
+
+func (x *StartServiceRequest) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
 	}
 	return ""
 }
@@ -106,7 +114,7 @@ type StartServiceResponse struct {
 
 func (x *StartServiceResponse) Reset() {
 	*x = StartServiceResponse{}
-	mi := &file_container_proto_msgTypes[1]
+	mi := &file_proto_container_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -118,7 +126,7 @@ func (x *StartServiceResponse) String() string {
 func (*StartServiceResponse) ProtoMessage() {}
 
 func (x *StartServiceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[1]
+	mi := &file_proto_container_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -131,7 +139,7 @@ func (x *StartServiceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartServiceResponse.ProtoReflect.Descriptor instead.
 func (*StartServiceResponse) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{1}
+	return file_proto_container_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *StartServiceResponse) GetSuccess() bool {
@@ -144,14 +152,15 @@ func (x *StartServiceResponse) GetSuccess() bool {
 // Service Messages
 type StopServiceRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ServiceId     string                 `protobuf:"bytes,1,opt,name=service_id,json=serviceId,proto3" json:"service_id,omitempty"`
+	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
+	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *StopServiceRequest) Reset() {
 	*x = StopServiceRequest{}
-	mi := &file_container_proto_msgTypes[2]
+	mi := &file_proto_container_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -163,7 +172,7 @@ func (x *StopServiceRequest) String() string {
 func (*StopServiceRequest) ProtoMessage() {}
 
 func (x *StopServiceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[2]
+	mi := &file_proto_container_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -176,12 +185,19 @@ func (x *StopServiceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopServiceRequest.ProtoReflect.Descriptor instead.
 func (*StopServiceRequest) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{2}
+	return file_proto_container_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *StopServiceRequest) GetServiceId() string {
+func (x *StopServiceRequest) GetContainerId() string {
 	if x != nil {
-		return x.ServiceId
+		return x.ContainerId
+	}
+	return ""
+}
+
+func (x *StopServiceRequest) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
 	}
 	return ""
 }
@@ -195,7 +211,7 @@ type StopServiceResponse struct {
 
 func (x *StopServiceResponse) Reset() {
 	*x = StopServiceResponse{}
-	mi := &file_container_proto_msgTypes[3]
+	mi := &file_proto_container_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -207,7 +223,7 @@ func (x *StopServiceResponse) String() string {
 func (*StopServiceResponse) ProtoMessage() {}
 
 func (x *StopServiceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[3]
+	mi := &file_proto_container_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -220,7 +236,7 @@ func (x *StopServiceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopServiceResponse.ProtoReflect.Descriptor instead.
 func (*StopServiceResponse) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{3}
+	return file_proto_container_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *StopServiceResponse) GetSuccess() bool {
@@ -232,14 +248,15 @@ func (x *StopServiceResponse) GetSuccess() bool {
 
 type RestartServiceRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ServiceId     string                 `protobuf:"bytes,1,opt,name=service_id,json=serviceId,proto3" json:"service_id,omitempty"`
+	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
+	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RestartServiceRequest) Reset() {
 	*x = RestartServiceRequest{}
-	mi := &file_container_proto_msgTypes[4]
+	mi := &file_proto_container_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -251,7 +268,7 @@ func (x *RestartServiceRequest) String() string {
 func (*RestartServiceRequest) ProtoMessage() {}
 
 func (x *RestartServiceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[4]
+	mi := &file_proto_container_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -264,12 +281,19 @@ func (x *RestartServiceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestartServiceRequest.ProtoReflect.Descriptor instead.
 func (*RestartServiceRequest) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{4}
+	return file_proto_container_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *RestartServiceRequest) GetServiceId() string {
+func (x *RestartServiceRequest) GetContainerId() string {
 	if x != nil {
-		return x.ServiceId
+		return x.ContainerId
+	}
+	return ""
+}
+
+func (x *RestartServiceRequest) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
 	}
 	return ""
 }
@@ -283,7 +307,7 @@ type RestartServiceResponse struct {
 
 func (x *RestartServiceResponse) Reset() {
 	*x = RestartServiceResponse{}
-	mi := &file_container_proto_msgTypes[5]
+	mi := &file_proto_container_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -295,7 +319,7 @@ func (x *RestartServiceResponse) String() string {
 func (*RestartServiceResponse) ProtoMessage() {}
 
 func (x *RestartServiceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[5]
+	mi := &file_proto_container_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -308,7 +332,7 @@ func (x *RestartServiceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestartServiceResponse.ProtoReflect.Descriptor instead.
 func (*RestartServiceResponse) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{5}
+	return file_proto_container_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *RestartServiceResponse) GetSuccess() bool {
@@ -320,14 +344,15 @@ func (x *RestartServiceResponse) GetSuccess() bool {
 
 type RemoveServiceRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ServiceId     string                 `protobuf:"bytes,1,opt,name=service_id,json=serviceId,proto3" json:"service_id,omitempty"`
+	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
+	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RemoveServiceRequest) Reset() {
 	*x = RemoveServiceRequest{}
-	mi := &file_container_proto_msgTypes[6]
+	mi := &file_proto_container_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -339,7 +364,7 @@ func (x *RemoveServiceRequest) String() string {
 func (*RemoveServiceRequest) ProtoMessage() {}
 
 func (x *RemoveServiceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[6]
+	mi := &file_proto_container_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -352,12 +377,19 @@ func (x *RemoveServiceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveServiceRequest.ProtoReflect.Descriptor instead.
 func (*RemoveServiceRequest) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{6}
+	return file_proto_container_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *RemoveServiceRequest) GetServiceId() string {
+func (x *RemoveServiceRequest) GetContainerId() string {
 	if x != nil {
-		return x.ServiceId
+		return x.ContainerId
+	}
+	return ""
+}
+
+func (x *RemoveServiceRequest) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
 	}
 	return ""
 }
@@ -371,7 +403,7 @@ type RemoveServiceResponse struct {
 
 func (x *RemoveServiceResponse) Reset() {
 	*x = RemoveServiceResponse{}
-	mi := &file_container_proto_msgTypes[7]
+	mi := &file_proto_container_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -383,7 +415,7 @@ func (x *RemoveServiceResponse) String() string {
 func (*RemoveServiceResponse) ProtoMessage() {}
 
 func (x *RemoveServiceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[7]
+	mi := &file_proto_container_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -396,7 +428,7 @@ func (x *RemoveServiceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveServiceResponse.ProtoReflect.Descriptor instead.
 func (*RemoveServiceResponse) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{7}
+	return file_proto_container_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *RemoveServiceResponse) GetSuccess() bool {
@@ -408,14 +440,15 @@ func (x *RemoveServiceResponse) GetSuccess() bool {
 
 type BackupServiceRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ServiceId     string                 `protobuf:"bytes,1,opt,name=service_id,json=serviceId,proto3" json:"service_id,omitempty"`
+	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
+	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *BackupServiceRequest) Reset() {
 	*x = BackupServiceRequest{}
-	mi := &file_container_proto_msgTypes[8]
+	mi := &file_proto_container_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -427,7 +460,7 @@ func (x *BackupServiceRequest) String() string {
 func (*BackupServiceRequest) ProtoMessage() {}
 
 func (x *BackupServiceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[8]
+	mi := &file_proto_container_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -440,12 +473,19 @@ func (x *BackupServiceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BackupServiceRequest.ProtoReflect.Descriptor instead.
 func (*BackupServiceRequest) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{8}
+	return file_proto_container_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *BackupServiceRequest) GetServiceId() string {
+func (x *BackupServiceRequest) GetContainerId() string {
 	if x != nil {
-		return x.ServiceId
+		return x.ContainerId
+	}
+	return ""
+}
+
+func (x *BackupServiceRequest) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
 	}
 	return ""
 }
@@ -459,7 +499,7 @@ type BackupServiceResponse struct {
 
 func (x *BackupServiceResponse) Reset() {
 	*x = BackupServiceResponse{}
-	mi := &file_container_proto_msgTypes[9]
+	mi := &file_proto_container_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -471,7 +511,7 @@ func (x *BackupServiceResponse) String() string {
 func (*BackupServiceResponse) ProtoMessage() {}
 
 func (x *BackupServiceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[9]
+	mi := &file_proto_container_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -484,7 +524,7 @@ func (x *BackupServiceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BackupServiceResponse.ProtoReflect.Descriptor instead.
 func (*BackupServiceResponse) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{9}
+	return file_proto_container_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *BackupServiceResponse) GetBackupUrl() string {
@@ -497,14 +537,16 @@ func (x *BackupServiceResponse) GetBackupUrl() string {
 // Session Messages
 type CompressSessionRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
+	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
+	SessionId     string                 `protobuf:"bytes,3,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CompressSessionRequest) Reset() {
 	*x = CompressSessionRequest{}
-	mi := &file_container_proto_msgTypes[10]
+	mi := &file_proto_container_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -516,7 +558,7 @@ func (x *CompressSessionRequest) String() string {
 func (*CompressSessionRequest) ProtoMessage() {}
 
 func (x *CompressSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[10]
+	mi := &file_proto_container_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -529,7 +571,21 @@ func (x *CompressSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CompressSessionRequest.ProtoReflect.Descriptor instead.
 func (*CompressSessionRequest) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{10}
+	return file_proto_container_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *CompressSessionRequest) GetContainerId() string {
+	if x != nil {
+		return x.ContainerId
+	}
+	return ""
+}
+
+func (x *CompressSessionRequest) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
+	}
+	return ""
 }
 
 func (x *CompressSessionRequest) GetSessionId() string {
@@ -548,7 +604,7 @@ type CompressSessionResponse struct {
 
 func (x *CompressSessionResponse) Reset() {
 	*x = CompressSessionResponse{}
-	mi := &file_container_proto_msgTypes[11]
+	mi := &file_proto_container_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -560,7 +616,7 @@ func (x *CompressSessionResponse) String() string {
 func (*CompressSessionResponse) ProtoMessage() {}
 
 func (x *CompressSessionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[11]
+	mi := &file_proto_container_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -573,7 +629,7 @@ func (x *CompressSessionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CompressSessionResponse.ProtoReflect.Descriptor instead.
 func (*CompressSessionResponse) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{11}
+	return file_proto_container_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *CompressSessionResponse) GetSessionId() string {
@@ -585,14 +641,16 @@ func (x *CompressSessionResponse) GetSessionId() string {
 
 type RemoveSessionRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
+	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
+	SessionId     string                 `protobuf:"bytes,3,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RemoveSessionRequest) Reset() {
 	*x = RemoveSessionRequest{}
-	mi := &file_container_proto_msgTypes[12]
+	mi := &file_proto_container_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -604,7 +662,7 @@ func (x *RemoveSessionRequest) String() string {
 func (*RemoveSessionRequest) ProtoMessage() {}
 
 func (x *RemoveSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[12]
+	mi := &file_proto_container_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -617,7 +675,21 @@ func (x *RemoveSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveSessionRequest.ProtoReflect.Descriptor instead.
 func (*RemoveSessionRequest) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{12}
+	return file_proto_container_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *RemoveSessionRequest) GetContainerId() string {
+	if x != nil {
+		return x.ContainerId
+	}
+	return ""
+}
+
+func (x *RemoveSessionRequest) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
+	}
+	return ""
 }
 
 func (x *RemoveSessionRequest) GetSessionId() string {
@@ -636,7 +708,7 @@ type RemoveSessionResponse struct {
 
 func (x *RemoveSessionResponse) Reset() {
 	*x = RemoveSessionResponse{}
-	mi := &file_container_proto_msgTypes[13]
+	mi := &file_proto_container_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -648,7 +720,7 @@ func (x *RemoveSessionResponse) String() string {
 func (*RemoveSessionResponse) ProtoMessage() {}
 
 func (x *RemoveSessionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[13]
+	mi := &file_proto_container_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -661,7 +733,7 @@ func (x *RemoveSessionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveSessionResponse.ProtoReflect.Descriptor instead.
 func (*RemoveSessionResponse) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{13}
+	return file_proto_container_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *RemoveSessionResponse) GetSuccess() bool {
@@ -674,16 +746,18 @@ func (x *RemoveSessionResponse) GetSuccess() bool {
 // Dialogue Messages
 type SendMessageToSessionRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	IsStream      bool                   `protobuf:"varint,3,opt,name=is_stream,json=isStream,proto3" json:"is_stream,omitempty"`
+	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
+	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
+	SessionId     string                 `protobuf:"bytes,3,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	Message       string                 `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`
+	IsStream      bool                   `protobuf:"varint,5,opt,name=is_stream,json=isStream,proto3" json:"is_stream,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *SendMessageToSessionRequest) Reset() {
 	*x = SendMessageToSessionRequest{}
-	mi := &file_container_proto_msgTypes[14]
+	mi := &file_proto_container_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -695,7 +769,7 @@ func (x *SendMessageToSessionRequest) String() string {
 func (*SendMessageToSessionRequest) ProtoMessage() {}
 
 func (x *SendMessageToSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[14]
+	mi := &file_proto_container_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -708,7 +782,21 @@ func (x *SendMessageToSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendMessageToSessionRequest.ProtoReflect.Descriptor instead.
 func (*SendMessageToSessionRequest) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{14}
+	return file_proto_container_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *SendMessageToSessionRequest) GetContainerId() string {
+	if x != nil {
+		return x.ContainerId
+	}
+	return ""
+}
+
+func (x *SendMessageToSessionRequest) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
+	}
+	return ""
 }
 
 func (x *SendMessageToSessionRequest) GetSessionId() string {
@@ -742,7 +830,7 @@ type SendMessageToSessionResponse struct {
 
 func (x *SendMessageToSessionResponse) Reset() {
 	*x = SendMessageToSessionResponse{}
-	mi := &file_container_proto_msgTypes[15]
+	mi := &file_proto_container_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -754,7 +842,7 @@ func (x *SendMessageToSessionResponse) String() string {
 func (*SendMessageToSessionResponse) ProtoMessage() {}
 
 func (x *SendMessageToSessionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[15]
+	mi := &file_proto_container_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -767,7 +855,7 @@ func (x *SendMessageToSessionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendMessageToSessionResponse.ProtoReflect.Descriptor instead.
 func (*SendMessageToSessionResponse) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{15}
+	return file_proto_container_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *SendMessageToSessionResponse) GetDeltaContent() string {
@@ -787,14 +875,17 @@ func (x *SendMessageToSessionResponse) GetIsFinal() bool {
 // Task Messages
 type StopTaskRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
+	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
+	TaskId        string                 `protobuf:"bytes,3,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	SessionId     string                 `protobuf:"bytes,4,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *StopTaskRequest) Reset() {
 	*x = StopTaskRequest{}
-	mi := &file_container_proto_msgTypes[16]
+	mi := &file_proto_container_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -806,7 +897,7 @@ func (x *StopTaskRequest) String() string {
 func (*StopTaskRequest) ProtoMessage() {}
 
 func (x *StopTaskRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[16]
+	mi := &file_proto_container_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -819,7 +910,28 @@ func (x *StopTaskRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopTaskRequest.ProtoReflect.Descriptor instead.
 func (*StopTaskRequest) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{16}
+	return file_proto_container_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *StopTaskRequest) GetContainerId() string {
+	if x != nil {
+		return x.ContainerId
+	}
+	return ""
+}
+
+func (x *StopTaskRequest) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
+	}
+	return ""
+}
+
+func (x *StopTaskRequest) GetTaskId() string {
+	if x != nil {
+		return x.TaskId
+	}
+	return ""
 }
 
 func (x *StopTaskRequest) GetSessionId() string {
@@ -838,7 +950,7 @@ type StopTaskResponse struct {
 
 func (x *StopTaskResponse) Reset() {
 	*x = StopTaskResponse{}
-	mi := &file_container_proto_msgTypes[17]
+	mi := &file_proto_container_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -850,7 +962,7 @@ func (x *StopTaskResponse) String() string {
 func (*StopTaskResponse) ProtoMessage() {}
 
 func (x *StopTaskResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[17]
+	mi := &file_proto_container_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -863,7 +975,7 @@ func (x *StopTaskResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopTaskResponse.ProtoReflect.Descriptor instead.
 func (*StopTaskResponse) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{17}
+	return file_proto_container_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *StopTaskResponse) GetSuccess() bool {
@@ -875,14 +987,17 @@ func (x *StopTaskResponse) GetSuccess() bool {
 
 type RestartTaskRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
+	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
+	TaskId        string                 `protobuf:"bytes,3,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	SessionId     string                 `protobuf:"bytes,4,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RestartTaskRequest) Reset() {
 	*x = RestartTaskRequest{}
-	mi := &file_container_proto_msgTypes[18]
+	mi := &file_proto_container_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -894,7 +1009,7 @@ func (x *RestartTaskRequest) String() string {
 func (*RestartTaskRequest) ProtoMessage() {}
 
 func (x *RestartTaskRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[18]
+	mi := &file_proto_container_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -907,7 +1022,28 @@ func (x *RestartTaskRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestartTaskRequest.ProtoReflect.Descriptor instead.
 func (*RestartTaskRequest) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{18}
+	return file_proto_container_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *RestartTaskRequest) GetContainerId() string {
+	if x != nil {
+		return x.ContainerId
+	}
+	return ""
+}
+
+func (x *RestartTaskRequest) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
+	}
+	return ""
+}
+
+func (x *RestartTaskRequest) GetTaskId() string {
+	if x != nil {
+		return x.TaskId
+	}
+	return ""
 }
 
 func (x *RestartTaskRequest) GetSessionId() string {
@@ -926,7 +1062,7 @@ type RestartTaskResponse struct {
 
 func (x *RestartTaskResponse) Reset() {
 	*x = RestartTaskResponse{}
-	mi := &file_container_proto_msgTypes[19]
+	mi := &file_proto_container_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -938,7 +1074,7 @@ func (x *RestartTaskResponse) String() string {
 func (*RestartTaskResponse) ProtoMessage() {}
 
 func (x *RestartTaskResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[19]
+	mi := &file_proto_container_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -951,7 +1087,7 @@ func (x *RestartTaskResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestartTaskResponse.ProtoReflect.Descriptor instead.
 func (*RestartTaskResponse) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{19}
+	return file_proto_container_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *RestartTaskResponse) GetSuccess() bool {
@@ -963,14 +1099,17 @@ func (x *RestartTaskResponse) GetSuccess() bool {
 
 type RemoveTaskRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
+	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
+	TaskId        string                 `protobuf:"bytes,3,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	SessionId     string                 `protobuf:"bytes,4,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RemoveTaskRequest) Reset() {
 	*x = RemoveTaskRequest{}
-	mi := &file_container_proto_msgTypes[20]
+	mi := &file_proto_container_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -982,7 +1121,7 @@ func (x *RemoveTaskRequest) String() string {
 func (*RemoveTaskRequest) ProtoMessage() {}
 
 func (x *RemoveTaskRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[20]
+	mi := &file_proto_container_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -995,7 +1134,28 @@ func (x *RemoveTaskRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveTaskRequest.ProtoReflect.Descriptor instead.
 func (*RemoveTaskRequest) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{20}
+	return file_proto_container_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *RemoveTaskRequest) GetContainerId() string {
+	if x != nil {
+		return x.ContainerId
+	}
+	return ""
+}
+
+func (x *RemoveTaskRequest) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
+	}
+	return ""
+}
+
+func (x *RemoveTaskRequest) GetTaskId() string {
+	if x != nil {
+		return x.TaskId
+	}
+	return ""
 }
 
 func (x *RemoveTaskRequest) GetSessionId() string {
@@ -1014,7 +1174,7 @@ type RemoveTaskResponse struct {
 
 func (x *RemoveTaskResponse) Reset() {
 	*x = RemoveTaskResponse{}
-	mi := &file_container_proto_msgTypes[21]
+	mi := &file_proto_container_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1026,7 +1186,7 @@ func (x *RemoveTaskResponse) String() string {
 func (*RemoveTaskResponse) ProtoMessage() {}
 
 func (x *RemoveTaskResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[21]
+	mi := &file_proto_container_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1039,7 +1199,7 @@ func (x *RemoveTaskResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveTaskResponse.ProtoReflect.Descriptor instead.
 func (*RemoveTaskResponse) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{21}
+	return file_proto_container_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *RemoveTaskResponse) GetSuccess() bool {
@@ -1053,15 +1213,16 @@ func (x *RemoveTaskResponse) GetSuccess() bool {
 type CreateSkillRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
-	SkillName     string                 `protobuf:"bytes,2,opt,name=skill_name,json=skillName,proto3" json:"skill_name,omitempty"`
-	Metadata      map[string]string      `protobuf:"bytes,3,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
+	SkillName     string                 `protobuf:"bytes,3,opt,name=skill_name,json=skillName,proto3" json:"skill_name,omitempty"`
+	Metadata      map[string]string      `protobuf:"bytes,4,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CreateSkillRequest) Reset() {
 	*x = CreateSkillRequest{}
-	mi := &file_container_proto_msgTypes[22]
+	mi := &file_proto_container_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1073,7 +1234,7 @@ func (x *CreateSkillRequest) String() string {
 func (*CreateSkillRequest) ProtoMessage() {}
 
 func (x *CreateSkillRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[22]
+	mi := &file_proto_container_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1086,12 +1247,19 @@ func (x *CreateSkillRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateSkillRequest.ProtoReflect.Descriptor instead.
 func (*CreateSkillRequest) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{22}
+	return file_proto_container_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *CreateSkillRequest) GetContainerId() string {
 	if x != nil {
 		return x.ContainerId
+	}
+	return ""
+}
+
+func (x *CreateSkillRequest) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
 	}
 	return ""
 }
@@ -1119,7 +1287,7 @@ type CreateSkillResponse struct {
 
 func (x *CreateSkillResponse) Reset() {
 	*x = CreateSkillResponse{}
-	mi := &file_container_proto_msgTypes[23]
+	mi := &file_proto_container_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1131,7 +1299,7 @@ func (x *CreateSkillResponse) String() string {
 func (*CreateSkillResponse) ProtoMessage() {}
 
 func (x *CreateSkillResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[23]
+	mi := &file_proto_container_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1144,7 +1312,7 @@ func (x *CreateSkillResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateSkillResponse.ProtoReflect.Descriptor instead.
 func (*CreateSkillResponse) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{23}
+	return file_proto_container_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *CreateSkillResponse) GetSkillId() string {
@@ -1156,14 +1324,16 @@ func (x *CreateSkillResponse) GetSkillId() string {
 
 type DisableSkillRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SkillId       string                 `protobuf:"bytes,1,opt,name=skill_id,json=skillId,proto3" json:"skill_id,omitempty"`
+	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
+	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
+	SkillId       string                 `protobuf:"bytes,3,opt,name=skill_id,json=skillId,proto3" json:"skill_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *DisableSkillRequest) Reset() {
 	*x = DisableSkillRequest{}
-	mi := &file_container_proto_msgTypes[24]
+	mi := &file_proto_container_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1175,7 +1345,7 @@ func (x *DisableSkillRequest) String() string {
 func (*DisableSkillRequest) ProtoMessage() {}
 
 func (x *DisableSkillRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[24]
+	mi := &file_proto_container_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1188,7 +1358,21 @@ func (x *DisableSkillRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DisableSkillRequest.ProtoReflect.Descriptor instead.
 func (*DisableSkillRequest) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{24}
+	return file_proto_container_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *DisableSkillRequest) GetContainerId() string {
+	if x != nil {
+		return x.ContainerId
+	}
+	return ""
+}
+
+func (x *DisableSkillRequest) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
+	}
+	return ""
 }
 
 func (x *DisableSkillRequest) GetSkillId() string {
@@ -1207,7 +1391,7 @@ type DisableSkillResponse struct {
 
 func (x *DisableSkillResponse) Reset() {
 	*x = DisableSkillResponse{}
-	mi := &file_container_proto_msgTypes[25]
+	mi := &file_proto_container_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1219,7 +1403,7 @@ func (x *DisableSkillResponse) String() string {
 func (*DisableSkillResponse) ProtoMessage() {}
 
 func (x *DisableSkillResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[25]
+	mi := &file_proto_container_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1232,7 +1416,7 @@ func (x *DisableSkillResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DisableSkillResponse.ProtoReflect.Descriptor instead.
 func (*DisableSkillResponse) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{25}
+	return file_proto_container_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *DisableSkillResponse) GetSuccess() bool {
@@ -1244,14 +1428,16 @@ func (x *DisableSkillResponse) GetSuccess() bool {
 
 type RemoveSkillRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SkillId       string                 `protobuf:"bytes,1,opt,name=skill_id,json=skillId,proto3" json:"skill_id,omitempty"`
+	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
+	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
+	SkillId       string                 `protobuf:"bytes,3,opt,name=skill_id,json=skillId,proto3" json:"skill_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RemoveSkillRequest) Reset() {
 	*x = RemoveSkillRequest{}
-	mi := &file_container_proto_msgTypes[26]
+	mi := &file_proto_container_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1263,7 +1449,7 @@ func (x *RemoveSkillRequest) String() string {
 func (*RemoveSkillRequest) ProtoMessage() {}
 
 func (x *RemoveSkillRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[26]
+	mi := &file_proto_container_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1276,7 +1462,21 @@ func (x *RemoveSkillRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveSkillRequest.ProtoReflect.Descriptor instead.
 func (*RemoveSkillRequest) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{26}
+	return file_proto_container_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *RemoveSkillRequest) GetContainerId() string {
+	if x != nil {
+		return x.ContainerId
+	}
+	return ""
+}
+
+func (x *RemoveSkillRequest) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
+	}
+	return ""
 }
 
 func (x *RemoveSkillRequest) GetSkillId() string {
@@ -1295,7 +1495,7 @@ type RemoveSkillResponse struct {
 
 func (x *RemoveSkillResponse) Reset() {
 	*x = RemoveSkillResponse{}
-	mi := &file_container_proto_msgTypes[27]
+	mi := &file_proto_container_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1307,7 +1507,7 @@ func (x *RemoveSkillResponse) String() string {
 func (*RemoveSkillResponse) ProtoMessage() {}
 
 func (x *RemoveSkillResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[27]
+	mi := &file_proto_container_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1320,7 +1520,7 @@ func (x *RemoveSkillResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveSkillResponse.ProtoReflect.Descriptor instead.
 func (*RemoveSkillResponse) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{27}
+	return file_proto_container_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *RemoveSkillResponse) GetSuccess() bool {
@@ -1334,15 +1534,16 @@ func (x *RemoveSkillResponse) GetSuccess() bool {
 type CreateToolRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
-	ToolName      string                 `protobuf:"bytes,2,opt,name=tool_name,json=toolName,proto3" json:"tool_name,omitempty"`
-	Metadata      map[string]string      `protobuf:"bytes,3,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
+	ToolName      string                 `protobuf:"bytes,3,opt,name=tool_name,json=toolName,proto3" json:"tool_name,omitempty"`
+	Metadata      map[string]string      `protobuf:"bytes,4,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CreateToolRequest) Reset() {
 	*x = CreateToolRequest{}
-	mi := &file_container_proto_msgTypes[28]
+	mi := &file_proto_container_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1354,7 +1555,7 @@ func (x *CreateToolRequest) String() string {
 func (*CreateToolRequest) ProtoMessage() {}
 
 func (x *CreateToolRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[28]
+	mi := &file_proto_container_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1367,12 +1568,19 @@ func (x *CreateToolRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateToolRequest.ProtoReflect.Descriptor instead.
 func (*CreateToolRequest) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{28}
+	return file_proto_container_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *CreateToolRequest) GetContainerId() string {
 	if x != nil {
 		return x.ContainerId
+	}
+	return ""
+}
+
+func (x *CreateToolRequest) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
 	}
 	return ""
 }
@@ -1400,7 +1608,7 @@ type CreateToolResponse struct {
 
 func (x *CreateToolResponse) Reset() {
 	*x = CreateToolResponse{}
-	mi := &file_container_proto_msgTypes[29]
+	mi := &file_proto_container_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1412,7 +1620,7 @@ func (x *CreateToolResponse) String() string {
 func (*CreateToolResponse) ProtoMessage() {}
 
 func (x *CreateToolResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[29]
+	mi := &file_proto_container_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1425,7 +1633,7 @@ func (x *CreateToolResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateToolResponse.ProtoReflect.Descriptor instead.
 func (*CreateToolResponse) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{29}
+	return file_proto_container_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *CreateToolResponse) GetToolId() string {
@@ -1437,14 +1645,16 @@ func (x *CreateToolResponse) GetToolId() string {
 
 type DisableToolRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ToolId        string                 `protobuf:"bytes,1,opt,name=tool_id,json=toolId,proto3" json:"tool_id,omitempty"`
+	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
+	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
+	ToolId        string                 `protobuf:"bytes,3,opt,name=tool_id,json=toolId,proto3" json:"tool_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *DisableToolRequest) Reset() {
 	*x = DisableToolRequest{}
-	mi := &file_container_proto_msgTypes[30]
+	mi := &file_proto_container_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1456,7 +1666,7 @@ func (x *DisableToolRequest) String() string {
 func (*DisableToolRequest) ProtoMessage() {}
 
 func (x *DisableToolRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[30]
+	mi := &file_proto_container_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1469,7 +1679,21 @@ func (x *DisableToolRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DisableToolRequest.ProtoReflect.Descriptor instead.
 func (*DisableToolRequest) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{30}
+	return file_proto_container_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *DisableToolRequest) GetContainerId() string {
+	if x != nil {
+		return x.ContainerId
+	}
+	return ""
+}
+
+func (x *DisableToolRequest) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
+	}
+	return ""
 }
 
 func (x *DisableToolRequest) GetToolId() string {
@@ -1488,7 +1712,7 @@ type DisableToolResponse struct {
 
 func (x *DisableToolResponse) Reset() {
 	*x = DisableToolResponse{}
-	mi := &file_container_proto_msgTypes[31]
+	mi := &file_proto_container_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1500,7 +1724,7 @@ func (x *DisableToolResponse) String() string {
 func (*DisableToolResponse) ProtoMessage() {}
 
 func (x *DisableToolResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[31]
+	mi := &file_proto_container_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1513,7 +1737,7 @@ func (x *DisableToolResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DisableToolResponse.ProtoReflect.Descriptor instead.
 func (*DisableToolResponse) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{31}
+	return file_proto_container_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *DisableToolResponse) GetSuccess() bool {
@@ -1525,14 +1749,16 @@ func (x *DisableToolResponse) GetSuccess() bool {
 
 type RemoveToolRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ToolId        string                 `protobuf:"bytes,1,opt,name=tool_id,json=toolId,proto3" json:"tool_id,omitempty"`
+	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
+	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
+	ToolId        string                 `protobuf:"bytes,3,opt,name=tool_id,json=toolId,proto3" json:"tool_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RemoveToolRequest) Reset() {
 	*x = RemoveToolRequest{}
-	mi := &file_container_proto_msgTypes[32]
+	mi := &file_proto_container_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1544,7 +1770,7 @@ func (x *RemoveToolRequest) String() string {
 func (*RemoveToolRequest) ProtoMessage() {}
 
 func (x *RemoveToolRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[32]
+	mi := &file_proto_container_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1557,7 +1783,21 @@ func (x *RemoveToolRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveToolRequest.ProtoReflect.Descriptor instead.
 func (*RemoveToolRequest) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{32}
+	return file_proto_container_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *RemoveToolRequest) GetContainerId() string {
+	if x != nil {
+		return x.ContainerId
+	}
+	return ""
+}
+
+func (x *RemoveToolRequest) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
+	}
+	return ""
 }
 
 func (x *RemoveToolRequest) GetToolId() string {
@@ -1576,7 +1816,7 @@ type RemoveToolResponse struct {
 
 func (x *RemoveToolResponse) Reset() {
 	*x = RemoveToolResponse{}
-	mi := &file_container_proto_msgTypes[33]
+	mi := &file_proto_container_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1588,7 +1828,7 @@ func (x *RemoveToolResponse) String() string {
 func (*RemoveToolResponse) ProtoMessage() {}
 
 func (x *RemoveToolResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[33]
+	mi := &file_proto_container_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1601,7 +1841,7 @@ func (x *RemoveToolResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveToolResponse.ProtoReflect.Descriptor instead.
 func (*RemoveToolResponse) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{33}
+	return file_proto_container_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *RemoveToolResponse) GetSuccess() bool {
@@ -1615,15 +1855,16 @@ func (x *RemoveToolResponse) GetSuccess() bool {
 type CreateMCPRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
-	McpName       string                 `protobuf:"bytes,2,opt,name=mcp_name,json=mcpName,proto3" json:"mcp_name,omitempty"`
-	Metadata      map[string]string      `protobuf:"bytes,3,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
+	McpName       string                 `protobuf:"bytes,3,opt,name=mcp_name,json=mcpName,proto3" json:"mcp_name,omitempty"`
+	Metadata      map[string]string      `protobuf:"bytes,4,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CreateMCPRequest) Reset() {
 	*x = CreateMCPRequest{}
-	mi := &file_container_proto_msgTypes[34]
+	mi := &file_proto_container_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1635,7 +1876,7 @@ func (x *CreateMCPRequest) String() string {
 func (*CreateMCPRequest) ProtoMessage() {}
 
 func (x *CreateMCPRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[34]
+	mi := &file_proto_container_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1648,12 +1889,19 @@ func (x *CreateMCPRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateMCPRequest.ProtoReflect.Descriptor instead.
 func (*CreateMCPRequest) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{34}
+	return file_proto_container_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *CreateMCPRequest) GetContainerId() string {
 	if x != nil {
 		return x.ContainerId
+	}
+	return ""
+}
+
+func (x *CreateMCPRequest) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
 	}
 	return ""
 }
@@ -1681,7 +1929,7 @@ type CreateMCPResponse struct {
 
 func (x *CreateMCPResponse) Reset() {
 	*x = CreateMCPResponse{}
-	mi := &file_container_proto_msgTypes[35]
+	mi := &file_proto_container_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1693,7 +1941,7 @@ func (x *CreateMCPResponse) String() string {
 func (*CreateMCPResponse) ProtoMessage() {}
 
 func (x *CreateMCPResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[35]
+	mi := &file_proto_container_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1706,7 +1954,7 @@ func (x *CreateMCPResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateMCPResponse.ProtoReflect.Descriptor instead.
 func (*CreateMCPResponse) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{35}
+	return file_proto_container_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *CreateMCPResponse) GetMcpId() string {
@@ -1718,14 +1966,16 @@ func (x *CreateMCPResponse) GetMcpId() string {
 
 type DisableMCPRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	McpId         string                 `protobuf:"bytes,1,opt,name=mcp_id,json=mcpId,proto3" json:"mcp_id,omitempty"`
+	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
+	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
+	McpId         string                 `protobuf:"bytes,3,opt,name=mcp_id,json=mcpId,proto3" json:"mcp_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *DisableMCPRequest) Reset() {
 	*x = DisableMCPRequest{}
-	mi := &file_container_proto_msgTypes[36]
+	mi := &file_proto_container_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1737,7 +1987,7 @@ func (x *DisableMCPRequest) String() string {
 func (*DisableMCPRequest) ProtoMessage() {}
 
 func (x *DisableMCPRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[36]
+	mi := &file_proto_container_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1750,7 +2000,21 @@ func (x *DisableMCPRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DisableMCPRequest.ProtoReflect.Descriptor instead.
 func (*DisableMCPRequest) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{36}
+	return file_proto_container_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *DisableMCPRequest) GetContainerId() string {
+	if x != nil {
+		return x.ContainerId
+	}
+	return ""
+}
+
+func (x *DisableMCPRequest) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
+	}
+	return ""
 }
 
 func (x *DisableMCPRequest) GetMcpId() string {
@@ -1769,7 +2033,7 @@ type DisableMCPResponse struct {
 
 func (x *DisableMCPResponse) Reset() {
 	*x = DisableMCPResponse{}
-	mi := &file_container_proto_msgTypes[37]
+	mi := &file_proto_container_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1781,7 +2045,7 @@ func (x *DisableMCPResponse) String() string {
 func (*DisableMCPResponse) ProtoMessage() {}
 
 func (x *DisableMCPResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[37]
+	mi := &file_proto_container_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1794,7 +2058,7 @@ func (x *DisableMCPResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DisableMCPResponse.ProtoReflect.Descriptor instead.
 func (*DisableMCPResponse) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{37}
+	return file_proto_container_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *DisableMCPResponse) GetSuccess() bool {
@@ -1806,14 +2070,16 @@ func (x *DisableMCPResponse) GetSuccess() bool {
 
 type RemoveMCPRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	McpId         string                 `protobuf:"bytes,1,opt,name=mcp_id,json=mcpId,proto3" json:"mcp_id,omitempty"`
+	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
+	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
+	McpId         string                 `protobuf:"bytes,3,opt,name=mcp_id,json=mcpId,proto3" json:"mcp_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RemoveMCPRequest) Reset() {
 	*x = RemoveMCPRequest{}
-	mi := &file_container_proto_msgTypes[38]
+	mi := &file_proto_container_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1825,7 +2091,7 @@ func (x *RemoveMCPRequest) String() string {
 func (*RemoveMCPRequest) ProtoMessage() {}
 
 func (x *RemoveMCPRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[38]
+	mi := &file_proto_container_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1838,7 +2104,21 @@ func (x *RemoveMCPRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveMCPRequest.ProtoReflect.Descriptor instead.
 func (*RemoveMCPRequest) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{38}
+	return file_proto_container_proto_rawDescGZIP(), []int{38}
+}
+
+func (x *RemoveMCPRequest) GetContainerId() string {
+	if x != nil {
+		return x.ContainerId
+	}
+	return ""
+}
+
+func (x *RemoveMCPRequest) GetAgentId() string {
+	if x != nil {
+		return x.AgentId
+	}
+	return ""
 }
 
 func (x *RemoveMCPRequest) GetMcpId() string {
@@ -1857,7 +2137,7 @@ type RemoveMCPResponse struct {
 
 func (x *RemoveMCPResponse) Reset() {
 	*x = RemoveMCPResponse{}
-	mi := &file_container_proto_msgTypes[39]
+	mi := &file_proto_container_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1869,7 +2149,7 @@ func (x *RemoveMCPResponse) String() string {
 func (*RemoveMCPResponse) ProtoMessage() {}
 
 func (x *RemoveMCPResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_container_proto_msgTypes[39]
+	mi := &file_proto_container_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1882,7 +2162,7 @@ func (x *RemoveMCPResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveMCPResponse.ProtoReflect.Descriptor instead.
 func (*RemoveMCPResponse) Descriptor() ([]byte, []int) {
-	return file_container_proto_rawDescGZIP(), []int{39}
+	return file_proto_container_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *RemoveMCPResponse) GetSuccess() bool {
@@ -1892,126 +2172,156 @@ func (x *RemoveMCPResponse) GetSuccess() bool {
 	return false
 }
 
-var File_container_proto protoreflect.FileDescriptor
+var File_proto_container_proto protoreflect.FileDescriptor
 
-const file_container_proto_rawDesc = "" +
+const file_proto_container_proto_rawDesc = "" +
 	"\n" +
-	"\x0fcontainer.proto\x12\x05labor\"\x93\x01\n" +
-	"\x13StartServiceRequest\x12\x1d\n" +
+	"\x15proto/container.proto\x12\x05labor\"\xb2\x01\n" +
+	"\x13StartServiceRequest\x12!\n" +
+	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
+	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x10\n" +
+	"\x03key\x18\x03 \x01(\tR\x03key\x12\x10\n" +
+	"\x03url\x18\x04 \x01(\tR\x03url\x12\x1d\n" +
 	"\n" +
-	"service_id\x18\x01 \x01(\tR\tserviceId\x12\x10\n" +
-	"\x03key\x18\x02 \x01(\tR\x03key\x12\x10\n" +
-	"\x03url\x18\x03 \x01(\tR\x03url\x12\x1d\n" +
-	"\n" +
-	"model_name\x18\x04 \x01(\tR\tmodelName\x12\x1a\n" +
-	"\bprovider\x18\x05 \x01(\tR\bprovider\"0\n" +
+	"model_name\x18\x05 \x01(\tR\tmodelName\x12\x1a\n" +
+	"\bprovider\x18\x06 \x01(\tR\bprovider\"0\n" +
 	"\x14StartServiceResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"3\n" +
-	"\x12StopServiceRequest\x12\x1d\n" +
-	"\n" +
-	"service_id\x18\x01 \x01(\tR\tserviceId\"/\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"R\n" +
+	"\x12StopServiceRequest\x12!\n" +
+	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
+	"\bagent_id\x18\x02 \x01(\tR\aagentId\"/\n" +
 	"\x13StopServiceResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"6\n" +
-	"\x15RestartServiceRequest\x12\x1d\n" +
-	"\n" +
-	"service_id\x18\x01 \x01(\tR\tserviceId\"2\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"U\n" +
+	"\x15RestartServiceRequest\x12!\n" +
+	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
+	"\bagent_id\x18\x02 \x01(\tR\aagentId\"2\n" +
 	"\x16RestartServiceResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"5\n" +
-	"\x14RemoveServiceRequest\x12\x1d\n" +
-	"\n" +
-	"service_id\x18\x01 \x01(\tR\tserviceId\"1\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"T\n" +
+	"\x14RemoveServiceRequest\x12!\n" +
+	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
+	"\bagent_id\x18\x02 \x01(\tR\aagentId\"1\n" +
 	"\x15RemoveServiceResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"5\n" +
-	"\x14BackupServiceRequest\x12\x1d\n" +
-	"\n" +
-	"service_id\x18\x01 \x01(\tR\tserviceId\"6\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"T\n" +
+	"\x14BackupServiceRequest\x12!\n" +
+	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
+	"\bagent_id\x18\x02 \x01(\tR\aagentId\"6\n" +
 	"\x15BackupServiceResponse\x12\x1d\n" +
 	"\n" +
-	"backup_url\x18\x01 \x01(\tR\tbackupUrl\"7\n" +
-	"\x16CompressSessionRequest\x12\x1d\n" +
+	"backup_url\x18\x01 \x01(\tR\tbackupUrl\"u\n" +
+	"\x16CompressSessionRequest\x12!\n" +
+	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
+	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x1d\n" +
 	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\"8\n" +
+	"session_id\x18\x03 \x01(\tR\tsessionId\"8\n" +
 	"\x17CompressSessionResponse\x12\x1d\n" +
 	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\"5\n" +
-	"\x14RemoveSessionRequest\x12\x1d\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\"s\n" +
+	"\x14RemoveSessionRequest\x12!\n" +
+	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
+	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x1d\n" +
 	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\"1\n" +
+	"session_id\x18\x03 \x01(\tR\tsessionId\"1\n" +
 	"\x15RemoveSessionResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"s\n" +
-	"\x1bSendMessageToSessionRequest\x12\x1d\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xb1\x01\n" +
+	"\x1bSendMessageToSessionRequest\x12!\n" +
+	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
+	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x1d\n" +
 	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\x12\x1b\n" +
-	"\tis_stream\x18\x03 \x01(\bR\bisStream\"^\n" +
+	"session_id\x18\x03 \x01(\tR\tsessionId\x12\x18\n" +
+	"\amessage\x18\x04 \x01(\tR\amessage\x12\x1b\n" +
+	"\tis_stream\x18\x05 \x01(\bR\bisStream\"^\n" +
 	"\x1cSendMessageToSessionResponse\x12#\n" +
 	"\rdelta_content\x18\x01 \x01(\tR\fdeltaContent\x12\x19\n" +
-	"\bis_final\x18\x02 \x01(\bR\aisFinal\"0\n" +
-	"\x0fStopTaskRequest\x12\x1d\n" +
+	"\bis_final\x18\x02 \x01(\bR\aisFinal\"\x87\x01\n" +
+	"\x0fStopTaskRequest\x12!\n" +
+	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
+	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x17\n" +
+	"\atask_id\x18\x03 \x01(\tR\x06taskId\x12\x1d\n" +
 	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\",\n" +
+	"session_id\x18\x04 \x01(\tR\tsessionId\",\n" +
 	"\x10StopTaskResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"3\n" +
-	"\x12RestartTaskRequest\x12\x1d\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\x8a\x01\n" +
+	"\x12RestartTaskRequest\x12!\n" +
+	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
+	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x17\n" +
+	"\atask_id\x18\x03 \x01(\tR\x06taskId\x12\x1d\n" +
 	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\"/\n" +
+	"session_id\x18\x04 \x01(\tR\tsessionId\"/\n" +
 	"\x13RestartTaskResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"2\n" +
-	"\x11RemoveTaskRequest\x12\x1d\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\x89\x01\n" +
+	"\x11RemoveTaskRequest\x12!\n" +
+	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
+	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x17\n" +
+	"\atask_id\x18\x03 \x01(\tR\x06taskId\x12\x1d\n" +
 	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\".\n" +
+	"session_id\x18\x04 \x01(\tR\tsessionId\".\n" +
 	"\x12RemoveTaskResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xd8\x01\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xf3\x01\n" +
 	"\x12CreateSkillRequest\x12!\n" +
-	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x1d\n" +
+	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
+	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x1d\n" +
 	"\n" +
-	"skill_name\x18\x02 \x01(\tR\tskillName\x12C\n" +
-	"\bmetadata\x18\x03 \x03(\v2'.labor.CreateSkillRequest.MetadataEntryR\bmetadata\x1a;\n" +
+	"skill_name\x18\x03 \x01(\tR\tskillName\x12C\n" +
+	"\bmetadata\x18\x04 \x03(\v2'.labor.CreateSkillRequest.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"0\n" +
 	"\x13CreateSkillResponse\x12\x19\n" +
-	"\bskill_id\x18\x01 \x01(\tR\askillId\"0\n" +
-	"\x13DisableSkillRequest\x12\x19\n" +
-	"\bskill_id\x18\x01 \x01(\tR\askillId\"0\n" +
+	"\bskill_id\x18\x01 \x01(\tR\askillId\"n\n" +
+	"\x13DisableSkillRequest\x12!\n" +
+	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
+	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x19\n" +
+	"\bskill_id\x18\x03 \x01(\tR\askillId\"0\n" +
 	"\x14DisableSkillResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"/\n" +
-	"\x12RemoveSkillRequest\x12\x19\n" +
-	"\bskill_id\x18\x01 \x01(\tR\askillId\"/\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"m\n" +
+	"\x12RemoveSkillRequest\x12!\n" +
+	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
+	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x19\n" +
+	"\bskill_id\x18\x03 \x01(\tR\askillId\"/\n" +
 	"\x13RemoveSkillResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xd4\x01\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xef\x01\n" +
 	"\x11CreateToolRequest\x12!\n" +
-	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x1b\n" +
-	"\ttool_name\x18\x02 \x01(\tR\btoolName\x12B\n" +
-	"\bmetadata\x18\x03 \x03(\v2&.labor.CreateToolRequest.MetadataEntryR\bmetadata\x1a;\n" +
+	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
+	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x1b\n" +
+	"\ttool_name\x18\x03 \x01(\tR\btoolName\x12B\n" +
+	"\bmetadata\x18\x04 \x03(\v2&.labor.CreateToolRequest.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"-\n" +
 	"\x12CreateToolResponse\x12\x17\n" +
-	"\atool_id\x18\x01 \x01(\tR\x06toolId\"-\n" +
-	"\x12DisableToolRequest\x12\x17\n" +
-	"\atool_id\x18\x01 \x01(\tR\x06toolId\"/\n" +
+	"\atool_id\x18\x01 \x01(\tR\x06toolId\"k\n" +
+	"\x12DisableToolRequest\x12!\n" +
+	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
+	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x17\n" +
+	"\atool_id\x18\x03 \x01(\tR\x06toolId\"/\n" +
 	"\x13DisableToolResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\",\n" +
-	"\x11RemoveToolRequest\x12\x17\n" +
-	"\atool_id\x18\x01 \x01(\tR\x06toolId\".\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"j\n" +
+	"\x11RemoveToolRequest\x12!\n" +
+	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
+	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x17\n" +
+	"\atool_id\x18\x03 \x01(\tR\x06toolId\".\n" +
 	"\x12RemoveToolResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xd0\x01\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xeb\x01\n" +
 	"\x10CreateMCPRequest\x12!\n" +
 	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
-	"\bmcp_name\x18\x02 \x01(\tR\amcpName\x12A\n" +
-	"\bmetadata\x18\x03 \x03(\v2%.labor.CreateMCPRequest.MetadataEntryR\bmetadata\x1a;\n" +
+	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x19\n" +
+	"\bmcp_name\x18\x03 \x01(\tR\amcpName\x12A\n" +
+	"\bmetadata\x18\x04 \x03(\v2%.labor.CreateMCPRequest.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"*\n" +
 	"\x11CreateMCPResponse\x12\x15\n" +
-	"\x06mcp_id\x18\x01 \x01(\tR\x05mcpId\"*\n" +
-	"\x11DisableMCPRequest\x12\x15\n" +
-	"\x06mcp_id\x18\x01 \x01(\tR\x05mcpId\".\n" +
+	"\x06mcp_id\x18\x01 \x01(\tR\x05mcpId\"h\n" +
+	"\x11DisableMCPRequest\x12!\n" +
+	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
+	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x15\n" +
+	"\x06mcp_id\x18\x03 \x01(\tR\x05mcpId\".\n" +
 	"\x12DisableMCPResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\")\n" +
-	"\x10RemoveMCPRequest\x12\x15\n" +
-	"\x06mcp_id\x18\x01 \x01(\tR\x05mcpId\"-\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"g\n" +
+	"\x10RemoveMCPRequest\x12!\n" +
+	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
+	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x15\n" +
+	"\x06mcp_id\x18\x03 \x01(\tR\x05mcpId\"-\n" +
 	"\x11RemoveMCPResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess2\xb3\v\n" +
 	"\x10ContainerService\x12G\n" +
@@ -2042,19 +2352,19 @@ const file_container_proto_rawDesc = "" +
 	"Z\blabor.v1b\x06proto3"
 
 var (
-	file_container_proto_rawDescOnce sync.Once
-	file_container_proto_rawDescData []byte
+	file_proto_container_proto_rawDescOnce sync.Once
+	file_proto_container_proto_rawDescData []byte
 )
 
-func file_container_proto_rawDescGZIP() []byte {
-	file_container_proto_rawDescOnce.Do(func() {
-		file_container_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_container_proto_rawDesc), len(file_container_proto_rawDesc)))
+func file_proto_container_proto_rawDescGZIP() []byte {
+	file_proto_container_proto_rawDescOnce.Do(func() {
+		file_proto_container_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_proto_container_proto_rawDesc), len(file_proto_container_proto_rawDesc)))
 	})
-	return file_container_proto_rawDescData
+	return file_proto_container_proto_rawDescData
 }
 
-var file_container_proto_msgTypes = make([]protoimpl.MessageInfo, 43)
-var file_container_proto_goTypes = []any{
+var file_proto_container_proto_msgTypes = make([]protoimpl.MessageInfo, 43)
+var file_proto_container_proto_goTypes = []any{
 	(*StartServiceRequest)(nil),          // 0: labor.StartServiceRequest
 	(*StartServiceResponse)(nil),         // 1: labor.StartServiceResponse
 	(*StopServiceRequest)(nil),           // 2: labor.StopServiceRequest
@@ -2099,7 +2409,7 @@ var file_container_proto_goTypes = []any{
 	nil,                                  // 41: labor.CreateToolRequest.MetadataEntry
 	nil,                                  // 42: labor.CreateMCPRequest.MetadataEntry
 }
-var file_container_proto_depIdxs = []int32{
+var file_proto_container_proto_depIdxs = []int32{
 	40, // 0: labor.CreateSkillRequest.metadata:type_name -> labor.CreateSkillRequest.MetadataEntry
 	41, // 1: labor.CreateToolRequest.metadata:type_name -> labor.CreateToolRequest.MetadataEntry
 	42, // 2: labor.CreateMCPRequest.metadata:type_name -> labor.CreateMCPRequest.MetadataEntry
@@ -2150,26 +2460,26 @@ var file_container_proto_depIdxs = []int32{
 	0,  // [0:3] is the sub-list for field type_name
 }
 
-func init() { file_container_proto_init() }
-func file_container_proto_init() {
-	if File_container_proto != nil {
+func init() { file_proto_container_proto_init() }
+func file_proto_container_proto_init() {
+	if File_proto_container_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_container_proto_rawDesc), len(file_container_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_container_proto_rawDesc), len(file_proto_container_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   43,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_container_proto_goTypes,
-		DependencyIndexes: file_container_proto_depIdxs,
-		MessageInfos:      file_container_proto_msgTypes,
+		GoTypes:           file_proto_container_proto_goTypes,
+		DependencyIndexes: file_proto_container_proto_depIdxs,
+		MessageInfos:      file_proto_container_proto_msgTypes,
 	}.Build()
-	File_container_proto = out.File
-	file_container_proto_goTypes = nil
-	file_container_proto_depIdxs = nil
+	File_proto_container_proto = out.File
+	file_proto_container_proto_goTypes = nil
+	file_proto_container_proto_depIdxs = nil
 }

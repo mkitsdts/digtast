@@ -2,7 +2,7 @@ package api
 
 import (
 	"context"
-	pb "proto/digital_labor"
+	pb "digital-labor/proto"
 )
 
 // CreateSkill 在容器里创建 Skill
