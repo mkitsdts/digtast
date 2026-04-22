@@ -1,0 +1,1 @@
+FROM GOLANG:1.24

@@ -1,0 +1,205 @@
+syntax = "proto3";
+
+package labor;
+
+option go_package = "labor.v1";
+
+// 容器与会话管理服务
+service ContainerService {
+  // --- 容器相关 ---
+  rpc StartService(StartServiceRequest) returns (StartServiceResponse);
+  rpc StopService(StopServiceRequest) returns (StopServiceResponse);
+  rpc RestartService(RestartServiceRequest) returns (RestartServiceResponse);
+  rpc RemoveService(RemoveServiceRequest) returns (RemoveServiceResponse);
+  rpc BackupService(BackupServiceRequest) returns (BackupServiceResponse);
+
+  // --- 会话相关 ---
+  rpc RemoveSession(RemoveSessionRequest) returns (RemoveSessionResponse);
+  rpc CompressSession(CompressSessionRequest) returns (CompressSessionResponse);
+
+  // --- 对话相关 ---
+  // 使用 stream 返回，支持打字机效果或长时生成
+  rpc SendMessageToSession(SendMessageToSessionRequest) returns (stream SendMessageToSessionResponse);
+
+  // --- 任务相关 ---
+  rpc StopTask(StopTaskRequest) returns (StopTaskResponse);
+  rpc RestartTask(RestartTaskRequest) returns (RestartTaskResponse);
+  rpc RemoveTask(RemoveTaskRequest) returns (RemoveTaskResponse);
+
+  // --- Skill 相关 ---
+  rpc CreateSkill(CreateSkillRequest) returns (CreateSkillResponse);
+  rpc DisableSkill(DisableSkillRequest) returns (DisableSkillResponse);
+  rpc RemoveSkill(RemoveSkillRequest) returns (RemoveSkillResponse);
+
+  // --- Tool 相关 ---
+  rpc CreateTool(CreateToolRequest) returns (CreateToolResponse);
+  rpc DisableTool(DisableToolRequest) returns (DisableToolResponse);
+  rpc RemoveTool(RemoveToolRequest) returns (RemoveToolResponse);
+
+  // --- MCP 相关 ---
+  rpc CreateMCP(CreateMCPRequest) returns (CreateMCPResponse);
+  rpc DisableMCP(DisableMCPRequest) returns (DisableMCPResponse);
+  rpc RemoveMCP(RemoveMCPRequest) returns (RemoveMCPResponse);
+}
+
+// --- 消息定义 (遵循唯一性原则) ---
+
+message StartServiceRequest {
+  string service_id = 1;
+  string key = 2;
+  string url = 3;
+  string model_name = 4;
+  string provider = 5;
+}
+message StartServiceResponse {
+  bool success = 1;
+}
+
+// Service Messages
+message StopServiceRequest {
+  string service_id = 1;
+}
+message StopServiceResponse {
+  bool success = 1;
+}
+
+message RestartServiceRequest {
+  string service_id = 1;
+}
+message RestartServiceResponse {
+  bool success = 1;
+}
+
+message RemoveServiceRequest {
+  string service_id = 1;
+}
+message RemoveServiceResponse {
+  bool success = 1;
+}
+
+message BackupServiceRequest {
+  string service_id = 1;
+}
+message BackupServiceResponse {
+  string backup_url = 1;
+}
+
+// Session Messages
+message CompressSessionRequest {
+  string session_id = 1;
+}
+message CompressSessionResponse {
+  string session_id = 1;
+}
+
+message RemoveSessionRequest {
+  string session_id = 1;
+}
+message RemoveSessionResponse {
+  bool success = 1;
+}
+
+// Dialogue Messages
+message SendMessageToSessionRequest {
+  string session_id = 1;
+  string message = 2;
+  bool is_stream = 3;
+}
+message SendMessageToSessionResponse {
+  string delta_content = 1; // 流式返回时的片段内容
+  bool is_final = 2; // 是否是最后一段
+}
+
+// Task Messages
+message StopTaskRequest {
+  string session_id = 1;
+}
+message StopTaskResponse {
+  bool success = 1;
+}
+
+message RestartTaskRequest {
+  string session_id = 1;
+}
+message RestartTaskResponse {
+  bool success = 1;
+}
+
+message RemoveTaskRequest {
+  string session_id = 1;
+}
+message RemoveTaskResponse {
+  bool success = 1;
+}
+
+// Skill Messages
+message CreateSkillRequest {
+  string container_id = 1;
+  string skill_name = 2;
+  map<string, string> metadata = 3;
+}
+message CreateSkillResponse {
+  string skill_id = 1;
+}
+
+message DisableSkillRequest {
+  string skill_id = 1;
+}
+message DisableSkillResponse {
+  bool success = 1;
+}
+
+message RemoveSkillRequest {
+  string skill_id = 1;
+}
+message RemoveSkillResponse {
+  bool success = 1;
+}
+
+// Tool Messages
+message CreateToolRequest {
+  string container_id = 1;
+  string tool_name = 2;
+  map<string, string> metadata = 3;
+}
+message CreateToolResponse {
+  string tool_id = 1;
+}
+
+message DisableToolRequest {
+  string tool_id = 1;
+}
+message DisableToolResponse {
+  bool success = 1;
+}
+
+message RemoveToolRequest {
+  string tool_id = 1;
+}
+message RemoveToolResponse {
+  bool success = 1;
+}
+
+// MCP Messages
+message CreateMCPRequest {
+  string container_id = 1;
+  string mcp_name = 2;
+  map<string, string> metadata = 3;
+}
+message CreateMCPResponse {
+  string mcp_id = 1;
+}
+
+message DisableMCPRequest {
+  string mcp_id = 1;
+}
+message DisableMCPResponse {
+  bool success = 1;
+}
+
+message RemoveMCPRequest {
+  string mcp_id = 1;
+}
+message RemoveMCPResponse {
+  bool success = 1;
+}
