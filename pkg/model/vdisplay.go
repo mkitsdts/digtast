@@ -1,7 +1,8 @@
 package model
 
 type GetDesktopDisplayRequest struct {
-	Key string
+	Key  string
+	Kind string
 }
 
 type GetDesktopDisplayResponse struct {
@@ -9,6 +10,7 @@ type GetDesktopDisplayResponse struct {
 }
 
 type ShutdownDesktopDisplayRequest struct {
+	Kind string
 }
 
 type ShutdownDesktopDisplayResponse struct {

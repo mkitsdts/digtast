@@ -15,9 +15,10 @@ func startVNC(key string) error {
 	}
 
 	arg := fmt.Sprintf(":%d", port)
+	// only test on linux, but Windows or macOS
 	cmd := exec.Command("vncserver", arg, "-geometry", "1920x1080")
 	if err := cmd.Run(); err != nil {
-		slog.Error("启动失败", "error", err)
+		slog.Error("VNC start failed", "error", err)
 		return err
 	}
 	go listenVNC(key, port, cmd)
@@ -27,7 +28,7 @@ func startVNC(key string) error {
 func stopVNC(port int) error {
 	//TODO:还需要优化逻辑，当前启动逻辑过于死板，适配性有限
 	if err := exec.Command("vncserver", "-kill", fmt.Sprintf(":%d", port)).Run(); err != nil {
-		slog.Error("停止失败", "error", err)
+		slog.Error("VNC stop failed", "error", err)
 		return err
 	}
 	return nil
@@ -52,7 +53,7 @@ func listenVNC(key string, port int, cmd *exec.Cmd) {
 			"stderr", string(exitErr.Stderr),
 		)
 
-		// 可以在这里触发重启逻辑
+		// restart
 		go startVNC(key)
 	} else {
 		// system error: maybe the program file does not exist, or other system issues
