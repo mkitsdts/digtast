@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             (unknown)
-// source: proto/container.proto
+// source: container.proto
 
 package labor_v1
 
@@ -863,5 +863,5 @@ var ContainerService_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "proto/container.proto",
+	Metadata: "container.proto",
 }

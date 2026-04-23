@@ -60,6 +60,7 @@ message StartServiceResponse {
 message StopServiceRequest {
   string container_id = 1;
   string agent_id = 2;
+  string session_id = 3;
 }
 message StopServiceResponse {
   bool success = 1;
