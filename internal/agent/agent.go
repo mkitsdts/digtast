@@ -2,9 +2,10 @@ package agent
 
 import (
 	"context"
-	"digital-labor/internal/registry"
 	"digital-labor/pkg/conf"
 	"digital-labor/pkg/ctxmanager"
+	mmodel "digital-labor/pkg/model"
+	"digital-labor/pkg/registry"
 	"errors"
 	"log/slog"
 	"strings"
@@ -20,17 +21,10 @@ import (
 	"github.com/cloudwego/eino/schema"
 )
 
-type ChatRequest struct {
-	SessionID string
-	Content   string
-	IsStream  bool
-	Prompt    PromptContext
-}
-
 type DigitalAgent struct {
 	ID       string
-	cm       model.ToolCallingChatModel
-	agent    *adk.Runner
+	cm       model.ToolCallingChatModel // 供临时对话使用
+	agent    *adk.Runner                // 智能体
 	prompts  *PromptBuilder
 	runMu    sync.Mutex
 	runStops map[string]context.CancelFunc
@@ -70,60 +64,15 @@ func NewDigitalAgent(provider, key, url, name string) (*DigitalAgent, error) {
 	return dga, nil
 }
 
-func (dga *DigitalAgent) SendMessageToSession(ctx context.Context, content string, isStream bool) (chan string, error) {
-	return dga.Chat(ctx, ChatRequest{
+func (dga *DigitalAgent) Run(ctx context.Context, content string, isStream bool) (chan string, error) {
+	if content == "" {
+		return nil, errors.New("content is empty")
+	}
+	return dga.run(ctx, mmodel.ChatRequest{
 		SessionID: sessionIDFromContext(ctx),
 		Content:   content,
 		IsStream:  isStream,
 	})
-}
-
-func (dga *DigitalAgent) Chat(ctx context.Context, req ChatRequest) (chan string, error) {
-	sessionID := req.SessionID
-	if sessionID == "" {
-		sessionID = sessionIDFromContext(ctx)
-	}
-	if sessionID == "" {
-		return nil, errors.New("invalid session_id")
-	}
-
-	msgs, err := buildMessages(req.Content, dga.prompts.Build(req.Prompt))
-	if err != nil {
-		return nil, err
-	}
-
-	runCtx, cancel := context.WithCancel(ctx)
-	dga.bindRun(sessionID, cancel)
-	events := dga.agent.Run(runCtx, msgs)
-
-	ch := make(chan string, 30)
-	go func() {
-		defer close(ch)
-		defer dga.unbindRun(sessionID)
-
-		runResult := ""
-		for {
-			event, ok := events.Next()
-			if !ok {
-				if !req.IsStream && runResult != "" {
-					ch <- runResult
-				}
-				return
-			}
-			if event.Err != nil {
-				slog.Error("execute agent failed", "session_id", sessionID, "err", event.Err)
-				return
-			}
-			if msg, err := event.Output.MessageOutput.GetMessage(); err == nil && msg.Content != "" {
-				runResult += msg.Content
-				if req.IsStream {
-					ch <- msg.Content
-				}
-			}
-		}
-	}()
-
-	return ch, nil
 }
 
 func (dga *DigitalAgent) PauseSession(sessionID string) error {

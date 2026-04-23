@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"digital-labor/pkg/model"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,13 +13,6 @@ import (
 
 const rootPromptFile = "agent.md"
 
-type PromptContext struct {
-	UserInstruction string
-	UserPreference  string
-	Skills          []string
-	Tools           []tool.BaseTool
-}
-
 type PromptBuilder struct {
 	workspaceDir string
 }
@@ -27,7 +21,7 @@ func NewPromptBuilder(workspaceDir string) *PromptBuilder {
 	return &PromptBuilder{workspaceDir: workspaceDir}
 }
 
-func (b *PromptBuilder) Build(ctx PromptContext) string {
+func (b *PromptBuilder) Build(ctx model.PromptContext) string {
 	parts := make([]string, 0, 5)
 
 	if root := strings.TrimSpace(b.loadRootPrompt()); root != "" {
