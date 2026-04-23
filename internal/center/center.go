@@ -2,13 +2,17 @@ package center
 
 import (
 	"digital-labor/internal/agent"
+	"digital-labor/internal/gateway"
+	"digital-labor/internal/vdisplay"
 	"errors"
 	"sync"
 )
 
 type Center struct {
-	mu     sync.RWMutex
-	agents map[string]*agent.DigitalAgent
+	mu             sync.RWMutex
+	agents         map[string]*agent.DigitalAgent
+	channelGateway gateway.ChannelGateway
+	visualDisplay  vdisplay.VisualDisplayManager
 }
 
 var (
