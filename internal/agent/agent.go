@@ -30,10 +30,11 @@ type DigitalAgent struct {
 	runStops map[string]context.CancelFunc
 }
 
-func NewDigitalAgent(provider, key, url, name string) (*DigitalAgent, error) {
+func NewDigitalAgent(provider, key, url, name, agent_id string) (*DigitalAgent, error) {
 	dga := &DigitalAgent{
 		runStops: make(map[string]context.CancelFunc),
 		prompts:  NewPromptBuilder(conf.Conf.WorkSpaceDir),
+		ID:       agent_id,
 	}
 
 	ctx := ctxmanager.GetOrCreate("digital_agent")

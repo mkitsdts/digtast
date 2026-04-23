@@ -37,11 +37,10 @@ func (m *Center) Create(containerID, agentID, provider, key, url, modelName stri
 		return nil, errors.New("agent_id is empty")
 	}
 
-	agent, err := agent.NewDigitalAgent(provider, key, url, modelName)
+	agent, err := agent.NewDigitalAgent(provider, key, url, modelName, agentID)
 	if err != nil {
 		return nil, err
 	}
-	agent.ID = agentID
 
 	keyID := buildAgentKey(containerID, agentID)
 
