@@ -1,8 +1,8 @@
 package websearch
 
 import (
-	"digital-labor/internal/registry"
 	"digital-labor/pkg/ctxmanager"
+	"digital-labor/pkg/registry"
 	"log/slog"
 
 	"github.com/cloudwego/eino-ext/components/tool/browseruse"
