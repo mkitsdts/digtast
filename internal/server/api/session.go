@@ -2,7 +2,7 @@ package api
 
 import (
 	"context"
-	"digital-labor/internal/agent"
+	"digital-labor/internal/center"
 	"digital-labor/pkg/ctxmanager"
 	pb "digital-labor/proto"
 
@@ -27,12 +27,12 @@ func (s *ContainerServer) SendMessageToSession(req *pb.SendMessageToSessionReque
 
 	ctx = context.WithValue(ctx, "session_id", req.SessionId)
 
-	digitalAgent, err := agent.GetManager().Get(req.ContainerId, req.AgentId)
+	digitalAgent, err := center.GetCenter().Get(req.ContainerId, req.AgentId)
 	if err != nil {
 		return err
 	}
 
-	sm, err := digitalAgent.SendMessageToSession(ctx, req.Message, req.IsStream)
+	sm, err := digitalAgent.Run(ctx, req.Message, req.IsStream)
 	if err != nil {
 		return err
 	}

@@ -2,15 +2,12 @@ package api
 
 import (
 	"context"
-	"digital-labor/internal/agent"
 	pb "digital-labor/proto"
 )
 
 // StopTask 暂停任务
 func (s *ContainerServer) StopTask(ctx context.Context, req *pb.StopTaskRequest) (*pb.StopTaskResponse, error) {
-	if err := agent.GetManager().Pause(req.ContainerId, req.AgentId, req.SessionId); err != nil {
-		return nil, err
-	}
+	// TODO: 实现暂停任务逻辑
 	return &pb.StopTaskResponse{
 		Success: true,
 	}, nil

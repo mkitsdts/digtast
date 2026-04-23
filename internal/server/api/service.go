@@ -2,17 +2,12 @@ package api
 
 import (
 	"context"
-	"digital-labor/internal/agent"
 	pb "digital-labor/proto"
 )
 
 // StopService 启动服务
 func (s *ContainerServer) StartService(ctx context.Context, req *pb.StartServiceRequest) (*pb.StartServiceResponse, error) {
-	_, err := agent.GetManager().Create(req.ContainerId, req.AgentId, req.Provider, req.Key, req.Url, req.ModelName)
-	if err != nil {
-		return nil, err
-	}
-
+	// TODO: 实现启动服务
 	return &pb.StartServiceResponse{
 		Success: true,
 	}, nil
@@ -20,9 +15,7 @@ func (s *ContainerServer) StartService(ctx context.Context, req *pb.StartService
 
 // StopService 暂停服务
 func (s *ContainerServer) StopService(ctx context.Context, req *pb.StopServiceRequest) (*pb.StopServiceResponse, error) {
-	if err := agent.GetManager().Remove(req.ContainerId, req.AgentId); err != nil {
-		return nil, err
-	}
+	// TODO: 主要实现 FTP 和 远程桌面的暂停
 	return &pb.StopServiceResponse{
 		Success: true,
 	}, nil
@@ -30,7 +23,7 @@ func (s *ContainerServer) StopService(ctx context.Context, req *pb.StopServiceRe
 
 // RestartService 重启服务
 func (s *ContainerServer) RestartService(ctx context.Context, req *pb.RestartServiceRequest) (*pb.RestartServiceResponse, error) {
-	// TODO: 实现重启容器逻辑
+	// TODO: 实现实现 FTP 和 远程桌面的重启
 	return &pb.RestartServiceResponse{
 		Success: true,
 	}, nil
@@ -38,9 +31,7 @@ func (s *ContainerServer) RestartService(ctx context.Context, req *pb.RestartSer
 
 // RemoveService 移除服务
 func (s *ContainerServer) RemoveService(ctx context.Context, req *pb.RemoveServiceRequest) (*pb.RemoveServiceResponse, error) {
-	if err := agent.GetManager().Remove(req.ContainerId, req.AgentId); err != nil {
-		return nil, err
-	}
+	// TODO: 实现全部服务的移除
 	return &pb.RemoveServiceResponse{
 		Success: true,
 	}, nil
