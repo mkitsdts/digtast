@@ -24,6 +24,7 @@ const (
 	ContainerService_RestartService_FullMethodName       = "/labor.ContainerService/RestartService"
 	ContainerService_RemoveService_FullMethodName        = "/labor.ContainerService/RemoveService"
 	ContainerService_BackupService_FullMethodName        = "/labor.ContainerService/BackupService"
+	ContainerService_GetOrCreateSession_FullMethodName   = "/labor.ContainerService/GetOrCreateSession"
 	ContainerService_RemoveSession_FullMethodName        = "/labor.ContainerService/RemoveSession"
 	ContainerService_CompressSession_FullMethodName      = "/labor.ContainerService/CompressSession"
 	ContainerService_SendMessageToSession_FullMethodName = "/labor.ContainerService/SendMessageToSession"
@@ -54,6 +55,7 @@ type ContainerServiceClient interface {
 	RemoveService(ctx context.Context, in *RemoveServiceRequest, opts ...grpc.CallOption) (*RemoveServiceResponse, error)
 	BackupService(ctx context.Context, in *BackupServiceRequest, opts ...grpc.CallOption) (*BackupServiceResponse, error)
 	// --- 会话相关 ---
+	GetOrCreateSession(ctx context.Context, in *GetOrCreateSessionRequest, opts ...grpc.CallOption) (*GetOrCreateSessionResponse, error)
 	RemoveSession(ctx context.Context, in *RemoveSessionRequest, opts ...grpc.CallOption) (*RemoveSessionResponse, error)
 	CompressSession(ctx context.Context, in *CompressSessionRequest, opts ...grpc.CallOption) (*CompressSessionResponse, error)
 	// --- 对话相关 ---
@@ -129,6 +131,16 @@ func (c *containerServiceClient) BackupService(ctx context.Context, in *BackupSe
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(BackupServiceResponse)
 	err := c.cc.Invoke(ctx, ContainerService_BackupService_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *containerServiceClient) GetOrCreateSession(ctx context.Context, in *GetOrCreateSessionRequest, opts ...grpc.CallOption) (*GetOrCreateSessionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetOrCreateSessionResponse)
+	err := c.cc.Invoke(ctx, ContainerService_GetOrCreateSession_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -307,6 +319,7 @@ type ContainerServiceServer interface {
 	RemoveService(context.Context, *RemoveServiceRequest) (*RemoveServiceResponse, error)
 	BackupService(context.Context, *BackupServiceRequest) (*BackupServiceResponse, error)
 	// --- 会话相关 ---
+	GetOrCreateSession(context.Context, *GetOrCreateSessionRequest) (*GetOrCreateSessionResponse, error)
 	RemoveSession(context.Context, *RemoveSessionRequest) (*RemoveSessionResponse, error)
 	CompressSession(context.Context, *CompressSessionRequest) (*CompressSessionResponse, error)
 	// --- 对话相关 ---
@@ -352,6 +365,9 @@ func (UnimplementedContainerServiceServer) RemoveService(context.Context, *Remov
 }
 func (UnimplementedContainerServiceServer) BackupService(context.Context, *BackupServiceRequest) (*BackupServiceResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method BackupService not implemented")
+}
+func (UnimplementedContainerServiceServer) GetOrCreateSession(context.Context, *GetOrCreateSessionRequest) (*GetOrCreateSessionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetOrCreateSession not implemented")
 }
 func (UnimplementedContainerServiceServer) RemoveSession(context.Context, *RemoveSessionRequest) (*RemoveSessionResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RemoveSession not implemented")
@@ -505,6 +521,24 @@ func _ContainerService_BackupService_Handler(srv interface{}, ctx context.Contex
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ContainerServiceServer).BackupService(ctx, req.(*BackupServiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContainerService_GetOrCreateSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOrCreateSessionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).GetOrCreateSession(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_GetOrCreateSession_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).GetOrCreateSession(ctx, req.(*GetOrCreateSessionRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -798,6 +832,10 @@ var ContainerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "BackupService",
 			Handler:    _ContainerService_BackupService_Handler,
+		},
+		{
+			MethodName: "GetOrCreateSession",
+			Handler:    _ContainerService_GetOrCreateSession_Handler,
 		},
 		{
 			MethodName: "RemoveSession",
