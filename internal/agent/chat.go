@@ -13,12 +13,6 @@ import (
 
 func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan string, error) {
 	sessionID := req.SessionID
-	if sessionID == "" {
-		sessionID = sessionIDFromContext(ctx)
-	}
-	if sessionID == "" {
-		return nil, errors.New("invalid session_id")
-	}
 
 	session, err := dga.memory.GetOrCreate(sessionID)
 	if err != nil {
@@ -119,14 +113,10 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 
 func buildMessages(content string, messages []*schema.Message) error {
 	// TODO:
-
-	return nil
-}
-
-func sessionIDFromContext(ctx context.Context) string {
-	if ctx == nil {
-		return ""
+	msg := &schema.Message{
+		Role:    schema.User,
+		Content: content,
 	}
-	sessionID, _ := ctx.Value("session_id").(string)
-	return sessionID
+	messages = append(messages, msg)
+	return nil
 }

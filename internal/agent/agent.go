@@ -5,7 +5,7 @@ import (
 	mem "digital-labor/internal/memory"
 	"digital-labor/pkg/ctxmanager"
 	mmodel "digital-labor/pkg/model"
-	tooll "digital-labor/pkg/tool"
+	"digital-labor/pkg/registry"
 	"errors"
 	"sync"
 
@@ -26,10 +26,8 @@ type DigitalAgent struct {
 }
 
 func NewDigitalAgent(cfg *DigitalAgentConfig) (*DigitalAgent, error) {
-	id := uuid.New().String()
-
 	if cfg.Name == "" {
-		cfg.Name = id
+		cfg.Name = uuid.New().String()
 	}
 
 	if cfg.Description == "" {
@@ -39,29 +37,29 @@ func NewDigitalAgent(cfg *DigitalAgentConfig) (*DigitalAgent, error) {
 	dga := &DigitalAgent{
 		runStops: make(map[string]context.CancelFunc),
 		prompts:  NewPromptBuilder(),
-		ID:       id,
+		ID:       cfg.ID,
 		memory:   mem.NewStore(),
 	}
 
-	ctx := ctxmanager.GetOrCreate(id)
+	ctx := ctxmanager.GetOrCreate(cfg.Name)
 	cm, err := newChatModel(ctx, cfg.Provider, cfg.Key, cfg.URL, cfg.Name)
 	if err != nil {
 		return nil, err
 	}
 	dga.cm = cm
 
+	cfg.persistDigitalAgentConfig(0) // persist before creating agent which allow program could save the config to disk even the agent is not created
+
 	dga.agent, err = adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
 		Name:  cfg.Name,
 		Model: cm,
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
-				Tools: tooll.GetTools(),
+				Tools: registry.GetTools(),
 			},
 		},
 		Description: cfg.Description,
 	})
-
-	cfg.persistDigitalAgentConfig(0)
 
 	if err != nil {
 		return nil, err
@@ -69,12 +67,20 @@ func NewDigitalAgent(cfg *DigitalAgentConfig) (*DigitalAgent, error) {
 	return dga, nil
 }
 
-func (dga *DigitalAgent) Run(ctx context.Context, content string, isStream bool) (chan string, error) {
+func (dga *DigitalAgent) Run(ctx context.Context, content string, isStream bool, sessionID string) (chan string, error) {
 	if content == "" {
 		return nil, errors.New("content is empty")
 	}
-	return dga.run(ctx, mmodel.ChatRequest{
-		SessionID: sessionIDFromContext(ctx),
+
+	if sessionID == "" {
+		return nil, errors.New("session_id is empty")
+	}
+
+	// to control the context lifecycle
+	vctx := ctxmanager.GetOrCreate(sessionID)
+
+	return dga.run(vctx, mmodel.ChatRequest{
+		SessionID: sessionID,
 		Content:   content,
 		IsStream:  isStream,
 	})
