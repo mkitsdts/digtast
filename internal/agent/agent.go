@@ -60,6 +60,9 @@ func NewDigitalAgent(cfg *DigitalAgentConfig) (*DigitalAgent, error) {
 		},
 		Description: cfg.Description,
 	})
+
+	cfg.persistDigitalAgentConfig(0)
+
 	if err != nil {
 		return nil, err
 	}
