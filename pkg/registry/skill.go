@@ -1,4 +1,4 @@
-package skill
+package registry
 
 import (
 	"context"
@@ -23,12 +23,6 @@ func (s *Skill) Info(ctx context.Context) (*schema.ToolInfo, error) {
 	}, nil
 }
 
-var skills = make([]tool.BaseTool, 0)
-
-func GetSkills() []tool.BaseTool {
-	return skills
-}
-
 func ScanSkills(path string) {
 	files, err := os.ReadDir(path)
 	if err != nil {
@@ -45,7 +39,7 @@ func ScanSkills(path string) {
 		if err != nil {
 			continue
 		}
-		skills = append(skills, result)
+		tools = append(tools, result)
 	}
 }
 
