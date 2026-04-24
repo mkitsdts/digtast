@@ -18,8 +18,10 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 	if err != nil {
 		return nil, err
 	}
-	msgs := session.GetMessages()
-	buildMessages(req.Content, msgs)
+	msgs, err := buildMessages(req.Content, session.GetMessages())
+	if err != nil {
+		return nil, err
+	}
 
 	runCtx, cancel := context.WithCancel(ctx)
 	dga.bindRun(sessionID, cancel)
@@ -111,12 +113,12 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 	return ch, nil
 }
 
-func buildMessages(content string, messages []*schema.Message) error {
+func buildMessages(content string, messages []*schema.Message) ([]*schema.Message, error) {
 	// TODO:
 	msg := &schema.Message{
 		Role:    schema.User,
 		Content: content,
 	}
 	messages = append(messages, msg)
-	return nil
+	return messages, nil
 }
