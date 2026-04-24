@@ -14,7 +14,7 @@ RemoveService     移除服务，删除所有内容
 BackupService     备份服务，备份记忆
 
 ## 会话相关
-会话仅负责维护上下文，仅此而已。
+会话仅负责维护上下文
 
 RemoveSession         删除会话
 ResumeSession         恢复会话
@@ -23,6 +23,11 @@ ResumeSession         恢复会话
 仅仅发送对话
 
 SendMessageToSession  会话里发起对话
+
+发起对话需要的参数：
+- sessionid：会话id，用于标记历史会话记录。如果没有则自动创建，下次带上
+- agentid: 调用的智能体id，用于区分不同助手
+- content：用户请求会话内容
 
 ## 任务相关
 任务管理器，每一次对话都抽象成一次任务。

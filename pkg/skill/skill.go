@@ -74,7 +74,7 @@ func parseSkill(content string) (tool.BaseTool, error) {
 
 	parts := strings.SplitN(content, delimiter, 3)
 
-	var result *Skill
+	result := &Skill{}
 
 	if err := yaml.Unmarshal([]byte(parts[1]), result); err != nil {
 		return nil, err

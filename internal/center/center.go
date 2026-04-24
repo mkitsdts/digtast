@@ -37,7 +37,13 @@ func (m *Center) Create(containerID, agentID, provider, key, url, modelName stri
 		return nil, errors.New("agent_id is empty")
 	}
 
-	agent, err := agent.NewDigitalAgent(provider, key, url, modelName, agentID)
+	ag, err := agent.NewDigitalAgent(&agent.DigitalAgentConfig{
+		Key:      key,
+		Name:     modelName,
+		Model:    modelName,
+		URL:      url,
+		Provider: provider,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -46,8 +52,8 @@ func (m *Center) Create(containerID, agentID, provider, key, url, modelName stri
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.agents[keyID] = agent
-	return agent, nil
+	m.agents[keyID] = ag
+	return ag, nil
 }
 
 func (m *Center) Get(containerID, agentID string) (*agent.DigitalAgent, error) {

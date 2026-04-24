@@ -3,7 +3,6 @@ package agent
 import (
 	"context"
 	mem "digital-labor/internal/memory"
-	"digital-labor/pkg/conf"
 	"digital-labor/pkg/ctxmanager"
 	mmodel "digital-labor/pkg/model"
 	tooll "digital-labor/pkg/tool"
@@ -13,6 +12,7 @@ import (
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/compose"
+	"github.com/google/uuid"
 )
 
 type DigitalAgent struct {
@@ -25,34 +25,40 @@ type DigitalAgent struct {
 	memory   *mem.Store
 }
 
-func NewDigitalAgent(provider, key, url, name, agent_id string) (*DigitalAgent, error) {
+func NewDigitalAgent(cfg *DigitalAgentConfig) (*DigitalAgent, error) {
+	id := uuid.New().String()
+
+	if cfg.Name == "" {
+		cfg.Name = id
+	}
+
+	if cfg.Description == "" {
+		cfg.Description = defaultModelDescription
+	}
+
 	dga := &DigitalAgent{
 		runStops: make(map[string]context.CancelFunc),
-		prompts:  NewPromptBuilder(conf.Conf.WorkSpaceDir),
-		ID:       agent_id,
+		prompts:  NewPromptBuilder(),
+		ID:       id,
 		memory:   mem.NewStore(),
 	}
 
-	ctx := ctxmanager.GetOrCreate("digital_agent")
-	cm, err := newChatModel(ctx, provider, key, url, name)
+	ctx := ctxmanager.GetOrCreate(id)
+	cm, err := newChatModel(ctx, cfg.Provider, cfg.Key, cfg.URL, cfg.Name)
 	if err != nil {
 		return nil, err
 	}
 	dga.cm = cm
 
-	if err != nil {
-		return nil, err
-	}
-
 	dga.agent, err = adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
-		Name:  agent_id,
+		Name:  cfg.Name,
 		Model: cm,
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
 				Tools: tooll.GetTools(),
 			},
 		},
-		Description: "你是一位名为“云端数字助理”的AI助手。你的核心目标是成为用户高效、可靠且易于沟通的智能伙伴。你应具备卓越的理解能力、严谨的逻辑思维和强大的信息整合能力，旨在帮助用户解决问题、获取知识、激发创意并提升效率。你的回答应始终体现专业性、准确性和用户友好性。",
+		Description: cfg.Description,
 	})
 	if err != nil {
 		return nil, err

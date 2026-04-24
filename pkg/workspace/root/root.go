@@ -83,6 +83,10 @@ func (r *Root) GetPromptName() string {
 	return "agent.md"
 }
 
+func (r *Root) GetRole() string {
+	return "system"
+}
+
 func init() {
 	workspace.RegisterPromptCreator(&Root{})
 }

@@ -3,28 +3,26 @@ package agent
 import (
 	"context"
 	"digital-labor/pkg/model"
+	"digital-labor/pkg/workspace"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/cloudwego/eino/components/tool"
 )
 
-const rootPromptFile = "agent.md"
+const defaultModelDescription = "你是一位云端数字助理。你的核心目标是成为用户高效、可靠且易于沟通的智能伙伴。你应具备卓越的理解能力、严谨的逻辑思维和强大的信息整合能力，旨在帮助用户解决问题、获取知识、激发创意并提升效率。你的回答应始终体现专业性、准确性和用户友好性。"
 
 type PromptBuilder struct {
-	workspaceDir string
 }
 
-func NewPromptBuilder(workspaceDir string) *PromptBuilder {
-	return &PromptBuilder{workspaceDir: workspaceDir}
+func NewPromptBuilder() *PromptBuilder {
+	return &PromptBuilder{}
 }
 
 func (b *PromptBuilder) Build(ctx model.PromptContext) string {
 	parts := make([]string, 0, 5)
 
-	if root := strings.TrimSpace(b.loadRootPrompt()); root != "" {
+	if root := strings.TrimSpace(b.loadPrompt()); root != "" {
 		parts = append(parts, root)
 	}
 	if instruction := strings.TrimSpace(ctx.UserInstruction); instruction != "" {
@@ -43,15 +41,16 @@ func (b *PromptBuilder) Build(ctx model.PromptContext) string {
 	return strings.Join(parts, "\n\n")
 }
 
-func (b *PromptBuilder) loadRootPrompt() string {
-	if strings.TrimSpace(b.workspaceDir) == "" {
-		return ""
+func (b *PromptBuilder) loadPrompt() string {
+	// TODO:
+	result := ""
+	prompts := workspace.GetPromptCreators()
+	for _, prompt := range prompts {
+		if p, err := prompt.GetPromptImpl(); err == nil {
+			result += p + "\n\n"
+		}
 	}
-	data, err := os.ReadFile(filepath.Join(b.workspaceDir, rootPromptFile))
-	if err != nil {
-		return ""
-	}
-	return string(data)
+	return ""
 }
 
 func renderTools(tools []tool.BaseTool) string {

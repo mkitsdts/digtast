@@ -6,7 +6,14 @@ import (
 )
 
 func TestChat(t *testing.T) {
-	agent, err := NewDigitalAgent("doubao", "***REMOVED***", "https://ark.cn-beijing.volces.com/api/v3", "doubao-seed-2-0-lite-260215", "114514")
+	agent, err := NewDigitalAgent(&DigitalAgentConfig{
+		Provider:    "doubao",
+		Key:         "***REMOVED***",
+		URL:         "https://ark.cn-beijing.volces.com/api/v3",
+		Model:       "doubao-seed-2-0-lite-260215",
+		Name:        "114514",
+		Description: "114514",
+	})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -36,6 +36,7 @@ type PromptImpl interface {
 	CreatePromptImpl() error
 	GetPromptImpl() (string, error)
 	GetPromptName() string
+	GetRole() string
 }
 
 var promptCreators []PromptImpl

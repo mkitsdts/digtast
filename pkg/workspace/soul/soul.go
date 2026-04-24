@@ -66,6 +66,10 @@ func (s *Soul) GetPromptName() string {
 	return "soul.md"
 }
 
+func (s *Soul) GetRole() string {
+	return "system"
+}
+
 func init() {
 	workspace.RegisterPromptCreator(&Soul{})
 }
