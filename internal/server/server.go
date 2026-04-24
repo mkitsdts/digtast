@@ -1,14 +1,12 @@
 package server
 
 import (
-	"context"
 	"log/slog"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"digital-labor/internal/center"
 	"digital-labor/internal/server/api"
 	pb "digital-labor/proto"
 
@@ -26,46 +24,6 @@ func newServer() *serverImpl {
 	return &serverImpl{
 		ContainerServer: &api.ContainerServer{},
 	}
-}
-
-// StartService 启动服务 (补充实现)
-func (s *serverImpl) StartService(ctx context.Context, req *pb.StartServiceRequest) (*pb.StartServiceResponse, error) {
-	slog.Info("StartService request received", "container_id", req.ContainerId, "agent_id", req.AgentId)
-
-	_, err := center.GetCenter().Create(req.ContainerId, req.AgentId, req.Provider, req.Key, req.Url, req.ModelName)
-	if err != nil {
-		slog.Error("Failed to create agent", "error", err)
-		return nil, err
-	}
-
-	slog.Info("Agent created successfully", "container_id", req.ContainerId, "agent_id", req.AgentId)
-	return &pb.StartServiceResponse{
-		Success: true,
-	}, nil
-}
-
-// RemoveService 移除服务 (补充实现)
-func (s *serverImpl) RemoveService(ctx context.Context, req *pb.RemoveServiceRequest) (*pb.RemoveServiceResponse, error) {
-	slog.Info("RemoveService request received", "container_id", req.ContainerId, "agent_id", req.AgentId)
-
-	err := center.GetCenter().Remove(req.ContainerId, req.AgentId)
-	if err != nil {
-		slog.Error("Failed to remove agent", "error", err)
-		return nil, err
-	}
-
-	slog.Info("Agent removed successfully", "container_id", req.ContainerId, "agent_id", req.AgentId)
-	return &pb.RemoveServiceResponse{
-		Success: true,
-	}, nil
-}
-
-// CompressSession 压缩会话 (补充实现)
-func (s *serverImpl) CompressSession(ctx context.Context, req *pb.CompressSessionRequest) (*pb.CompressSessionResponse, error) {
-	slog.Info("CompressSession request received", "session_id", req.SessionId)
-	return &pb.CompressSessionResponse{
-		SessionId: req.SessionId,
-	}, nil
 }
 
 // Start 初始化并启动 gRPC 服务器
@@ -86,7 +44,7 @@ func Start(port string) {
 	// 注册服务
 	srv := newServer()
 	pb.RegisterContainerServiceServer(grpcServer, srv)
-	
+
 	// 注册反射服务，方便调试
 	reflection.Register(grpcServer)
 
@@ -101,7 +59,7 @@ func Start(port string) {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	
+
 	slog.Info("shutting down server...")
 	grpcServer.GracefulStop()
 	slog.Info("server stopped")

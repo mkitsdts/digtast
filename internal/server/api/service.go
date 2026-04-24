@@ -2,12 +2,31 @@ package api
 
 import (
 	"context"
+	"digital-labor/internal/agent"
+	"digital-labor/internal/center"
 	pb "digital-labor/proto"
+	"fmt"
+	"log/slog"
 )
 
 // StopService 启动服务
 func (s *ContainerServer) StartService(ctx context.Context, req *pb.StartServiceRequest) (*pb.StartServiceResponse, error) {
-	// TODO: 实现启动服务
+	slog.Info("StartService request received", "container_id", req.ContainerId, "agent_id", req.AgentId)
+
+	_, err := center.GetCenter().CreateAgent(&agent.DigitalAgentConfig{
+		ID:       fmt.Sprintf("%s/%s", req.ContainerId, req.AgentId),
+		Key:      req.Key,
+		Name:     req.ModelName,
+		Model:    req.ModelName,
+		URL:      req.Url,
+		Provider: req.Provider,
+	})
+	if err != nil {
+		slog.Error("Failed to create agent", "error", err)
+		return nil, err
+	}
+
+	slog.Info("Agent created successfully", "container_id", req.ContainerId, "agent_id", req.AgentId)
 	return &pb.StartServiceResponse{
 		Success: true,
 	}, nil
@@ -32,6 +51,17 @@ func (s *ContainerServer) RestartService(ctx context.Context, req *pb.RestartSer
 // RemoveService 移除服务
 func (s *ContainerServer) RemoveService(ctx context.Context, req *pb.RemoveServiceRequest) (*pb.RemoveServiceResponse, error) {
 	// TODO: 实现全部服务的移除
+	slog.Info("RemoveService request received", "container_id", req.ContainerId, "agent_id", req.AgentId)
+
+	id := buildAgentKey(req.ContainerId, req.AgentId)
+
+	err := center.GetCenter().Remove(id)
+	if err != nil {
+		slog.Error("Failed to remove agent", "error", err)
+		return nil, err
+	}
+
+	slog.Info("Agent removed successfully", "container_id", req.ContainerId, "agent_id", req.AgentId)
 	return &pb.RemoveServiceResponse{
 		Success: true,
 	}, nil
@@ -43,4 +73,8 @@ func (s *ContainerServer) BackupService(ctx context.Context, req *pb.BackupServi
 	return &pb.BackupServiceResponse{
 		BackupUrl: "http://backup-server/container-" + req.ContainerId + "/agent-" + req.AgentId + ".tar.gz",
 	}, nil
+}
+
+func buildAgentKey(containerID, agentID string) string {
+	return containerID + "/" + agentID
 }
