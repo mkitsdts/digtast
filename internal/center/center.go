@@ -22,6 +22,7 @@ var (
 
 func GetCenter() *Center {
 	managerOnce.Do(func() {
+		//TODO: parse config.json
 		center = &Center{
 			agents: make(map[string]*agent.DigitalAgent),
 		}
@@ -29,79 +30,60 @@ func GetCenter() *Center {
 	return center
 }
 
-func (m *Center) Create(containerID, agentID, provider, key, url, modelName string) (*agent.DigitalAgent, error) {
-	if containerID == "" {
+func (m *Center) CreateAgent(config *agent.DigitalAgentConfig) (*agent.DigitalAgent, error) {
+	if config.Key == "" {
 		return nil, errors.New("container_id is empty")
 	}
-	if agentID == "" {
-		return nil, errors.New("agent_id is empty")
+	if config.Name == "" {
+		return nil, errors.New("name is empty")
+	}
+	if config.Model == "" {
+		return nil, errors.New("model is empty")
 	}
 
-	ag, err := agent.NewDigitalAgent(&agent.DigitalAgentConfig{
-		Key:      key,
-		Name:     modelName,
-		Model:    modelName,
-		URL:      url,
-		Provider: provider,
-	})
+	ag, err := agent.NewDigitalAgent(config)
 	if err != nil {
 		return nil, err
 	}
 
-	keyID := buildAgentKey(containerID, agentID)
-
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.agents[keyID] = ag
+	m.agents[config.ID] = ag
 	return ag, nil
 }
 
-func (m *Center) Get(containerID, agentID string) (*agent.DigitalAgent, error) {
-	if containerID == "" {
-		return nil, errors.New("container_id is empty")
+func (m *Center) Get(id string) (*agent.DigitalAgent, error) {
+	if id == "" {
+		return nil, errors.New("invalid agent id paramater")
 	}
-	if agentID == "" {
-		return nil, errors.New("agent_id is empty")
-	}
-
-	keyID := buildAgentKey(containerID, agentID)
 
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	agent, ok := m.agents[keyID]
+	agent, ok := m.agents[id]
 	if !ok {
 		return nil, errors.New("agent not found")
 	}
 	return agent, nil
 }
 
-func (m *Center) Pause(containerID, agentID, sessionID string) error {
-	agent, err := m.Get(containerID, agentID)
+func (m *Center) Pause(id, sessionID string) error {
+	agent, err := m.Get(id)
 	if err != nil {
 		return err
 	}
 	return agent.PauseSession(sessionID)
 }
 
-func (m *Center) Remove(containerID, agentID string) error {
-	if containerID == "" {
-		return errors.New("container_id is empty")
+func (m *Center) Remove(id string) error {
+	if id == "" {
+		return errors.New("invalid agent id parameter")
 	}
-	if agentID == "" {
-		return errors.New("agent_id is empty")
-	}
-
-	keyID := buildAgentKey(containerID, agentID)
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if _, ok := m.agents[keyID]; !ok {
+	if _, ok := m.agents[id]; !ok {
 		return errors.New("agent not found")
 	}
-	delete(m.agents, keyID)
+	delete(m.agents, id)
 	return nil
-}
-
-func buildAgentKey(containerID, agentID string) string {
-	return containerID + "/" + agentID
 }
