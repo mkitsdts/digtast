@@ -9,36 +9,39 @@ import (
 	"github.com/cloudwego/eino/schema"
 )
 
-func TestBuildMessages(t *testing.T) {
+func TestBuildMessages_ReturnsNewSlice(t *testing.T) {
 	msgs := make([]*schema.Message, 0)
-	err := buildMessages("hello world", msgs)
+	result, err := buildMessages("hello world", msgs)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	// BUG: buildMessages uses append on a copy of the slice,
-	// so the original 'msgs' is NOT modified. This documents the bug.
-	if len(msgs) == 0 {
-		t.Log("BUG CONFIRMED: buildMessages does not modify the caller's slice — append works on a copy, not the original")
+	if len(result) != 1 {
+		t.Fatalf("expected 1 message in result, got %d", len(result))
+	}
+	if result[0].Role != schema.User {
+		t.Fatalf("expected User role, got %s", result[0].Role)
+	}
+	if result[0].Content != "hello world" {
+		t.Fatalf("expected 'hello world', got '%s'", result[0].Content)
 	}
 }
 
-func TestBuildMessages_AppendReturnsNewSlice(t *testing.T) {
-	msgs := make([]*schema.Message, 0)
-	err := buildMessages("test", msgs)
+func TestBuildMessages_AppendsToExisting(t *testing.T) {
+	existing := []*schema.Message{
+		{Role: schema.User, Content: "prev"},
+	}
+	result, err := buildMessages("new msg", existing)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	// The function appends internally but doesn't return the new slice.
-	// The caller in run() line 22 does:
-	//   msgs := session.GetMessages()
-	//   buildMessages(req.Content, msgs)
-	// which means the user message is lost.
-	//
-	// Fix: either return []*schema.Message from buildMessages,
-	// or use *[]*schema.Message as parameter.
-	_ = msgs // msgs remains empty due to bug
+	if len(result) != 2 {
+		t.Fatalf("expected 2 messages, got %d", len(result))
+	}
+	if result[1].Content != "new msg" {
+		t.Fatalf("expected 'new msg' as last message, got '%s'", result[1].Content)
+	}
 }
 
 func TestRenderTools_Empty(t *testing.T) {
@@ -87,7 +90,7 @@ func TestPromptBuilder_Build(t *testing.T) {
 	}
 
 	result := b.Build(ctx)
-	// loadPrompt() returns "" (TODO), so result should only contain instruction and preference
+	// loadPrompt() returns "" (TODO), so result should contain instruction and preference
 	if !strings.Contains(result, "be helpful") {
 		t.Fatal("expected Build to contain user instruction")
 	}

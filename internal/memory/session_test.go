@@ -2,23 +2,35 @@ package mem
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/cloudwego/eino/schema"
 )
 
-func newTestSession(t *testing.T) *Session {
+func newTestSessionWithFile(t *testing.T) (*Session, string) {
 	t.Helper()
-	return &Session{
+	dir := t.TempDir()
+	filePath := filepath.Join(dir, "test-sess.jsonl")
+
+	// Create session file with header
+	header := `{"type":"session","id":"test-sess","created_at":"2024-01-01T00:00:00Z"}`
+	if err := os.WriteFile(filePath, []byte(header+"\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	sess := &Session{
 		ID:        "test-sess",
 		CreatedAt: time.Now(),
+		filePath:  filePath,
 		messages:  make([]*schema.Message, 0),
 	}
+	return sess, filePath
 }
 
 func TestAppend(t *testing.T) {
-	sess := newTestSession(t)
+	sess, _ := newTestSessionWithFile(t)
 
 	msg := &schema.Message{
 		Role:    schema.User,
@@ -38,7 +50,7 @@ func TestAppend(t *testing.T) {
 }
 
 func TestAppend_Multiple(t *testing.T) {
-	sess := newTestSession(t)
+	sess, _ := newTestSessionWithFile(t)
 
 	sess.Append(&schema.Message{Role: schema.User, Content: "msg1"})
 	sess.Append(&schema.Message{Role: schema.Assistant, Content: "reply1"})
@@ -51,11 +63,11 @@ func TestAppend_Multiple(t *testing.T) {
 }
 
 func TestGetMessages_ReturnsSnapshot(t *testing.T) {
-	sess := newTestSession(t)
+	sess, _ := newTestSessionWithFile(t)
 	sess.Append(&schema.Message{Role: schema.User, Content: "original"})
 
 	msgs1 := sess.GetMessages()
-	msgs1[0].Content = "modified" // modify the returned slice
+	msgs1[0].Content = "modified"
 
 	msgs2 := sess.GetMessages()
 	if msgs2[0].Content != "original" {
@@ -64,7 +76,7 @@ func TestGetMessages_ReturnsSnapshot(t *testing.T) {
 }
 
 func TestTitle(t *testing.T) {
-	sess := newTestSession(t)
+	sess, _ := newTestSessionWithFile(t)
 	if title := sess.Title(); title != "New Session" {
 		t.Fatalf("expected 'New Session', got '%s'", title)
 	}
@@ -78,7 +90,7 @@ func TestTitle(t *testing.T) {
 }
 
 func TestTitle_Truncation(t *testing.T) {
-	sess := newTestSession(t)
+	sess, _ := newTestSessionWithFile(t)
 	longContent := ""
 	for i := 0; i < 100; i++ {
 		longContent += "中"
@@ -92,7 +104,7 @@ func TestTitle_Truncation(t *testing.T) {
 }
 
 func TestSetAndGetPendingInterruptID(t *testing.T) {
-	sess := newTestSession(t)
+	sess, _ := newTestSessionWithFile(t)
 
 	if id := sess.GetPendingInterruptID(); id != "" {
 		t.Fatalf("expected empty, got '%s'", id)
@@ -105,7 +117,7 @@ func TestSetAndGetPendingInterruptID(t *testing.T) {
 }
 
 func TestSetAndGetMsgIdx(t *testing.T) {
-	sess := newTestSession(t)
+	sess, _ := newTestSessionWithFile(t)
 
 	if idx := sess.GetMsgIdx(); idx != 0 {
 		t.Fatalf("expected 0, got %d", idx)
@@ -118,21 +130,7 @@ func TestSetAndGetMsgIdx(t *testing.T) {
 }
 
 func TestAppend_PersistsToDisk(t *testing.T) {
-	dir := t.TempDir()
-	filePath := dir + "/disk-sess.jsonl"
-
-	// Create session file with header
-	header := `{"type":"session","id":"disk-sess","created_at":"2024-01-01T00:00:00Z"}`
-	if err := os.WriteFile(filePath, []byte(header+"\n"), 0644); err != nil {
-		t.Fatal(err)
-	}
-
-	sess := &Session{
-		ID:        "disk-sess",
-		CreatedAt: time.Now(),
-		filePath:  filePath,
-		messages:  make([]*schema.Message, 0),
-	}
+	sess, filePath := newTestSessionWithFile(t)
 
 	sess.Append(&schema.Message{Role: schema.User, Content: "persisted"})
 
@@ -144,5 +142,16 @@ func TestAppend_PersistsToDisk(t *testing.T) {
 	content := string(data)
 	if len(content) == 0 {
 		t.Fatal("expected file to have content")
+	}
+
+	// Should have header + 1 message line
+	lines := 0
+	for i := 0; i < len(content); i++ {
+		if content[i] == '\n' {
+			lines++
+		}
+	}
+	if lines != 2 {
+		t.Fatalf("expected 2 lines (header + 1 message), got %d", lines)
 	}
 }
