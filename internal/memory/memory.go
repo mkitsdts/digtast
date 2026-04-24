@@ -35,6 +35,7 @@ func NewStore() *Store {
 		slog.Error("failed to create session dir", "error", err)
 		return nil
 	}
+
 	return &Store{
 		dir:   dir,
 		cache: make(map[string]*Session),
