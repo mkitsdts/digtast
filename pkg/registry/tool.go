@@ -1,6 +1,15 @@
 package registry
 
-import "github.com/cloudwego/eino/components/tool"
+import (
+	"sync"
+
+	"github.com/cloudwego/eino/components/tool"
+)
+
+var (
+	tools  = make([]tool.BaseTool, 0)
+	toolMu sync.RWMutex
+)
 
 func RegisterTool(t tool.BaseTool) {
 	if t == nil {

@@ -5,15 +5,11 @@ import (
 	"sync"
 
 	localbk "github.com/cloudwego/eino-ext/adk/backend/local"
-	"github.com/cloudwego/eino/components/tool"
 )
 
 var (
 	backend     *localbk.Local
 	backendOnce sync.Once
-
-	toolMu sync.RWMutex
-	tools  = make([]tool.BaseTool, 0)
 )
 
 func GetRegistry() (*localbk.Local, error) {
