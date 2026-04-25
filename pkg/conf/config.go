@@ -1,5 +1,9 @@
 package conf
 
+const (
+	IS_DEBUG = true
+)
+
 type Config struct {
 	MemoryDir    string `yaml:"memory_dir"`
 	SkillDir     string `yaml:"skill_dir"`

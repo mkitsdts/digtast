@@ -44,7 +44,7 @@ func (s *Soul) CreatePromptImpl() error {
 		return nil
 	}
 
-	file, err := os.OpenFile(fmt.Sprintf("%s/soul.md", workspacePath), os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := os.OpenFile(fmt.Sprintf("%s/prompt/soul.md", workspacePath), os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		if os.IsExist(err) {
 			return nil
@@ -59,7 +59,17 @@ func (s *Soul) CreatePromptImpl() error {
 
 func (s *Soul) GetPromptImpl() (string, error) {
 	//TODO:
-	return agentSoulPrompt, nil
+	workspacePath := workspace.GetWorkspacePath()
+	if workspacePath == "" {
+		return "", nil
+	}
+
+	content, err := os.ReadFile(fmt.Sprintf("%s/soul.md", workspacePath))
+	if err != nil {
+		return agentSoulPrompt, s.CreatePromptImpl()
+	}
+
+	return string(content), nil
 }
 
 func (s *Soul) GetPromptName() string {

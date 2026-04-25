@@ -61,7 +61,7 @@ func (r *Root) CreatePromptImpl() error {
 		return nil
 	}
 
-	file, err := os.OpenFile(fmt.Sprintf("%s/agent.md", workspacePath), os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := os.OpenFile(fmt.Sprintf("%s/prompt/agent.md", workspacePath), os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		if os.IsExist(err) {
 			return nil
@@ -76,7 +76,17 @@ func (r *Root) CreatePromptImpl() error {
 
 func (r *Root) GetPromptImpl() (string, error) {
 	// TODO:
-	return agentRootPrompt, nil
+	workspacePath := workspace.GetWorkspacePath()
+	if workspacePath == "" {
+		return "", nil
+	}
+
+	content, err := os.ReadFile(fmt.Sprintf("%s/agent.md", workspacePath))
+	if err != nil {
+		return agentRootPrompt, r.CreatePromptImpl()
+	}
+
+	return string(content), nil
 }
 
 func (r *Root) GetPromptName() string {

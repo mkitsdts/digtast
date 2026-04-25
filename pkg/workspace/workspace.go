@@ -32,6 +32,11 @@ func InitWorkspace() {
 		return
 	}
 
+	if err := os.MkdirAll(path+"/prompt", 0755); err != nil {
+		slog.Error("Failed to create prompt directory", "path", path+"/prompt", "err", err)
+		return
+	}
+
 	for _, promptCreator := range promptCreators {
 		err := promptCreator.CreatePromptImpl()
 		if err != nil {
@@ -50,6 +55,7 @@ type PromptImpl interface {
 var promptCreators []PromptImpl
 
 func RegisterPromptCreator(promptImpl PromptImpl) {
+	// create template
 	promptCreators = append(promptCreators, promptImpl)
 }
 
