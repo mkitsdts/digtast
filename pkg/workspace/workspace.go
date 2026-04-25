@@ -3,6 +3,7 @@ package workspace
 import (
 	"log/slog"
 	"os"
+	"path"
 )
 
 func GetWorkspacePath() string {
@@ -18,11 +19,18 @@ func GetWorkspacePath() string {
 		}
 	}
 
+	workspacePath = path.Join(workspacePath, "/.digtast")
+
 	return workspacePath
 }
 
 func InitWorkspace() {
 	// TODO:
+	path := GetWorkspacePath()
+	if err := os.MkdirAll(path, 0755); err != nil {
+		slog.Error("Failed to create workspace", "path", path, "err", err)
+		return
+	}
 
 	for _, promptCreator := range promptCreators {
 		err := promptCreator.CreatePromptImpl()

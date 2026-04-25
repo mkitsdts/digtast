@@ -40,7 +40,7 @@ func TestCreateAgent_EmptyFields(t *testing.T) {
 func TestGet_NotFound(t *testing.T) {
 	c := &Center{agents: make(map[string]*agent.DigitalAgent)}
 
-	_, err := c.Get("nonexistent")
+	_, err := c.GetAgent("nonexistent")
 	if err == nil {
 		t.Fatal("expected error for nonexistent agent")
 	}
@@ -52,7 +52,7 @@ func TestGet_NotFound(t *testing.T) {
 func TestGet_EmptyID(t *testing.T) {
 	c := &Center{agents: make(map[string]*agent.DigitalAgent)}
 
-	_, err := c.Get("")
+	_, err := c.GetAgent("")
 	if err == nil {
 		t.Fatal("expected error for empty id")
 	}
@@ -61,7 +61,7 @@ func TestGet_EmptyID(t *testing.T) {
 func TestRemove_NotFound(t *testing.T) {
 	c := &Center{agents: make(map[string]*agent.DigitalAgent)}
 
-	err := c.Remove("nonexistent")
+	err := c.RemoveAgent("nonexistent")
 	if err == nil {
 		t.Fatal("expected error for nonexistent agent")
 	}
@@ -70,7 +70,7 @@ func TestRemove_NotFound(t *testing.T) {
 func TestRemove_EmptyID(t *testing.T) {
 	c := &Center{agents: make(map[string]*agent.DigitalAgent)}
 
-	err := c.Remove("")
+	err := c.RemoveAgent("")
 	if err == nil {
 		t.Fatal("expected error for empty id")
 	}
@@ -85,7 +85,7 @@ func TestConcurrency_Agents(t *testing.T) {
 		wg.Add(1)
 		go func(n int) {
 			defer wg.Done()
-			c.Get("key")
+			c.GetAgent("key")
 		}(i)
 	}
 	wg.Wait()

@@ -11,7 +11,7 @@ import (
 
 func (s *ContainerServer) GetOrCreateSession(ctx context.Context, req *pb.GetOrCreateSessionRequest) (*pb.GetOrCreateSessionResponse, error) {
 	id := buildAgentKey(req.ContainerId, req.AgentId)
-	ag, err := center.GetCenter().Get(id)
+	ag, err := center.GetCenter().GetAgent(id)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (s *ContainerServer) SendMessageToSession(req *pb.SendMessageToSessionReque
 
 	ctx = context.WithValue(ctx, "session_id", req.SessionId)
 	id := buildAgentKey(req.ContainerId, req.AgentId)
-	digitalAgent, err := center.GetCenter().Get(id)
+	digitalAgent, err := center.GetCenter().GetAgent(id)
 	if err != nil {
 		return err
 	}

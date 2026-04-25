@@ -35,9 +35,11 @@ func (s *ContainerServer) StartService(ctx context.Context, req *pb.StartService
 // StopService 暂停服务
 func (s *ContainerServer) StopService(ctx context.Context, req *pb.StopServiceRequest) (*pb.StopServiceResponse, error) {
 	// TODO: 主要实现 FTP 和 远程桌面的暂停
+	err := center.GetCenter().StopFTPServer()
+
 	return &pb.StopServiceResponse{
-		Success: true,
-	}, nil
+		Success: err == nil,
+	}, err
 }
 
 // RestartService 重启服务
@@ -55,7 +57,7 @@ func (s *ContainerServer) RemoveService(ctx context.Context, req *pb.RemoveServi
 
 	id := buildAgentKey(req.ContainerId, req.AgentId)
 
-	err := center.GetCenter().Remove(id)
+	err := center.GetCenter().RemoveAgent(id)
 	if err != nil {
 		slog.Error("Failed to remove agent", "error", err)
 		return nil, err
