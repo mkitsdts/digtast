@@ -5,8 +5,8 @@
   "session_id": "test-session",
   "message": "Hello",
   "timeout": "2m",
-  "provider": "",
-  "api_key": "",
-  "base_url": "",
-  "model_name": ""
+  "provider": "doubao",
+  "api_key": "***REMOVED***",
+  "base_url": "https://ark.cn-beijing.volces.com/api/v3",
+  "model_name": "doubao-seed-2-0-lite-260215"
 }
