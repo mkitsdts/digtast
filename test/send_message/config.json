@@ -1,0 +1,12 @@
+{
+  "addr": "127.0.0.1:10086",
+  "container_id": "local-container",
+  "agent_id": "local-agent",
+  "session_id": "test-session",
+  "message": "Hello",
+  "timeout": "2m",
+  "provider": "",
+  "api_key": "",
+  "base_url": "",
+  "model_name": ""
+}
