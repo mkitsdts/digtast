@@ -2,7 +2,9 @@ package registry
 
 import (
 	"context"
+	"digital-labor/pkg/workspace"
 	"errors"
+	"log/slog"
 	"os"
 	"strings"
 
@@ -37,6 +39,7 @@ func ScanSkills(path string) {
 		skillPath := path + "/" + file.Name()
 		result, err := registerSkill(skillPath)
 		if err != nil {
+			slog.Error("failed to load skill file", "path", skillPath, "error", err)
 			continue
 		}
 		tools = append(tools, result)
@@ -79,4 +82,9 @@ func parseSkill(content string) (tool.BaseTool, error) {
 	}
 
 	return result, nil
+}
+
+func init() {
+	path := workspace.GetWorkspacePath()
+	ScanSkills(path)
 }
