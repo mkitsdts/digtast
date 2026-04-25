@@ -34,7 +34,7 @@ func NewFTPServer(cfg *ServerConfig) *FTPServer {
 	return s
 }
 
-func (s *FTPServer) Start() {
+func (s *FTPServer) Start() error {
 
 	if s.ch == nil {
 		s.ch = make(chan error)
@@ -56,12 +56,16 @@ func (s *FTPServer) Start() {
 		}
 		slog.Info("ftp server stop")
 	}()
+
+	return nil
 }
 
-func (s *FTPServer) Stop() {
+func (s *FTPServer) Stop() error {
 	if s.ch == nil {
-		return
+		return errors.New("ftp not start")
 	}
 
 	s.ch <- errors.New("stop")
+
+	return nil
 }
