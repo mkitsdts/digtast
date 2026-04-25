@@ -9,7 +9,9 @@ require (
 	github.com/cloudwego/eino-ext/components/model/deepseek v0.1.2
 	github.com/cloudwego/eino-ext/components/model/qwen v0.1.9
 	github.com/cloudwego/eino-ext/components/tool/browseruse v0.0.0-20260416081055-0ebab92e14f2
+	github.com/fclairamb/ftpserverlib v0.30.0
 	github.com/google/uuid v1.6.0
+	github.com/spf13/afero v1.15.0
 	google.golang.org/grpc v1.80.0
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v2 v2.4.0
