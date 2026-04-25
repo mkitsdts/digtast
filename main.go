@@ -1,7 +1,9 @@
 package main
 
-import "digital-labor/internal/server"
+import (
+	"digital-labor/internal/server"
+)
 
 func main() {
-	server.Start(":50051")
+	server.Start(":10086")
 }
