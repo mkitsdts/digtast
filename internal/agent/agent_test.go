@@ -11,7 +11,7 @@ import (
 
 func TestBuildMessages_ReturnsNil(t *testing.T) {
 	msgs := make([]*schema.Message, 0)
-	err := buildMessages("hello world", msgs)
+	msgs, err := buildMessages("hello world", msgs)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -19,7 +19,7 @@ func TestBuildMessages_ReturnsNil(t *testing.T) {
 
 func TestBuildMessages_CreatesUserMessage(t *testing.T) {
 	msgs := make([]*schema.Message, 0)
-	err := buildMessages("test content", msgs)
+	msgs, err := buildMessages("test content", msgs)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
