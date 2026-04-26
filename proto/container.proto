@@ -115,6 +115,7 @@ message CompressSessionRequest {
 }
 message CompressSessionResponse {
   string session_id = 1;
+  bool success = 2;
 }
 
 message RemoveSessionRequest {

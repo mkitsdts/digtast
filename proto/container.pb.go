@@ -802,6 +802,7 @@ func (x *CompressSessionRequest) GetSessionId() string {
 type CompressSessionResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	Success       bool                   `protobuf:"varint,2,opt,name=success,proto3" json:"success,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -841,6 +842,13 @@ func (x *CompressSessionResponse) GetSessionId() string {
 		return x.SessionId
 	}
 	return ""
+}
+
+func (x *CompressSessionResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
 }
 
 type RemoveSessionRequest struct {
@@ -2204,10 +2212,11 @@ const file_proto_container_proto_rawDesc = "" +
 	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
 	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x1d\n" +
 	"\n" +
-	"session_id\x18\x03 \x01(\tR\tsessionId\"8\n" +
+	"session_id\x18\x03 \x01(\tR\tsessionId\"R\n" +
 	"\x17CompressSessionResponse\x12\x1d\n" +
 	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\"s\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x18\n" +
+	"\asuccess\x18\x02 \x01(\bR\asuccess\"s\n" +
 	"\x14RemoveSessionRequest\x12!\n" +
 	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
 	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x1d\n" +

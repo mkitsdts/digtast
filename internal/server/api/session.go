@@ -96,3 +96,12 @@ func (s *ContainerServer) StopTask(ctx context.Context, req *pb.StopTaskRequest)
 
 	return &pb.StopTaskResponse{Success: true}, nil
 }
+
+func (s *ContainerServer) CompressSession(ctx context.Context, req *pb.CompressSessionRequest) (*pb.CompressSessionResponse, error) {
+	// TODO: 需要对应记忆模块的压缩
+
+	return &pb.CompressSessionResponse{
+		SessionId: req.SessionId,
+		Success:   true,
+	}, nil
+}
