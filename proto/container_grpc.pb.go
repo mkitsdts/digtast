@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             (unknown)
-// source: container.proto
+// source: proto/container.proto
 
 package labor_v1
 
@@ -29,8 +29,6 @@ const (
 	ContainerService_CompressSession_FullMethodName      = "/labor.ContainerService/CompressSession"
 	ContainerService_SendMessageToSession_FullMethodName = "/labor.ContainerService/SendMessageToSession"
 	ContainerService_StopTask_FullMethodName             = "/labor.ContainerService/StopTask"
-	ContainerService_RestartTask_FullMethodName          = "/labor.ContainerService/RestartTask"
-	ContainerService_RemoveTask_FullMethodName           = "/labor.ContainerService/RemoveTask"
 	ContainerService_CreateSkill_FullMethodName          = "/labor.ContainerService/CreateSkill"
 	ContainerService_DisableSkill_FullMethodName         = "/labor.ContainerService/DisableSkill"
 	ContainerService_RemoveSkill_FullMethodName          = "/labor.ContainerService/RemoveSkill"
@@ -63,8 +61,6 @@ type ContainerServiceClient interface {
 	SendMessageToSession(ctx context.Context, in *SendMessageToSessionRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[SendMessageToSessionResponse], error)
 	// --- 任务相关 ---
 	StopTask(ctx context.Context, in *StopTaskRequest, opts ...grpc.CallOption) (*StopTaskResponse, error)
-	RestartTask(ctx context.Context, in *RestartTaskRequest, opts ...grpc.CallOption) (*RestartTaskResponse, error)
-	RemoveTask(ctx context.Context, in *RemoveTaskRequest, opts ...grpc.CallOption) (*RemoveTaskResponse, error)
 	// --- Skill 相关 ---
 	CreateSkill(ctx context.Context, in *CreateSkillRequest, opts ...grpc.CallOption) (*CreateSkillResponse, error)
 	DisableSkill(ctx context.Context, in *DisableSkillRequest, opts ...grpc.CallOption) (*DisableSkillResponse, error)
@@ -196,26 +192,6 @@ func (c *containerServiceClient) StopTask(ctx context.Context, in *StopTaskReque
 	return out, nil
 }
 
-func (c *containerServiceClient) RestartTask(ctx context.Context, in *RestartTaskRequest, opts ...grpc.CallOption) (*RestartTaskResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RestartTaskResponse)
-	err := c.cc.Invoke(ctx, ContainerService_RestartTask_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *containerServiceClient) RemoveTask(ctx context.Context, in *RemoveTaskRequest, opts ...grpc.CallOption) (*RemoveTaskResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RemoveTaskResponse)
-	err := c.cc.Invoke(ctx, ContainerService_RemoveTask_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *containerServiceClient) CreateSkill(ctx context.Context, in *CreateSkillRequest, opts ...grpc.CallOption) (*CreateSkillResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateSkillResponse)
@@ -327,8 +303,6 @@ type ContainerServiceServer interface {
 	SendMessageToSession(*SendMessageToSessionRequest, grpc.ServerStreamingServer[SendMessageToSessionResponse]) error
 	// --- 任务相关 ---
 	StopTask(context.Context, *StopTaskRequest) (*StopTaskResponse, error)
-	RestartTask(context.Context, *RestartTaskRequest) (*RestartTaskResponse, error)
-	RemoveTask(context.Context, *RemoveTaskRequest) (*RemoveTaskResponse, error)
 	// --- Skill 相关 ---
 	CreateSkill(context.Context, *CreateSkillRequest) (*CreateSkillResponse, error)
 	DisableSkill(context.Context, *DisableSkillRequest) (*DisableSkillResponse, error)
@@ -380,12 +354,6 @@ func (UnimplementedContainerServiceServer) SendMessageToSession(*SendMessageToSe
 }
 func (UnimplementedContainerServiceServer) StopTask(context.Context, *StopTaskRequest) (*StopTaskResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method StopTask not implemented")
-}
-func (UnimplementedContainerServiceServer) RestartTask(context.Context, *RestartTaskRequest) (*RestartTaskResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method RestartTask not implemented")
-}
-func (UnimplementedContainerServiceServer) RemoveTask(context.Context, *RemoveTaskRequest) (*RemoveTaskResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method RemoveTask not implemented")
 }
 func (UnimplementedContainerServiceServer) CreateSkill(context.Context, *CreateSkillRequest) (*CreateSkillResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateSkill not implemented")
@@ -608,42 +576,6 @@ func _ContainerService_StopTask_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ContainerService_RestartTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RestartTaskRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ContainerServiceServer).RestartTask(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ContainerService_RestartTask_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).RestartTask(ctx, req.(*RestartTaskRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ContainerService_RemoveTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RemoveTaskRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ContainerServiceServer).RemoveTask(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ContainerService_RemoveTask_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).RemoveTask(ctx, req.(*RemoveTaskRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _ContainerService_CreateSkill_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateSkillRequest)
 	if err := dec(in); err != nil {
@@ -850,14 +782,6 @@ var ContainerService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ContainerService_StopTask_Handler,
 		},
 		{
-			MethodName: "RestartTask",
-			Handler:    _ContainerService_RestartTask_Handler,
-		},
-		{
-			MethodName: "RemoveTask",
-			Handler:    _ContainerService_RemoveTask_Handler,
-		},
-		{
 			MethodName: "CreateSkill",
 			Handler:    _ContainerService_CreateSkill_Handler,
 		},
@@ -901,5 +825,5 @@ var ContainerService_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "container.proto",
+	Metadata: "proto/container.proto",
 }

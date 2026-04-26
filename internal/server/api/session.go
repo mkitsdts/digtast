@@ -5,6 +5,8 @@ import (
 	"digital-labor/internal/center"
 	"digital-labor/pkg/ctxmanager"
 	pb "digital-labor/proto"
+	"errors"
+	"log/slog"
 
 	"github.com/google/uuid"
 )
@@ -73,4 +75,24 @@ func (s *ContainerServer) SendMessageToSession(req *pb.SendMessageToSessionReque
 			}
 		}
 	}
+}
+
+func (s *ContainerServer) StopTask(ctx context.Context, req *pb.StopTaskRequest) (*pb.StopTaskResponse, error) {
+	key := buildAgentKey(req.ContainerId, req.AgentId)
+
+	if key == "" {
+		return nil, errors.New("container id and session id is necessary")
+	}
+
+	ag, err := center.GetCenter().GetAgent(key)
+	if err != nil {
+		return nil, errors.New("invaild container id or session id")
+	}
+
+	if err := ag.Cancel(req.SessionId); err != nil {
+		slog.Error("cancel task failed", "error", err)
+		return nil, err
+	}
+
+	return &pb.StopTaskResponse{Success: true}, nil
 }

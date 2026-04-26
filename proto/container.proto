@@ -24,8 +24,6 @@ service ContainerService {
 
   // --- 任务相关 ---
   rpc StopTask(StopTaskRequest) returns (StopTaskResponse);
-  rpc RestartTask(RestartTaskRequest) returns (RestartTaskResponse);
-  rpc RemoveTask(RemoveTaskRequest) returns (RemoveTaskResponse);
 
   // --- Skill 相关 ---
   rpc CreateSkill(CreateSkillRequest) returns (CreateSkillResponse);
@@ -145,30 +143,9 @@ message SendMessageToSessionResponse {
 message StopTaskRequest {
   string container_id = 1;
   string agent_id = 2;
-  string task_id = 3;
-  string session_id = 4;
+  string session_id = 3;
 }
 message StopTaskResponse {
-  bool success = 1;
-}
-
-message RestartTaskRequest {
-  string container_id = 1;
-  string agent_id = 2;
-  string task_id = 3;
-  string session_id = 4;
-}
-message RestartTaskResponse {
-  bool success = 1;
-}
-
-message RemoveTaskRequest {
-  string container_id = 1;
-  string agent_id = 2;
-  string task_id = 3;
-  string session_id = 4;
-}
-message RemoveTaskResponse {
   bool success = 1;
 }
 

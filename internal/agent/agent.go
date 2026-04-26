@@ -86,20 +86,12 @@ func (dga *DigitalAgent) Run(ctx context.Context, content string, isStream bool,
 	})
 }
 
-func (dga *DigitalAgent) PauseSession(sessionID string) error {
+func (dga *DigitalAgent) Cancel(sessionID string) error {
 	if sessionID == "" {
 		return errors.New("session_id is empty")
 	}
 
-	dga.runMu.Lock()
-	cancel, ok := dga.runStops[sessionID]
-	dga.runMu.Unlock()
-	if !ok {
-		return errors.New("session is not running")
-	}
-
-	cancel()
-	return nil
+	return dga.stop(sessionID)
 }
 
 func (dga *DigitalAgent) bindRun(sessionID string, cancel context.CancelFunc) {
