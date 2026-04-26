@@ -22,6 +22,14 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 	if err != nil {
 		return nil, err
 	}
+	// Persist the user's turn through internal memory. The agent still receives
+	// msgs above, which includes the same user input for this run.
+	if err := session.Append(&schema.Message{
+		Role:    schema.User,
+		Content: req.Content,
+	}); err != nil {
+		return nil, err
+	}
 
 	runCtx, cancel := context.WithCancel(ctx)
 	dga.bindRun(sessionID, cancel)
@@ -35,6 +43,13 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 	go func() {
 		defer close(ch)
 		defer dga.unbindRun(sessionID)
+		defer func() {
+			// Chunk rotation is intentionally deferred until the run finishes so
+			// one request/response pair is not split across two files.
+			if err := session.CompleteTurn(); err != nil {
+				slog.Error("failed to complete memory turn", "session_id", sessionID, "err", err)
+			}
+		}()
 
 		if events == nil {
 			slog.Error("events stream is nil")

@@ -1,17 +1,25 @@
 package mem
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
+
+	"digital-labor/pkg/workspace"
+
+	"github.com/cloudwego/eino/schema"
 )
 
 func newTestStore(t *testing.T) *Store {
 	t.Helper()
 	dir := t.TempDir()
+	persist, err := workspace.NewMemoryStore(filepath.Join(dir, "memory"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	return &Store{
-		dir:   dir,
-		cache: make(map[string]*Session),
+		agentID: "test-agent",
+		cache:   make(map[string]*Session),
+		persist: persist,
 	}
 }
 
@@ -26,10 +34,8 @@ func TestGetOrCreate_NewSession(t *testing.T) {
 		t.Fatalf("expected ID 'new-session-1', got '%s'", sess.ID)
 	}
 
-	// Verify file was created
-	_, err = os.Stat(filepath.Join(s.dir, "new-session-1.jsonl"))
-	if err != nil {
-		t.Fatalf("expected session file to exist: %v", err)
+	if len(s.persist.ListSessions("test-agent")) != 1 {
+		t.Fatal("expected session index entry to exist")
 	}
 }
 
@@ -54,11 +60,10 @@ func TestGetOrCreate_ReturnsCached(t *testing.T) {
 func TestGetOrCreate_LoadExisting(t *testing.T) {
 	s := newTestStore(t)
 
-	// Create session file manually with header
-	header := `{"type":"session","id":"existing","created_at":"2024-01-01T00:00:00Z"}`
-	msgLine := `{"role":"user","content":"hello"}`
-	filePath := filepath.Join(s.dir, "existing.jsonl")
-	if err := os.WriteFile(filePath, []byte(header+"\n"+msgLine+"\n"), 0644); err != nil {
+	if _, err := s.persist.NewSessionFile("test-agent", "existing"); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.persist.PersistMessage("test-agent", "existing", &schema.Message{Role: schema.User, Content: "hello"}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -85,9 +90,6 @@ func TestList(t *testing.T) {
 	s.GetOrCreate("sess-a")
 	s.GetOrCreate("sess-b")
 
-	// Create a non-jsonl file to verify it's ignored
-	os.WriteFile(filepath.Join(s.dir, "notes.txt"), []byte("ignore me"), 0644)
-
 	metas, err := s.List()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -101,17 +103,16 @@ func TestDelete(t *testing.T) {
 	s := newTestStore(t)
 
 	s.GetOrCreate("to-delete")
-	filePath := filepath.Join(s.dir, "to-delete.jsonl")
-	if _, err := os.Stat(filePath); err != nil {
-		t.Fatal("expected file to exist before delete")
+	if err := s.persist.PersistMessage("test-agent", "to-delete", &schema.Message{Role: schema.User, Content: "hello"}); err != nil {
+		t.Fatal(err)
 	}
 
 	if err := s.Delete("to-delete"); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if _, err := os.Stat(filePath); !os.IsNotExist(err) {
-		t.Fatal("expected file to be deleted")
+	if len(s.persist.ListSessions("test-agent")) != 0 {
+		t.Fatal("expected session index entry to be deleted")
 	}
 
 	// Double delete should not error

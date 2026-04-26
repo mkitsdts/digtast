@@ -1,9 +1,6 @@
 package mem
 
 import (
-	"encoding/json"
-	"fmt"
-	"os"
 	"sync"
 	"time"
 
@@ -20,13 +17,21 @@ type SessionMeta struct {
 // Session holds the in-memory state for a single conversation.
 type Session struct {
 	ID        string
+	AgentID   string
 	CreatedAt time.Time
 
-	filePath           string
 	mu                 sync.Mutex
 	messages           []*schema.Message
 	pendingInterruptID string // non-empty while the agent is paused awaiting human approval
 	msgIdx             int    // A2UI component slot index at the point of last interrupt
+
+	// store links the runtime session back to its owner so Append can delegate
+	// persistence without exposing workspace details to callers.
+	store *Store
+
+	// rotateAfterTurn is set when the current chunk is already over the size
+	// limit. The next chunk is allocated only after the active task completes.
+	rotateAfterTurn bool
 }
 
 // SetPendingInterruptID saves the interrupt ID so the approve endpoint can resume it.
@@ -59,24 +64,23 @@ func (s *Session) GetMsgIdx() int {
 
 // Append adds a message to memory and persists it to disk.
 func (s *Session) Append(msg *schema.Message) error {
+	if msg == nil {
+		return nil
+	}
+
 	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	s.messages = append(s.messages, msg)
+	// Copy the persistence handles while holding the lock, then release it
+	// before doing disk I/O.
+	store := s.store
+	agentID := s.AgentID
+	sessionID := s.ID
+	s.mu.Unlock()
 
-	data, err := json.Marshal(msg)
-	if err != nil {
-		return err
+	if store == nil || store.persist == nil {
+		return nil
 	}
-
-	f, err := os.OpenFile(s.filePath, os.O_APPEND|os.O_WRONLY, 0o644)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	_, err = fmt.Fprintf(f, "%s\n", data)
-	return err
+	return store.persist.PersistMessage(agentID, sessionID, msg)
 }
 
 // GetMessages returns a snapshot of all messages.
@@ -85,8 +89,37 @@ func (s *Session) GetMessages() []*schema.Message {
 	defer s.mu.Unlock()
 
 	result := make([]*schema.Message, len(s.messages))
-	copy(result, s.messages)
+	for i, msg := range s.messages {
+		if msg == nil {
+			continue
+		}
+		// Return message copies so callers cannot mutate the session cache.
+		cp := *msg
+		result[i] = &cp
+	}
 	return result
+}
+
+// CompleteTurn rotates to a new chunk after the current task finishes when the previous chunk is too large.
+func (s *Session) CompleteTurn() error {
+	s.mu.Lock()
+	if !s.rotateAfterTurn {
+		s.mu.Unlock()
+		return nil
+	}
+	s.rotateAfterTurn = false
+	// Capture the store/session identifiers under the lock, then rotate the
+	// persistent chunk without holding the session mutex.
+	store := s.store
+	agentID := s.AgentID
+	sessionID := s.ID
+	s.mu.Unlock()
+
+	if store == nil || store.persist == nil {
+		return nil
+	}
+	_, err := store.persist.NewSessionFile(agentID, sessionID)
+	return err
 }
 
 // Title derives a display title from the first user message.

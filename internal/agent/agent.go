@@ -38,7 +38,7 @@ func NewDigitalAgent(cfg *DigitalAgentConfig) (*DigitalAgent, error) {
 		runStops: make(map[string]context.CancelFunc),
 		prompts:  NewPromptBuilder(),
 		ID:       cfg.ID,
-		memory:   mem.NewStore(),
+		memory:   mem.NewStore(cfg.Name),
 	}
 
 	ctx := ctxmanager.GetOrCreate(cfg.Name)

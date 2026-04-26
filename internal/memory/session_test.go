@@ -1,32 +1,35 @@
 package mem
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 	"time"
+
+	"digital-labor/pkg/workspace"
 
 	"github.com/cloudwego/eino/schema"
 )
 
-func newTestSessionWithFile(t *testing.T) (*Session, string) {
+func newTestSessionWithFile(t *testing.T) (*Session, *workspace.MemoryStore) {
 	t.Helper()
-	dir := t.TempDir()
-	filePath := filepath.Join(dir, "test-sess.jsonl")
-
-	// Create session file with header
-	header := `{"type":"session","id":"test-sess","created_at":"2024-01-01T00:00:00Z"}`
-	if err := os.WriteFile(filePath, []byte(header+"\n"), 0644); err != nil {
+	persist, err := workspace.NewMemoryStore(t.TempDir())
+	if err != nil {
 		t.Fatal(err)
+	}
+	store := &Store{
+		agentID: "test-agent",
+		cache:   make(map[string]*Session),
+		persist: persist,
 	}
 
 	sess := &Session{
 		ID:        "test-sess",
+		AgentID:   "test-agent",
 		CreatedAt: time.Now(),
-		filePath:  filePath,
+		store:     store,
 		messages:  make([]*schema.Message, 0),
 	}
-	return sess, filePath
+	store.cache[sess.ID] = sess
+	return sess, persist
 }
 
 func TestAppend(t *testing.T) {
@@ -130,28 +133,18 @@ func TestSetAndGetMsgIdx(t *testing.T) {
 }
 
 func TestAppend_PersistsToDisk(t *testing.T) {
-	sess, filePath := newTestSessionWithFile(t)
+	sess, persist := newTestSessionWithFile(t)
 
 	sess.Append(&schema.Message{Role: schema.User, Content: "persisted"})
 
-	// Read file and verify message was appended
-	data, err := os.ReadFile(filePath)
+	msgs, err := persist.LoadSession("test-agent", "test-sess")
 	if err != nil {
 		t.Fatal(err)
 	}
-	content := string(data)
-	if len(content) == 0 {
-		t.Fatal("expected file to have content")
+	if len(msgs) != 1 {
+		t.Fatalf("expected 1 persisted message, got %d", len(msgs))
 	}
-
-	// Should have header + 1 message line
-	lines := 0
-	for i := 0; i < len(content); i++ {
-		if content[i] == '\n' {
-			lines++
-		}
-	}
-	if lines != 2 {
-		t.Fatalf("expected 2 lines (header + 1 message), got %d", lines)
+	if msgs[0].Content != "persisted" {
+		t.Fatalf("expected persisted message, got %q", msgs[0].Content)
 	}
 }
