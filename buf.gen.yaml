@@ -1,8 +1,8 @@
-version: v1
+version: v2
 plugins:
-  - plugin: go
-    out: proto
+  - remote: buf.build/protocolbuffers/go
+    out: ./
     opt: paths=source_relative
-  - plugin: go-grpc
-    out: proto
+  - remote: buf.build/grpc/go
+    out: ./
     opt: paths=source_relative
