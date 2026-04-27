@@ -1,4 +1,4 @@
-package workspace
+package soul
 
 import (
 	"digital-labor/pkg/workspace"
@@ -38,13 +38,15 @@ const agentSoulPrompt = `
 - 始终保持对工作区文件系统（WorkDir）的尊重，执行写操作前默认遵循“安全第一”原则。
 `
 
+const prompt_name = "soul"
+
 func (s *Soul) CreatePromptImpl() error {
 	workspacePath := workspace.GetWorkspacePath()
 	if workspacePath == "" {
 		return nil
 	}
 
-	file, err := os.OpenFile(fmt.Sprintf("%s/prompt/soul.md", workspacePath), os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := os.OpenFile(fmt.Sprintf("%s/prompt/%s.md", workspacePath, prompt_name), os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		if os.IsExist(err) {
 			return nil
@@ -64,7 +66,7 @@ func (s *Soul) GetPromptImpl() (string, error) {
 		return "", nil
 	}
 
-	content, err := os.ReadFile(fmt.Sprintf("%s/soul.md", workspacePath))
+	content, err := os.ReadFile(fmt.Sprintf("%s/%s.md", workspacePath, prompt_name))
 	if err != nil {
 		return agentSoulPrompt, s.CreatePromptImpl()
 	}
@@ -73,7 +75,7 @@ func (s *Soul) GetPromptImpl() (string, error) {
 }
 
 func (s *Soul) GetPromptName() string {
-	return "soul.md"
+	return fmt.Sprintf("%s.md", prompt_name)
 }
 
 func (s *Soul) GetRole() string {

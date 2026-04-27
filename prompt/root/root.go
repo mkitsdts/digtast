@@ -55,13 +55,15 @@ const agentRootPrompt string = `
 5. **最终输出**：将优化后的最终答案呈现给用户。
 `
 
+const prompt_name = "agent"
+
 func (r *Root) CreatePromptImpl() error {
 	workspacePath := workspace.GetWorkspacePath()
 	if workspacePath == "" {
 		return nil
 	}
 
-	file, err := os.OpenFile(fmt.Sprintf("%s/prompt/agent.md", workspacePath), os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := os.OpenFile(fmt.Sprintf("%s/prompt/%s.md", workspacePath, prompt_name), os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		if os.IsExist(err) {
 			return nil
@@ -81,7 +83,7 @@ func (r *Root) GetPromptImpl() (string, error) {
 		return "", nil
 	}
 
-	content, err := os.ReadFile(fmt.Sprintf("%s/agent.md", workspacePath))
+	content, err := os.ReadFile(fmt.Sprintf("%s/%s.md", workspacePath, prompt_name))
 	if err != nil {
 		return agentRootPrompt, r.CreatePromptImpl()
 	}
@@ -90,7 +92,7 @@ func (r *Root) GetPromptImpl() (string, error) {
 }
 
 func (r *Root) GetPromptName() string {
-	return "agent.md"
+	return fmt.Sprintf("%s.md", prompt_name)
 }
 
 func (r *Root) GetRole() string {
