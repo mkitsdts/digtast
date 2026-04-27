@@ -3,6 +3,8 @@ package queue
 import (
 	"sync"
 	"testing"
+
+	"github.com/cloudwego/eino/schema"
 )
 
 func TestNewQueue(t *testing.T) {
@@ -91,7 +93,9 @@ func TestMessageQueue(t *testing.T) {
 			t.Fatal("expected panic on uninitialized key")
 		}
 	}()
-	mq.Push("nonexistent", "msg")
+	mq.Push("nonexistent", &schema.Message{
+		Content: "1",
+	})
 }
 
 func TestConcurrency_Queue(t *testing.T) {
