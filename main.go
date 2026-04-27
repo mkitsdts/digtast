@@ -3,6 +3,7 @@ package main
 import (
 	"digital-labor/internal/server"
 	"digital-labor/pkg/workspace"
+	_ "digital-labor/prompt"
 	_ "digital-labor/tools"
 )
 
