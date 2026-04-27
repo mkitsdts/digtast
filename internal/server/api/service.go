@@ -26,9 +26,31 @@ func (s *ContainerServer) StartService(ctx context.Context, req *pb.StartService
 		return nil, err
 	}
 
+	ftp_port := 2121
+	if req.FtpEnabled {
+		err := center.GetCenter().StartFTPServer(&center.FTPServerParams{
+			Port: ftp_port,
+		})
+		if err != nil {
+			slog.Error("Failed to start FTP server", "error", err)
+			return nil, err
+		}
+	}
+
+	port := -1
+	if req.VncEnabled {
+		port, err = center.GetCenter().StartVDisplay(&center.VDisplayParams{})
+		if err != nil {
+			slog.Error("Failed to start VNC server", "error", err)
+			return nil, err
+		}
+	}
+
 	slog.Info("Agent created successfully", "container_id", req.ContainerId, "agent_id", req.AgentId)
 	return &pb.StartServiceResponse{
-		Success: true,
+		VisualDisplayPort: int32(port),
+		FtpPort:           int32(ftp_port),
+		Success:           true,
 	}, nil
 }
 

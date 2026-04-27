@@ -52,9 +52,12 @@ message StartServiceRequest {
   string provider = 6;
   string agent_kind = 7;
   bool vnc_enabled = 8;
+  bool ftp_enabled = 9;
 }
 message StartServiceResponse {
-  bool success = 1;
+  int32 visual_display_port = 1;
+  int32 ftp_port = 2;
+  bool success = 3;
 }
 
 // Service Messages

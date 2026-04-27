@@ -13,7 +13,7 @@ type FTPServer struct {
 }
 
 func NewFTPServer(cfg *ServerConfig) *FTPServer {
-	if !cfg.Enabled {
+	if !cfg.FTPEnabled {
 		return nil
 	}
 

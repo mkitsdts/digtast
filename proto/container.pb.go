@@ -31,6 +31,7 @@ type StartServiceRequest struct {
 	Provider      string                 `protobuf:"bytes,6,opt,name=provider,proto3" json:"provider,omitempty"`
 	AgentKind     string                 `protobuf:"bytes,7,opt,name=agent_kind,json=agentKind,proto3" json:"agent_kind,omitempty"`
 	VncEnabled    bool                   `protobuf:"varint,8,opt,name=vnc_enabled,json=vncEnabled,proto3" json:"vnc_enabled,omitempty"`
+	FtpEnabled    bool                   `protobuf:"varint,9,opt,name=ftp_enabled,json=ftpEnabled,proto3" json:"ftp_enabled,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -121,11 +122,20 @@ func (x *StartServiceRequest) GetVncEnabled() bool {
 	return false
 }
 
+func (x *StartServiceRequest) GetFtpEnabled() bool {
+	if x != nil {
+		return x.FtpEnabled
+	}
+	return false
+}
+
 type StartServiceResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	VisualDisplayPort int32                  `protobuf:"varint,1,opt,name=visual_display_port,json=visualDisplayPort,proto3" json:"visual_display_port,omitempty"`
+	FtpPort           int32                  `protobuf:"varint,2,opt,name=ftp_port,json=ftpPort,proto3" json:"ftp_port,omitempty"`
+	Success           bool                   `protobuf:"varint,3,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *StartServiceResponse) Reset() {
@@ -156,6 +166,20 @@ func (x *StartServiceResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use StartServiceResponse.ProtoReflect.Descriptor instead.
 func (*StartServiceResponse) Descriptor() ([]byte, []int) {
 	return file_proto_container_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *StartServiceResponse) GetVisualDisplayPort() int32 {
+	if x != nil {
+		return x.VisualDisplayPort
+	}
+	return 0
+}
+
+func (x *StartServiceResponse) GetFtpPort() int32 {
+	if x != nil {
+		return x.FtpPort
+	}
+	return 0
 }
 
 func (x *StartServiceResponse) GetSuccess() bool {
@@ -2156,7 +2180,7 @@ var File_proto_container_proto protoreflect.FileDescriptor
 
 const file_proto_container_proto_rawDesc = "" +
 	"\n" +
-	"\x15proto/container.proto\x12\x05labor\"\xf2\x01\n" +
+	"\x15proto/container.proto\x12\x05labor\"\x93\x02\n" +
 	"\x13StartServiceRequest\x12!\n" +
 	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
 	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x10\n" +
@@ -2168,9 +2192,13 @@ const file_proto_container_proto_rawDesc = "" +
 	"\n" +
 	"agent_kind\x18\a \x01(\tR\tagentKind\x12\x1f\n" +
 	"\vvnc_enabled\x18\b \x01(\bR\n" +
-	"vncEnabled\"0\n" +
-	"\x14StartServiceResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"q\n" +
+	"vncEnabled\x12\x1f\n" +
+	"\vftp_enabled\x18\t \x01(\bR\n" +
+	"ftpEnabled\"{\n" +
+	"\x14StartServiceResponse\x12.\n" +
+	"\x13visual_display_port\x18\x01 \x01(\x05R\x11visualDisplayPort\x12\x19\n" +
+	"\bftp_port\x18\x02 \x01(\x05R\aftpPort\x12\x18\n" +
+	"\asuccess\x18\x03 \x01(\bR\asuccess\"q\n" +
 	"\x12StopServiceRequest\x12!\n" +
 	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
 	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x1d\n" +

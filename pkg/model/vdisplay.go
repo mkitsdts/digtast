@@ -10,6 +10,7 @@ type GetDesktopDisplayResponse struct {
 }
 
 type ShutdownDesktopDisplayRequest struct {
+	Key  string
 	Kind string
 }
 

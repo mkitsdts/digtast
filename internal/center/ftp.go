@@ -1,9 +1,10 @@
 package center
 
-type FTPServerParamater struct {
+type FTPServerParams struct {
+	Port int `json:"port"`
 }
 
-func (m *Center) StartFTPServer(req *FTPServerParamater) error {
+func (m *Center) StartFTPServer(req *FTPServerParams) error {
 	return m.ftpServer.Start()
 }
 

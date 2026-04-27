@@ -1,9 +1,9 @@
 package ftp
 
 type ServerConfig struct {
-	BaseDir string
-	Port    int
-	Enabled bool
+	BaseDir    string
+	Port       int
+	FTPEnabled bool
 }
 
 const (
