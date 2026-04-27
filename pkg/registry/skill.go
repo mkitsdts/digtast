@@ -2,9 +2,7 @@ package registry
 
 import (
 	"context"
-	"digital-labor/pkg/workspace"
 	"errors"
-	"fmt"
 	"log/slog"
 	"os"
 	"strings"
@@ -83,9 +81,4 @@ func parseSkill(content string) (tool.BaseTool, error) {
 	}
 
 	return result, nil
-}
-
-func init() {
-	path := fmt.Sprintf("%s/skills", workspace.GetWorkspacePath())
-	ScanSkills(path)
 }

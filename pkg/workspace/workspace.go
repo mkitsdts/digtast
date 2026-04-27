@@ -24,6 +24,15 @@ func GetWorkspacePath() string {
 	return workspacePath
 }
 
+func GetCurrentWorkspacePath() string {
+	wd, err := os.Getwd()
+	if err != nil {
+		slog.Error("cant get current workspace path", "error", err)
+		return ""
+	}
+	return wd
+}
+
 func InitWorkspace() {
 	// TODO:
 	path := GetWorkspacePath()

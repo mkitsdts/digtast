@@ -1,10 +1,12 @@
 package registry
 
 import (
-	"digital-labor/pkg/ctxmanager"
+	"context"
 	"sync"
 
 	localbk "github.com/cloudwego/eino-ext/adk/backend/local"
+	"github.com/cloudwego/eino/adk"
+	"github.com/cloudwego/eino/adk/middlewares/filesystem"
 )
 
 var (
@@ -12,14 +14,14 @@ var (
 	backendOnce sync.Once
 )
 
-func GetRegistry() (*localbk.Local, error) {
-	var err error
-	backendOnce.Do(func() {
-		ctx := ctxmanager.GetOrCreate("backend")
-		backend, err = localbk.NewBackend(ctx, &localbk.Config{})
+func GetBackendMiddleware() adk.ChatModelAgentMiddleware {
+
+	middleware, err := filesystem.New(context.Background(), &filesystem.MiddlewareConfig{
+		Backend: backend,
 	})
 	if err != nil {
-		return nil, err
+		return nil
 	}
-	return backend, nil
+
+	return middleware
 }

@@ -57,6 +57,7 @@ func NewDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 			},
 		},
 		Description: cfg.Description,
+		Handlers:    []adk.ChatModelAgentMiddleware{registry.GetBackendMiddleware()},
 	})
 
 	if err != nil {
