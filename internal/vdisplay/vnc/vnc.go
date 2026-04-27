@@ -2,6 +2,7 @@ package vnc
 
 import (
 	"digital-labor/pkg/model"
+	"errors"
 	"sync"
 )
 
@@ -56,6 +57,21 @@ func (s *VNCServer) GetDesktopDisplay(req model.GetDesktopDisplayRequest) (model
 	if err != nil {
 		return model.GetDesktopDisplayResponse{}, err
 	}
-	
+
 	return model.GetDesktopDisplayResponse{Port: port}, nil
+}
+
+func (s *VNCServer) ShutdownDesktopDisplay(req model.ShutdownDesktopDisplayRequest) (model.ShutdownDesktopDisplayResponse, error) {
+	id, ok := s.GetVNCService(req.Key)
+	if !ok {
+		return model.ShutdownDesktopDisplayResponse{}, errors.New("vnc service not found")
+	}
+
+	err := stopVNC(id)
+	if err != nil {
+		return model.ShutdownDesktopDisplayResponse{}, err
+	}
+
+	s.RemoveVNCService(req.Key)
+	return model.ShutdownDesktopDisplayResponse{}, nil
 }

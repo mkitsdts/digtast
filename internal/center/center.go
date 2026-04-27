@@ -5,6 +5,7 @@ import (
 	"digital-labor/internal/ftp"
 	"digital-labor/internal/gateway"
 	"digital-labor/internal/vdisplay"
+	"digital-labor/pkg/conf"
 	"digital-labor/pkg/workspace"
 	"log/slog"
 	"sync"
@@ -28,9 +29,11 @@ func GetCenter() *Center {
 		center = &Center{
 			agents: make(map[string]*agent.DigitalAgent),
 			ftpServer: ftp.NewFTPServer(&ftp.ServerConfig{
-				BaseDir: "/",
-				Port:    2121,
+				BaseDir:    "/",
+				Port:       conf.Conf.FTP.Port,
+				FTPEnabled: conf.Conf.FTP.Enabled,
 			}),
+			visualDisplay: *vdisplay.GetVisualDisplayManager(),
 		}
 		// Load persisted agents
 		configs, err := workspace.LoadAllAgentConfigs()

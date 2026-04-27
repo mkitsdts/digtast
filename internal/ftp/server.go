@@ -61,11 +61,15 @@ func (s *FTPServer) Start() error {
 }
 
 func (s *FTPServer) Stop() error {
-	if s.ch == nil {
-		return errors.New("ftp not start")
+	if s.server == nil {
+		return errors.New("ftp not initialized")
 	}
 
-	s.ch <- errors.New("stop")
+	err := s.server.Stop()
+	if err != nil {
+		slog.Error("FTP Server stop failed", "error", err)
+		return err
+	}
 
 	return nil
 }

@@ -85,7 +85,7 @@ func (r *Root) GetPromptImpl() (string, error) {
 
 	content, err := os.ReadFile(fmt.Sprintf("%s/%s.md", workspacePath, prompt_name))
 	if err != nil {
-		return agentRootPrompt, r.CreatePromptImpl()
+		return agentRootPrompt, err
 	}
 
 	return string(content), nil

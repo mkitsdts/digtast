@@ -5,7 +5,6 @@ import (
 	"digital-labor/internal/center"
 	"digital-labor/pkg/model"
 	pb "digital-labor/proto"
-	"fmt"
 	"log/slog"
 )
 
@@ -13,8 +12,9 @@ import (
 func (s *ContainerServer) StartService(ctx context.Context, req *pb.StartServiceRequest) (*pb.StartServiceResponse, error) {
 	slog.Info("StartService request received", "container_id", req.ContainerId, "agent_id", req.AgentId)
 
+	id := buildAgentKey(req.ContainerId, req.AgentId)
 	_, err := center.GetCenter().CreateAgent(&model.DigitalAgentConfig{
-		ID:       fmt.Sprintf("%s/%s", req.ContainerId, req.AgentId),
+		ID:       id,
 		Key:      req.Key,
 		Name:     req.ModelName,
 		Model:    req.ModelName,
@@ -39,7 +39,9 @@ func (s *ContainerServer) StartService(ctx context.Context, req *pb.StartService
 
 	port := -1
 	if req.VncEnabled {
-		port, err = center.GetCenter().StartVDisplay(&center.VDisplayParams{})
+		port, err = center.GetCenter().StartVDisplay(&center.VDisplayParams{
+			Key: id,
+		})
 		if err != nil {
 			slog.Error("Failed to start VNC server", "error", err)
 			return nil, err
@@ -56,7 +58,15 @@ func (s *ContainerServer) StartService(ctx context.Context, req *pb.StartService
 
 // StopService 暂停服务
 func (s *ContainerServer) StopService(ctx context.Context, req *pb.StopServiceRequest) (*pb.StopServiceResponse, error) {
-	// TODO: 主要实现 FTP 和 远程桌面的暂停
+	slog.Info("StopService request received", "container_id", req.ContainerId, "agent_id", req.AgentId)
+	id := buildAgentKey(req.ContainerId, req.AgentId)
+
+	// Stop VNC if it was running
+	_ = center.GetCenter().StopVDisplay(&center.VDisplayParams{
+		Key: id,
+	})
+
+	// Stop FTP Server (global)
 	err := center.GetCenter().StopFTPServer()
 
 	return &pb.StopServiceResponse{
@@ -74,10 +84,14 @@ func (s *ContainerServer) RestartService(ctx context.Context, req *pb.RestartSer
 
 // RemoveService 移除服务
 func (s *ContainerServer) RemoveService(ctx context.Context, req *pb.RemoveServiceRequest) (*pb.RemoveServiceResponse, error) {
-	// TODO: 实现全部服务的移除
 	slog.Info("RemoveService request received", "container_id", req.ContainerId, "agent_id", req.AgentId)
 
 	id := buildAgentKey(req.ContainerId, req.AgentId)
+
+	// Stop VNC first
+	_ = center.GetCenter().StopVDisplay(&center.VDisplayParams{
+		Key: id,
+	})
 
 	err := center.GetCenter().RemoveAgent(id)
 	if err != nil {
