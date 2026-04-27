@@ -93,6 +93,9 @@ func (c *Center) RunLocalREPL() {
 				fmt.Print("Enter Model: ")
 				scanner.Scan()
 				modelName := strings.TrimSpace(scanner.Text())
+				fmt.Print("Enter Base URL: ")
+				scanner.Scan()
+				baseURL := strings.TrimSpace(scanner.Text())
 
 				cfg := &model.DigitalAgentConfig{
 					ID:       id,
@@ -100,6 +103,7 @@ func (c *Center) RunLocalREPL() {
 					Provider: provider,
 					Key:      key,
 					Model:    modelName,
+					URL:      baseURL,
 				}
 				ag, err := c.CreateAgent(cfg)
 				if err != nil {

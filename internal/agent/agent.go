@@ -42,7 +42,7 @@ func NewDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 	}
 
 	ctx := ctxmanager.GetOrCreate(cfg.Name)
-	cm, err := newChatModel(ctx, cfg.Provider, cfg.Key, cfg.URL, cfg.Name)
+	cm, err := newChatModel(ctx, cfg.Provider, cfg.Key, cfg.URL, cfg.Model)
 	if err != nil {
 		return nil, err
 	}
