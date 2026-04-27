@@ -26,7 +26,7 @@ func DefaultAgentID() string {
 
 // MaxMemoryChunkSize returns the configured chunk rotation threshold.
 func MaxMemoryChunkSize() int64 {
-	return conf.Conf.MaxMessagesSize
+	return conf.Conf.Memory.MaxMessagesSize
 }
 
 // MemoryStore owns the workspace memory index and the session chunk files.
