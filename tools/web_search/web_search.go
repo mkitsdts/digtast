@@ -1,24 +1,31 @@
 package websearch
 
 import (
-	"digital-labor/pkg/ctxmanager"
+	"context"
 	"digital-labor/pkg/registry"
+	"log"
 	"log/slog"
 
-	"github.com/cloudwego/eino-ext/components/tool/browseruse"
+	"github.com/cloudwego/eino-ext/components/tool/duckduckgo/ddgsearch"
+	"github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2"
+	"github.com/cloudwego/eino/components/tool"
 )
 
-func NewBrowserTool() *browseruse.Tool {
-	ctx := ctxmanager.GetOrCreate("browser_use")
+func NewWebSearchTool() tool.InvokableTool {
 
-	var err error
-	browserTool, err := browseruse.NewBrowserUseTool(ctx, &browseruse.Config{})
+	searchTool, err := duckduckgo.NewTextSearchTool(context.Background(), &duckduckgo.Config{ // 下面所有这些参数都是默认值，仅作用法展示
+		ToolName:   "duckduckgo_search",
+		ToolDesc:   "search web for information by duckduckgo",
+		MaxResults: 10,
+		Region:     duckduckgo.Region(ddgsearch.RegionCN),
+	})
 	if err != nil {
-		slog.Error("create browseruse tool failed", "err", err)
+		log.Fatalf("NewTool of duckduckgo failed, err=%v", err)
 	}
-	return browserTool
+	return searchTool
 }
 
 func init() {
-	registry.RegisterTool(NewBrowserTool())
+	registry.RegisterTool(NewWebSearchTool())
+	slog.Info("web_search tool registered")
 }
