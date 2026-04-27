@@ -78,12 +78,23 @@ time=... level=INFO msg="server listening at" address=[::]:10086
 
 ---
 
-## 🛠️ 二次开发说明
+## 🛠️ 功能开发清单 (TODO List)
 
-本项目的核心逻辑存放在 `internal` 目录下：
-- **`internal/server/server.go`**: gRPC 服务的入口包装与启动逻辑。在这里将原有的 API 进行了组装和补充。
-- **`internal/server/api/`**: 包含各项 gRPC 接口的默认实现和占位 (TODOs)。
-- **`internal/agent/`**: 封装了 `DigitalAgent`，通过 Eino 框架对接了包括 DeepSeek, Qwen, Doubao 等主流大模型。
-- **`internal/center/`**: `Center` 维护了多实例、多智能体的全局状态。
+### 🧠 记忆与上下文管理
+- [ ] **完善持久化存储**：修复 `internal/memory` 中的消息合并逻辑，支持工具调用（Tool Calls）和结果的结构化存储。
+- [ ] **实现记忆压缩**：开发 `CompressSession` 逻辑，支持通过 LLM 总结摘要或固定窗口裁剪方式压缩历史上下文。
+- [ ] **长期记忆检索**：计划引入向量数据库或简单的关键词索引，支持跨会话的知识检索。
 
-请在 `internal/server/server.go` 或 `internal/server/api` 内进一步补充各个功能模块（如 FTP, VNC 等）的具体业务代码。
+### 📋 任务管理系统
+- [ ] **任务中心 (Task Center)**：建立独立的任务追踪模块，支持对异步执行的 Agent 任务进行编号和状态管理。
+- [ ] **状态查询接口**：实现 `GetTaskStatus`，允许用户实时查看 Agent 的行动轨迹（如：正在调用某工具、正在思考）。
+- [ ] **任务控制增强**：完善 `StopTask` 并增加 `Pause/ResumeTask` 功能。
+
+### 🔌 技能与扩展性
+- [ ] **动态工具加载**：实现 `CreateTool` 接口，支持通过配置文件或远程地址动态为 Agent 挂载新工具。
+- [ ] **技能包 (Skill) 支持**：定义 Skill 规范，允许将一组 Prompt + Tools 封装为特定技能（如：翻译专家、代码审计员）。
+- [ ] **MCP 协议对接**：实现 Model Context Protocol (MCP)，支持挂载标准化的外部上下文服务器。
+
+### 🖥️ 视觉与交互优化
+- [ ] **VNC 状态管理**：完善远程桌面的启动与自动端口回收机制。
+- [ ] **流式元数据优化**：确保 `SendMessageToSession` 的流式返回中包含完整的 SessionID 和状态位。
