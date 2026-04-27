@@ -1,6 +1,8 @@
 package registry
 
 import (
+	"context"
+	"log/slog"
 	"sync"
 
 	"github.com/cloudwego/eino/components/tool"
@@ -17,6 +19,12 @@ func RegisterTool(t tool.BaseTool) {
 	}
 	toolMu.Lock()
 	defer toolMu.Unlock()
+	info, err := t.Info(context.Background())
+	if err != nil {
+		slog.Error("failed to get tool info", "error", err)
+		return
+	}
+	slog.Info("registering tool", "name", info.Name)
 	tools = append(tools, t)
 }
 

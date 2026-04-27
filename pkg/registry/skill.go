@@ -4,6 +4,7 @@ import (
 	"context"
 	"digital-labor/pkg/workspace"
 	"errors"
+	"fmt"
 	"log/slog"
 	"os"
 	"strings"
@@ -85,6 +86,6 @@ func parseSkill(content string) (tool.BaseTool, error) {
 }
 
 func init() {
-	path := workspace.GetWorkspacePath()
+	path := fmt.Sprintf("%s/skills", workspace.GetWorkspacePath())
 	ScanSkills(path)
 }
