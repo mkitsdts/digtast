@@ -25,7 +25,7 @@ type DigitalAgent struct {
 	memory   *mem.Store
 }
 
-func NewDigitalAgent(cfg *DigitalAgentConfig) (*DigitalAgent, error) {
+func NewDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 	if cfg.Name == "" {
 		cfg.Name = uuid.New().String()
 	}
@@ -47,8 +47,6 @@ func NewDigitalAgent(cfg *DigitalAgentConfig) (*DigitalAgent, error) {
 		return nil, err
 	}
 	dga.cm = cm
-
-	cfg.persistDigitalAgentConfig(0) // persist before creating agent which allow program could save the config to disk even the agent is not created
 
 	dga.agent, err = adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
 		Name:  cfg.Name,

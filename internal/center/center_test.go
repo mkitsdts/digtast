@@ -2,6 +2,7 @@ package center
 
 import (
 	"digital-labor/internal/agent"
+	"digital-labor/pkg/model"
 	"sync"
 	"testing"
 )
@@ -19,19 +20,19 @@ func TestCreateAgent_EmptyFields(t *testing.T) {
 	c := &Center{agents: make(map[string]*agent.DigitalAgent)}
 
 	// Empty key
-	_, err := c.CreateAgent(&agent.DigitalAgentConfig{Key: ""})
+	_, err := c.CreateAgent(&model.DigitalAgentConfig{Key: ""})
 	if err == nil || err.Error() != "key is empty" {
 		t.Fatalf("expected 'key is empty' error, got: %v", err)
 	}
 
 	// Empty name
-	_, err = c.CreateAgent(&agent.DigitalAgentConfig{Key: "some-key", Name: ""})
+	_, err = c.CreateAgent(&model.DigitalAgentConfig{Key: "some-key", Name: ""})
 	if err == nil || err.Error() != "name is empty" {
 		t.Fatalf("expected 'name is empty' error, got: %v", err)
 	}
 
 	// Empty model
-	_, err = c.CreateAgent(&agent.DigitalAgentConfig{Key: "some-key", Name: "test", Model: ""})
+	_, err = c.CreateAgent(&model.DigitalAgentConfig{Key: "some-key", Name: "test", Model: ""})
 	if err == nil || err.Error() != "model is empty" {
 		t.Fatalf("expected 'model is empty' error, got: %v", err)
 	}

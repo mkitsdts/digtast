@@ -2,12 +2,17 @@ package center
 
 import (
 	"digital-labor/internal/agent"
+	"digital-labor/pkg/model"
+	"digital-labor/pkg/workspace"
 	"errors"
 )
 
-func (m *Center) CreateAgent(config *agent.DigitalAgentConfig) (*agent.DigitalAgent, error) {
+func (m *Center) CreateAgent(config *model.DigitalAgentConfig) (*agent.DigitalAgent, error) {
+	if config.ID == "" {
+		return nil, errors.New("id is empty")
+	}
 	if config.Key == "" {
-		return nil, errors.New("container_id is empty")
+		return nil, errors.New("key is empty")
 	}
 	if config.Name == "" {
 		return nil, errors.New("name is empty")
@@ -18,6 +23,11 @@ func (m *Center) CreateAgent(config *agent.DigitalAgentConfig) (*agent.DigitalAg
 
 	ag, err := agent.NewDigitalAgent(config)
 	if err != nil {
+		return nil, err
+	}
+
+	// Persist to workspace
+	if err := workspace.SaveAgentConfig(config); err != nil {
 		return nil, err
 	}
 
@@ -44,6 +54,11 @@ func (m *Center) GetAgent(id string) (*agent.DigitalAgent, error) {
 func (m *Center) RemoveAgent(id string) error {
 	if id == "" {
 		return errors.New("invalid agent id parameter")
+	}
+
+	// Remove from workspace first
+	if err := workspace.RemoveAgentConfig(id); err != nil {
+		return err
 	}
 
 	m.mu.Lock()

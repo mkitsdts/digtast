@@ -2,8 +2,8 @@ package api
 
 import (
 	"context"
-	"digital-labor/internal/agent"
 	"digital-labor/internal/center"
+	"digital-labor/pkg/model"
 	pb "digital-labor/proto"
 	"fmt"
 	"log/slog"
@@ -13,7 +13,7 @@ import (
 func (s *ContainerServer) StartService(ctx context.Context, req *pb.StartServiceRequest) (*pb.StartServiceResponse, error) {
 	slog.Info("StartService request received", "container_id", req.ContainerId, "agent_id", req.AgentId)
 
-	_, err := center.GetCenter().CreateAgent(&agent.DigitalAgentConfig{
+	_, err := center.GetCenter().CreateAgent(&model.DigitalAgentConfig{
 		ID:       fmt.Sprintf("%s/%s", req.ContainerId, req.AgentId),
 		Key:      req.Key,
 		Name:     req.ModelName,
