@@ -58,11 +58,9 @@ time=... level=INFO msg="server listening at" address=[::]:10086
 - `CompressSession`：压缩历史会话上下文，降低 Token 消耗。
 - `RemoveSession`：删除并清空指定会话的上下文记忆。
 
-### 📝 3. 任务管理 (Task) （暂未实现，计划通过 Hook before agent loop 实现，不能依靠大模型主动调用）
+### 📝 3. 任务管理 (Task) 
 复杂的对话过程会被抽象为任务进行调度：
 - `StopTask`：暂停正在执行中的长任务。
-- `RestartTask`：恢复或重新启动被暂停的任务。
-- `RemoveTask`：中止并移除任务。
 
 ## 🔌 终端指南
 
