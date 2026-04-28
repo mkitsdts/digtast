@@ -35,7 +35,8 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 	msgs := buildMessages(session.GetMessages())
 
 	t, err := task.CreateTask(task.Config{
-		AgentID: dga.ID,
+		SessionID: sessionID,
+		AgentID:   dga.ID,
 	})
 	if err != nil {
 		return nil, err
