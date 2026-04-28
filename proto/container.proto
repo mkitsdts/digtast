@@ -24,11 +24,6 @@ service ContainerService {
 
   // --- 任务相关 ---
   rpc StopTask(StopTaskRequest) returns (StopTaskResponse);
-
-  // --- MCP 相关 ---
-  rpc CreateMCP(CreateMCPRequest) returns (CreateMCPResponse);
-  rpc DisableMCP(DisableMCPRequest) returns (DisableMCPResponse);
-  rpc RemoveMCP(RemoveMCPRequest) returns (RemoveMCPResponse);
 }
 
 // --- 消息定义 (遵循唯一性原则) ---
@@ -140,35 +135,5 @@ message StopTaskRequest {
   string session_id = 3;
 }
 message StopTaskResponse {
-  bool success = 1;
-}
-
-// MCP Messages
-message CreateMCPRequest {
-  string container_id = 1;
-  string agent_id = 2;
-  string mcp_name = 3;
-  string description = 4;
-  map<string, string> metadata = 5;
-}
-message CreateMCPResponse {
-  string mcp_id = 1;
-}
-
-message DisableMCPRequest {
-  string container_id = 1;
-  string agent_id = 2;
-  string mcp_id = 3;
-}
-message DisableMCPResponse {
-  bool success = 1;
-}
-
-message RemoveMCPRequest {
-  string container_id = 1;
-  string agent_id = 2;
-  string mcp_id = 3;
-}
-message RemoveMCPResponse {
   bool success = 1;
 }

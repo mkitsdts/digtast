@@ -1213,335 +1213,6 @@ func (x *StopTaskResponse) GetSuccess() bool {
 	return false
 }
 
-// MCP Messages
-type CreateMCPRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
-	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
-	McpName       string                 `protobuf:"bytes,3,opt,name=mcp_name,json=mcpName,proto3" json:"mcp_name,omitempty"`
-	Description   string                 `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
-	Metadata      map[string]string      `protobuf:"bytes,5,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CreateMCPRequest) Reset() {
-	*x = CreateMCPRequest{}
-	mi := &file_proto_container_proto_msgTypes[21]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CreateMCPRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CreateMCPRequest) ProtoMessage() {}
-
-func (x *CreateMCPRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_container_proto_msgTypes[21]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CreateMCPRequest.ProtoReflect.Descriptor instead.
-func (*CreateMCPRequest) Descriptor() ([]byte, []int) {
-	return file_proto_container_proto_rawDescGZIP(), []int{21}
-}
-
-func (x *CreateMCPRequest) GetContainerId() string {
-	if x != nil {
-		return x.ContainerId
-	}
-	return ""
-}
-
-func (x *CreateMCPRequest) GetAgentId() string {
-	if x != nil {
-		return x.AgentId
-	}
-	return ""
-}
-
-func (x *CreateMCPRequest) GetMcpName() string {
-	if x != nil {
-		return x.McpName
-	}
-	return ""
-}
-
-func (x *CreateMCPRequest) GetDescription() string {
-	if x != nil {
-		return x.Description
-	}
-	return ""
-}
-
-func (x *CreateMCPRequest) GetMetadata() map[string]string {
-	if x != nil {
-		return x.Metadata
-	}
-	return nil
-}
-
-type CreateMCPResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	McpId         string                 `protobuf:"bytes,1,opt,name=mcp_id,json=mcpId,proto3" json:"mcp_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CreateMCPResponse) Reset() {
-	*x = CreateMCPResponse{}
-	mi := &file_proto_container_proto_msgTypes[22]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CreateMCPResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CreateMCPResponse) ProtoMessage() {}
-
-func (x *CreateMCPResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_container_proto_msgTypes[22]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CreateMCPResponse.ProtoReflect.Descriptor instead.
-func (*CreateMCPResponse) Descriptor() ([]byte, []int) {
-	return file_proto_container_proto_rawDescGZIP(), []int{22}
-}
-
-func (x *CreateMCPResponse) GetMcpId() string {
-	if x != nil {
-		return x.McpId
-	}
-	return ""
-}
-
-type DisableMCPRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
-	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
-	McpId         string                 `protobuf:"bytes,3,opt,name=mcp_id,json=mcpId,proto3" json:"mcp_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DisableMCPRequest) Reset() {
-	*x = DisableMCPRequest{}
-	mi := &file_proto_container_proto_msgTypes[23]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DisableMCPRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DisableMCPRequest) ProtoMessage() {}
-
-func (x *DisableMCPRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_container_proto_msgTypes[23]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DisableMCPRequest.ProtoReflect.Descriptor instead.
-func (*DisableMCPRequest) Descriptor() ([]byte, []int) {
-	return file_proto_container_proto_rawDescGZIP(), []int{23}
-}
-
-func (x *DisableMCPRequest) GetContainerId() string {
-	if x != nil {
-		return x.ContainerId
-	}
-	return ""
-}
-
-func (x *DisableMCPRequest) GetAgentId() string {
-	if x != nil {
-		return x.AgentId
-	}
-	return ""
-}
-
-func (x *DisableMCPRequest) GetMcpId() string {
-	if x != nil {
-		return x.McpId
-	}
-	return ""
-}
-
-type DisableMCPResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DisableMCPResponse) Reset() {
-	*x = DisableMCPResponse{}
-	mi := &file_proto_container_proto_msgTypes[24]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DisableMCPResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DisableMCPResponse) ProtoMessage() {}
-
-func (x *DisableMCPResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_container_proto_msgTypes[24]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DisableMCPResponse.ProtoReflect.Descriptor instead.
-func (*DisableMCPResponse) Descriptor() ([]byte, []int) {
-	return file_proto_container_proto_rawDescGZIP(), []int{24}
-}
-
-func (x *DisableMCPResponse) GetSuccess() bool {
-	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
-type RemoveMCPRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
-	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
-	McpId         string                 `protobuf:"bytes,3,opt,name=mcp_id,json=mcpId,proto3" json:"mcp_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RemoveMCPRequest) Reset() {
-	*x = RemoveMCPRequest{}
-	mi := &file_proto_container_proto_msgTypes[25]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RemoveMCPRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RemoveMCPRequest) ProtoMessage() {}
-
-func (x *RemoveMCPRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_container_proto_msgTypes[25]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RemoveMCPRequest.ProtoReflect.Descriptor instead.
-func (*RemoveMCPRequest) Descriptor() ([]byte, []int) {
-	return file_proto_container_proto_rawDescGZIP(), []int{25}
-}
-
-func (x *RemoveMCPRequest) GetContainerId() string {
-	if x != nil {
-		return x.ContainerId
-	}
-	return ""
-}
-
-func (x *RemoveMCPRequest) GetAgentId() string {
-	if x != nil {
-		return x.AgentId
-	}
-	return ""
-}
-
-func (x *RemoveMCPRequest) GetMcpId() string {
-	if x != nil {
-		return x.McpId
-	}
-	return ""
-}
-
-type RemoveMCPResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RemoveMCPResponse) Reset() {
-	*x = RemoveMCPResponse{}
-	mi := &file_proto_container_proto_msgTypes[26]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RemoveMCPResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RemoveMCPResponse) ProtoMessage() {}
-
-func (x *RemoveMCPResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_container_proto_msgTypes[26]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RemoveMCPResponse.ProtoReflect.Descriptor instead.
-func (*RemoveMCPResponse) Descriptor() ([]byte, []int) {
-	return file_proto_container_proto_rawDescGZIP(), []int{26}
-}
-
-func (x *RemoveMCPResponse) GetSuccess() bool {
-	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
 var File_proto_container_proto protoreflect.FileDescriptor
 
 const file_proto_container_proto_rawDesc = "" +
@@ -1634,30 +1305,7 @@ const file_proto_container_proto_rawDesc = "" +
 	"\n" +
 	"session_id\x18\x03 \x01(\tR\tsessionId\",\n" +
 	"\x10StopTaskResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"\x8d\x02\n" +
-	"\x10CreateMCPRequest\x12!\n" +
-	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
-	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x19\n" +
-	"\bmcp_name\x18\x03 \x01(\tR\amcpName\x12 \n" +
-	"\vdescription\x18\x04 \x01(\tR\vdescription\x12A\n" +
-	"\bmetadata\x18\x05 \x03(\v2%.labor.CreateMCPRequest.MetadataEntryR\bmetadata\x1a;\n" +
-	"\rMetadataEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"*\n" +
-	"\x11CreateMCPResponse\x12\x15\n" +
-	"\x06mcp_id\x18\x01 \x01(\tR\x05mcpId\"h\n" +
-	"\x11DisableMCPRequest\x12!\n" +
-	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
-	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x15\n" +
-	"\x06mcp_id\x18\x03 \x01(\tR\x05mcpId\".\n" +
-	"\x12DisableMCPResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"g\n" +
-	"\x10RemoveMCPRequest\x12!\n" +
-	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
-	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x15\n" +
-	"\x06mcp_id\x18\x03 \x01(\tR\x05mcpId\"-\n" +
-	"\x11RemoveMCPResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess2\xe4\a\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess2\xa1\x06\n" +
 	"\x10ContainerService\x12G\n" +
 	"\fStartService\x12\x1a.labor.StartServiceRequest\x1a\x1b.labor.StartServiceResponse\x12D\n" +
 	"\vStopService\x12\x19.labor.StopServiceRequest\x1a\x1a.labor.StopServiceResponse\x12M\n" +
@@ -1668,11 +1316,7 @@ const file_proto_container_proto_rawDesc = "" +
 	"\rRemoveSession\x12\x1b.labor.RemoveSessionRequest\x1a\x1c.labor.RemoveSessionResponse\x12P\n" +
 	"\x0fCompressSession\x12\x1d.labor.CompressSessionRequest\x1a\x1e.labor.CompressSessionResponse\x12a\n" +
 	"\x14SendMessageToSession\x12\".labor.SendMessageToSessionRequest\x1a#.labor.SendMessageToSessionResponse0\x01\x12;\n" +
-	"\bStopTask\x12\x16.labor.StopTaskRequest\x1a\x17.labor.StopTaskResponse\x12>\n" +
-	"\tCreateMCP\x12\x17.labor.CreateMCPRequest\x1a\x18.labor.CreateMCPResponse\x12A\n" +
-	"\n" +
-	"DisableMCP\x12\x18.labor.DisableMCPRequest\x1a\x19.labor.DisableMCPResponse\x12>\n" +
-	"\tRemoveMCP\x12\x17.labor.RemoveMCPRequest\x1a\x18.labor.RemoveMCPResponseB\n" +
+	"\bStopTask\x12\x16.labor.StopTaskRequest\x1a\x17.labor.StopTaskResponseB\n" +
 	"Z\blabor.v1b\x06proto3"
 
 var (
@@ -1687,7 +1331,7 @@ func file_proto_container_proto_rawDescGZIP() []byte {
 	return file_proto_container_proto_rawDescData
 }
 
-var file_proto_container_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
+var file_proto_container_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_proto_container_proto_goTypes = []any{
 	(*StartServiceRequest)(nil),          // 0: labor.StartServiceRequest
 	(*StartServiceResponse)(nil),         // 1: labor.StartServiceResponse
@@ -1710,48 +1354,34 @@ var file_proto_container_proto_goTypes = []any{
 	(*SendMessageToSessionResponse)(nil), // 18: labor.SendMessageToSessionResponse
 	(*StopTaskRequest)(nil),              // 19: labor.StopTaskRequest
 	(*StopTaskResponse)(nil),             // 20: labor.StopTaskResponse
-	(*CreateMCPRequest)(nil),             // 21: labor.CreateMCPRequest
-	(*CreateMCPResponse)(nil),            // 22: labor.CreateMCPResponse
-	(*DisableMCPRequest)(nil),            // 23: labor.DisableMCPRequest
-	(*DisableMCPResponse)(nil),           // 24: labor.DisableMCPResponse
-	(*RemoveMCPRequest)(nil),             // 25: labor.RemoveMCPRequest
-	(*RemoveMCPResponse)(nil),            // 26: labor.RemoveMCPResponse
-	nil,                                  // 27: labor.CreateMCPRequest.MetadataEntry
 }
 var file_proto_container_proto_depIdxs = []int32{
 	11, // 0: labor.GetOrCreateSessionResponse.messages:type_name -> labor.Message
-	27, // 1: labor.CreateMCPRequest.metadata:type_name -> labor.CreateMCPRequest.MetadataEntry
-	0,  // 2: labor.ContainerService.StartService:input_type -> labor.StartServiceRequest
-	2,  // 3: labor.ContainerService.StopService:input_type -> labor.StopServiceRequest
-	4,  // 4: labor.ContainerService.RestartService:input_type -> labor.RestartServiceRequest
-	6,  // 5: labor.ContainerService.RemoveService:input_type -> labor.RemoveServiceRequest
-	8,  // 6: labor.ContainerService.BackupService:input_type -> labor.BackupServiceRequest
-	10, // 7: labor.ContainerService.GetOrCreateSession:input_type -> labor.GetOrCreateSessionRequest
-	15, // 8: labor.ContainerService.RemoveSession:input_type -> labor.RemoveSessionRequest
-	13, // 9: labor.ContainerService.CompressSession:input_type -> labor.CompressSessionRequest
-	17, // 10: labor.ContainerService.SendMessageToSession:input_type -> labor.SendMessageToSessionRequest
-	19, // 11: labor.ContainerService.StopTask:input_type -> labor.StopTaskRequest
-	21, // 12: labor.ContainerService.CreateMCP:input_type -> labor.CreateMCPRequest
-	23, // 13: labor.ContainerService.DisableMCP:input_type -> labor.DisableMCPRequest
-	25, // 14: labor.ContainerService.RemoveMCP:input_type -> labor.RemoveMCPRequest
-	1,  // 15: labor.ContainerService.StartService:output_type -> labor.StartServiceResponse
-	3,  // 16: labor.ContainerService.StopService:output_type -> labor.StopServiceResponse
-	5,  // 17: labor.ContainerService.RestartService:output_type -> labor.RestartServiceResponse
-	7,  // 18: labor.ContainerService.RemoveService:output_type -> labor.RemoveServiceResponse
-	9,  // 19: labor.ContainerService.BackupService:output_type -> labor.BackupServiceResponse
-	12, // 20: labor.ContainerService.GetOrCreateSession:output_type -> labor.GetOrCreateSessionResponse
-	16, // 21: labor.ContainerService.RemoveSession:output_type -> labor.RemoveSessionResponse
-	14, // 22: labor.ContainerService.CompressSession:output_type -> labor.CompressSessionResponse
-	18, // 23: labor.ContainerService.SendMessageToSession:output_type -> labor.SendMessageToSessionResponse
-	20, // 24: labor.ContainerService.StopTask:output_type -> labor.StopTaskResponse
-	22, // 25: labor.ContainerService.CreateMCP:output_type -> labor.CreateMCPResponse
-	24, // 26: labor.ContainerService.DisableMCP:output_type -> labor.DisableMCPResponse
-	26, // 27: labor.ContainerService.RemoveMCP:output_type -> labor.RemoveMCPResponse
-	15, // [15:28] is the sub-list for method output_type
-	2,  // [2:15] is the sub-list for method input_type
-	2,  // [2:2] is the sub-list for extension type_name
-	2,  // [2:2] is the sub-list for extension extendee
-	0,  // [0:2] is the sub-list for field type_name
+	0,  // 1: labor.ContainerService.StartService:input_type -> labor.StartServiceRequest
+	2,  // 2: labor.ContainerService.StopService:input_type -> labor.StopServiceRequest
+	4,  // 3: labor.ContainerService.RestartService:input_type -> labor.RestartServiceRequest
+	6,  // 4: labor.ContainerService.RemoveService:input_type -> labor.RemoveServiceRequest
+	8,  // 5: labor.ContainerService.BackupService:input_type -> labor.BackupServiceRequest
+	10, // 6: labor.ContainerService.GetOrCreateSession:input_type -> labor.GetOrCreateSessionRequest
+	15, // 7: labor.ContainerService.RemoveSession:input_type -> labor.RemoveSessionRequest
+	13, // 8: labor.ContainerService.CompressSession:input_type -> labor.CompressSessionRequest
+	17, // 9: labor.ContainerService.SendMessageToSession:input_type -> labor.SendMessageToSessionRequest
+	19, // 10: labor.ContainerService.StopTask:input_type -> labor.StopTaskRequest
+	1,  // 11: labor.ContainerService.StartService:output_type -> labor.StartServiceResponse
+	3,  // 12: labor.ContainerService.StopService:output_type -> labor.StopServiceResponse
+	5,  // 13: labor.ContainerService.RestartService:output_type -> labor.RestartServiceResponse
+	7,  // 14: labor.ContainerService.RemoveService:output_type -> labor.RemoveServiceResponse
+	9,  // 15: labor.ContainerService.BackupService:output_type -> labor.BackupServiceResponse
+	12, // 16: labor.ContainerService.GetOrCreateSession:output_type -> labor.GetOrCreateSessionResponse
+	16, // 17: labor.ContainerService.RemoveSession:output_type -> labor.RemoveSessionResponse
+	14, // 18: labor.ContainerService.CompressSession:output_type -> labor.CompressSessionResponse
+	18, // 19: labor.ContainerService.SendMessageToSession:output_type -> labor.SendMessageToSessionResponse
+	20, // 20: labor.ContainerService.StopTask:output_type -> labor.StopTaskResponse
+	11, // [11:21] is the sub-list for method output_type
+	1,  // [1:11] is the sub-list for method input_type
+	1,  // [1:1] is the sub-list for extension type_name
+	1,  // [1:1] is the sub-list for extension extendee
+	0,  // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_proto_container_proto_init() }
@@ -1765,7 +1395,7 @@ func file_proto_container_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_container_proto_rawDesc), len(file_proto_container_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   28,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
