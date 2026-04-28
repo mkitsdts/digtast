@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             (unknown)
-// source: proto/container.proto
+// source: labor/v1/container.proto
 
 package labor_v1
 
@@ -19,16 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ContainerService_StartService_FullMethodName         = "/labor.ContainerService/StartService"
-	ContainerService_StopService_FullMethodName          = "/labor.ContainerService/StopService"
-	ContainerService_RestartService_FullMethodName       = "/labor.ContainerService/RestartService"
-	ContainerService_RemoveService_FullMethodName        = "/labor.ContainerService/RemoveService"
-	ContainerService_BackupService_FullMethodName        = "/labor.ContainerService/BackupService"
-	ContainerService_GetOrCreateSession_FullMethodName   = "/labor.ContainerService/GetOrCreateSession"
-	ContainerService_RemoveSession_FullMethodName        = "/labor.ContainerService/RemoveSession"
-	ContainerService_CompressSession_FullMethodName      = "/labor.ContainerService/CompressSession"
-	ContainerService_SendMessageToSession_FullMethodName = "/labor.ContainerService/SendMessageToSession"
-	ContainerService_StopTask_FullMethodName             = "/labor.ContainerService/StopTask"
+	ContainerService_StartService_FullMethodName         = "/labor.v1.ContainerService/StartService"
+	ContainerService_StopService_FullMethodName          = "/labor.v1.ContainerService/StopService"
+	ContainerService_BackupService_FullMethodName        = "/labor.v1.ContainerService/BackupService"
+	ContainerService_GetOrCreateSession_FullMethodName   = "/labor.v1.ContainerService/GetOrCreateSession"
+	ContainerService_RemoveSession_FullMethodName        = "/labor.v1.ContainerService/RemoveSession"
+	ContainerService_CompressSession_FullMethodName      = "/labor.v1.ContainerService/CompressSession"
+	ContainerService_SendMessageToSession_FullMethodName = "/labor.v1.ContainerService/SendMessageToSession"
+	ContainerService_StopTask_FullMethodName             = "/labor.v1.ContainerService/StopTask"
 )
 
 // ContainerServiceClient is the client API for ContainerService service.
@@ -40,8 +38,6 @@ type ContainerServiceClient interface {
 	// --- 容器相关 ---
 	StartService(ctx context.Context, in *StartServiceRequest, opts ...grpc.CallOption) (*StartServiceResponse, error)
 	StopService(ctx context.Context, in *StopServiceRequest, opts ...grpc.CallOption) (*StopServiceResponse, error)
-	RestartService(ctx context.Context, in *RestartServiceRequest, opts ...grpc.CallOption) (*RestartServiceResponse, error)
-	RemoveService(ctx context.Context, in *RemoveServiceRequest, opts ...grpc.CallOption) (*RemoveServiceResponse, error)
 	BackupService(ctx context.Context, in *BackupServiceRequest, opts ...grpc.CallOption) (*BackupServiceResponse, error)
 	// --- 会话相关 ---
 	GetOrCreateSession(ctx context.Context, in *GetOrCreateSessionRequest, opts ...grpc.CallOption) (*GetOrCreateSessionResponse, error)
@@ -76,26 +72,6 @@ func (c *containerServiceClient) StopService(ctx context.Context, in *StopServic
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(StopServiceResponse)
 	err := c.cc.Invoke(ctx, ContainerService_StopService_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *containerServiceClient) RestartService(ctx context.Context, in *RestartServiceRequest, opts ...grpc.CallOption) (*RestartServiceResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RestartServiceResponse)
-	err := c.cc.Invoke(ctx, ContainerService_RestartService_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *containerServiceClient) RemoveService(ctx context.Context, in *RemoveServiceRequest, opts ...grpc.CallOption) (*RemoveServiceResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RemoveServiceResponse)
-	err := c.cc.Invoke(ctx, ContainerService_RemoveService_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -180,8 +156,6 @@ type ContainerServiceServer interface {
 	// --- 容器相关 ---
 	StartService(context.Context, *StartServiceRequest) (*StartServiceResponse, error)
 	StopService(context.Context, *StopServiceRequest) (*StopServiceResponse, error)
-	RestartService(context.Context, *RestartServiceRequest) (*RestartServiceResponse, error)
-	RemoveService(context.Context, *RemoveServiceRequest) (*RemoveServiceResponse, error)
 	BackupService(context.Context, *BackupServiceRequest) (*BackupServiceResponse, error)
 	// --- 会话相关 ---
 	GetOrCreateSession(context.Context, *GetOrCreateSessionRequest) (*GetOrCreateSessionResponse, error)
@@ -207,12 +181,6 @@ func (UnimplementedContainerServiceServer) StartService(context.Context, *StartS
 }
 func (UnimplementedContainerServiceServer) StopService(context.Context, *StopServiceRequest) (*StopServiceResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method StopService not implemented")
-}
-func (UnimplementedContainerServiceServer) RestartService(context.Context, *RestartServiceRequest) (*RestartServiceResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method RestartService not implemented")
-}
-func (UnimplementedContainerServiceServer) RemoveService(context.Context, *RemoveServiceRequest) (*RemoveServiceResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method RemoveService not implemented")
 }
 func (UnimplementedContainerServiceServer) BackupService(context.Context, *BackupServiceRequest) (*BackupServiceResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method BackupService not implemented")
@@ -285,42 +253,6 @@ func _ContainerService_StopService_Handler(srv interface{}, ctx context.Context,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ContainerServiceServer).StopService(ctx, req.(*StopServiceRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ContainerService_RestartService_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RestartServiceRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ContainerServiceServer).RestartService(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ContainerService_RestartService_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).RestartService(ctx, req.(*RestartServiceRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ContainerService_RemoveService_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RemoveServiceRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ContainerServiceServer).RemoveService(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ContainerService_RemoveService_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).RemoveService(ctx, req.(*RemoveServiceRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -430,7 +362,7 @@ func _ContainerService_StopTask_Handler(srv interface{}, ctx context.Context, de
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ContainerService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "labor.ContainerService",
+	ServiceName: "labor.v1.ContainerService",
 	HandlerType: (*ContainerServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -440,14 +372,6 @@ var ContainerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "StopService",
 			Handler:    _ContainerService_StopService_Handler,
-		},
-		{
-			MethodName: "RestartService",
-			Handler:    _ContainerService_RestartService_Handler,
-		},
-		{
-			MethodName: "RemoveService",
-			Handler:    _ContainerService_RemoveService_Handler,
 		},
 		{
 			MethodName: "BackupService",
@@ -477,5 +401,5 @@ var ContainerService_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "proto/container.proto",
+	Metadata: "labor/v1/container.proto",
 }

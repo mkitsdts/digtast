@@ -9,8 +9,6 @@ service ContainerService {
   // --- 容器相关 ---
   rpc StartService(StartServiceRequest) returns (StartServiceResponse);
   rpc StopService(StopServiceRequest) returns (StopServiceResponse);
-  rpc RestartService(RestartServiceRequest) returns (RestartServiceResponse);
-  rpc RemoveService(RemoveServiceRequest) returns (RemoveServiceResponse);
   rpc BackupService(BackupServiceRequest) returns (BackupServiceResponse);
 
   // --- 会话相关 ---
@@ -52,22 +50,6 @@ message StopServiceRequest {
   string session_id = 3;
 }
 message StopServiceResponse {
-  bool success = 1;
-}
-
-message RestartServiceRequest {
-  string container_id = 1;
-  string agent_id = 2;
-}
-message RestartServiceResponse {
-  bool success = 1;
-}
-
-message RemoveServiceRequest {
-  string container_id = 1;
-  string agent_id = 2;
-}
-message RemoveServiceResponse {
   bool success = 1;
 }
 
