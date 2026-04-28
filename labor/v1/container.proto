@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package labor;
+package labor.v1;
 
 option go_package = "labor.v1";
 
