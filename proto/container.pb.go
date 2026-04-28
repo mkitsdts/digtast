@@ -1219,7 +1219,8 @@ type CreateMCPRequest struct {
 	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
 	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
 	McpName       string                 `protobuf:"bytes,3,opt,name=mcp_name,json=mcpName,proto3" json:"mcp_name,omitempty"`
-	Metadata      map[string]string      `protobuf:"bytes,4,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Description   string                 `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
+	Metadata      map[string]string      `protobuf:"bytes,5,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1271,6 +1272,13 @@ func (x *CreateMCPRequest) GetAgentId() string {
 func (x *CreateMCPRequest) GetMcpName() string {
 	if x != nil {
 		return x.McpName
+	}
+	return ""
+}
+
+func (x *CreateMCPRequest) GetDescription() string {
+	if x != nil {
+		return x.Description
 	}
 	return ""
 }
@@ -1626,12 +1634,13 @@ const file_proto_container_proto_rawDesc = "" +
 	"\n" +
 	"session_id\x18\x03 \x01(\tR\tsessionId\",\n" +
 	"\x10StopTaskResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xeb\x01\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\x8d\x02\n" +
 	"\x10CreateMCPRequest\x12!\n" +
 	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
 	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x19\n" +
-	"\bmcp_name\x18\x03 \x01(\tR\amcpName\x12A\n" +
-	"\bmetadata\x18\x04 \x03(\v2%.labor.CreateMCPRequest.MetadataEntryR\bmetadata\x1a;\n" +
+	"\bmcp_name\x18\x03 \x01(\tR\amcpName\x12 \n" +
+	"\vdescription\x18\x04 \x01(\tR\vdescription\x12A\n" +
+	"\bmetadata\x18\x05 \x03(\v2%.labor.CreateMCPRequest.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"*\n" +

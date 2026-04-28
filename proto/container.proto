@@ -148,7 +148,8 @@ message CreateMCPRequest {
   string container_id = 1;
   string agent_id = 2;
   string mcp_name = 3;
-  map<string, string> metadata = 4;
+  string description = 4;
+  map<string, string> metadata = 5;
 }
 message CreateMCPResponse {
   string mcp_id = 1;

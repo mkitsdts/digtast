@@ -29,9 +29,6 @@ const (
 	ContainerService_CompressSession_FullMethodName      = "/labor.ContainerService/CompressSession"
 	ContainerService_SendMessageToSession_FullMethodName = "/labor.ContainerService/SendMessageToSession"
 	ContainerService_StopTask_FullMethodName             = "/labor.ContainerService/StopTask"
-	ContainerService_CreateMCP_FullMethodName            = "/labor.ContainerService/CreateMCP"
-	ContainerService_DisableMCP_FullMethodName           = "/labor.ContainerService/DisableMCP"
-	ContainerService_RemoveMCP_FullMethodName            = "/labor.ContainerService/RemoveMCP"
 )
 
 // ContainerServiceClient is the client API for ContainerService service.
@@ -55,10 +52,6 @@ type ContainerServiceClient interface {
 	SendMessageToSession(ctx context.Context, in *SendMessageToSessionRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[SendMessageToSessionResponse], error)
 	// --- 任务相关 ---
 	StopTask(ctx context.Context, in *StopTaskRequest, opts ...grpc.CallOption) (*StopTaskResponse, error)
-	// --- MCP 相关 ---
-	CreateMCP(ctx context.Context, in *CreateMCPRequest, opts ...grpc.CallOption) (*CreateMCPResponse, error)
-	DisableMCP(ctx context.Context, in *DisableMCPRequest, opts ...grpc.CallOption) (*DisableMCPResponse, error)
-	RemoveMCP(ctx context.Context, in *RemoveMCPRequest, opts ...grpc.CallOption) (*RemoveMCPResponse, error)
 }
 
 type containerServiceClient struct {
@@ -178,36 +171,6 @@ func (c *containerServiceClient) StopTask(ctx context.Context, in *StopTaskReque
 	return out, nil
 }
 
-func (c *containerServiceClient) CreateMCP(ctx context.Context, in *CreateMCPRequest, opts ...grpc.CallOption) (*CreateMCPResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CreateMCPResponse)
-	err := c.cc.Invoke(ctx, ContainerService_CreateMCP_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *containerServiceClient) DisableMCP(ctx context.Context, in *DisableMCPRequest, opts ...grpc.CallOption) (*DisableMCPResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DisableMCPResponse)
-	err := c.cc.Invoke(ctx, ContainerService_DisableMCP_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *containerServiceClient) RemoveMCP(ctx context.Context, in *RemoveMCPRequest, opts ...grpc.CallOption) (*RemoveMCPResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RemoveMCPResponse)
-	err := c.cc.Invoke(ctx, ContainerService_RemoveMCP_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // ContainerServiceServer is the server API for ContainerService service.
 // All implementations must embed UnimplementedContainerServiceServer
 // for forward compatibility.
@@ -229,10 +192,6 @@ type ContainerServiceServer interface {
 	SendMessageToSession(*SendMessageToSessionRequest, grpc.ServerStreamingServer[SendMessageToSessionResponse]) error
 	// --- 任务相关 ---
 	StopTask(context.Context, *StopTaskRequest) (*StopTaskResponse, error)
-	// --- MCP 相关 ---
-	CreateMCP(context.Context, *CreateMCPRequest) (*CreateMCPResponse, error)
-	DisableMCP(context.Context, *DisableMCPRequest) (*DisableMCPResponse, error)
-	RemoveMCP(context.Context, *RemoveMCPRequest) (*RemoveMCPResponse, error)
 	mustEmbedUnimplementedContainerServiceServer()
 }
 
@@ -272,15 +231,6 @@ func (UnimplementedContainerServiceServer) SendMessageToSession(*SendMessageToSe
 }
 func (UnimplementedContainerServiceServer) StopTask(context.Context, *StopTaskRequest) (*StopTaskResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method StopTask not implemented")
-}
-func (UnimplementedContainerServiceServer) CreateMCP(context.Context, *CreateMCPRequest) (*CreateMCPResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method CreateMCP not implemented")
-}
-func (UnimplementedContainerServiceServer) DisableMCP(context.Context, *DisableMCPRequest) (*DisableMCPResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method DisableMCP not implemented")
-}
-func (UnimplementedContainerServiceServer) RemoveMCP(context.Context, *RemoveMCPRequest) (*RemoveMCPResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method RemoveMCP not implemented")
 }
 func (UnimplementedContainerServiceServer) mustEmbedUnimplementedContainerServiceServer() {}
 func (UnimplementedContainerServiceServer) testEmbeddedByValue()                          {}
@@ -476,60 +426,6 @@ func _ContainerService_StopTask_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ContainerService_CreateMCP_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateMCPRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ContainerServiceServer).CreateMCP(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ContainerService_CreateMCP_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).CreateMCP(ctx, req.(*CreateMCPRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ContainerService_DisableMCP_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DisableMCPRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ContainerServiceServer).DisableMCP(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ContainerService_DisableMCP_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).DisableMCP(ctx, req.(*DisableMCPRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ContainerService_RemoveMCP_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RemoveMCPRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ContainerServiceServer).RemoveMCP(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ContainerService_RemoveMCP_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).RemoveMCP(ctx, req.(*RemoveMCPRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // ContainerService_ServiceDesc is the grpc.ServiceDesc for ContainerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -572,18 +468,6 @@ var ContainerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "StopTask",
 			Handler:    _ContainerService_StopTask_Handler,
-		},
-		{
-			MethodName: "CreateMCP",
-			Handler:    _ContainerService_CreateMCP_Handler,
-		},
-		{
-			MethodName: "DisableMCP",
-			Handler:    _ContainerService_DisableMCP_Handler,
-		},
-		{
-			MethodName: "RemoveMCP",
-			Handler:    _ContainerService_RemoveMCP_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
