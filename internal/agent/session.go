@@ -7,7 +7,6 @@ import (
 )
 
 func (ag *DigitalAgent) GetOrCreateSession(sessionId string) (string, *mem.Session) {
-	//TODO:
 	if sessionId == "" {
 		sessionId = uuid.New().String()
 	}

@@ -3,23 +3,21 @@ package task
 import (
 	"digital-labor/pkg/workspace"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 )
 
 func persist() {
-	for {
-		if !globalTaskManager.is_dirty {
-			return
-		}
-
-		data, err := json.Marshal(globalTaskManager.Tasks)
+	for event := range globalTaskManager.eventChan {
+		data, err := json.Marshal(event)
 		if err != nil {
-			slog.Error("failed to persist tasks")
-			return
+			slog.Error("failed to marshal task event", "error", err)
+			continue
 		}
 
-		go workspace.PersistFile("tasks.json", data)
-		globalTaskManager.is_dirty = false
+		// Use .jsonl extension for incremental append
+		filename := fmt.Sprintf("tasks/%s/%s.jsonl", event.AgentID, event.SessionID)
+		workspace.AppendFile(filename, data)
 	}
 }
 

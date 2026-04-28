@@ -9,15 +9,23 @@ import (
 	"github.com/google/uuid"
 )
 
+type TaskEvent struct {
+	Type      string `json:"type"`
+	AgentID   string `json:"agent_id"`
+	SessionID string `json:"session_id"`
+	Data      any    `json:"data"`
+}
+
 type TaskManager struct {
-	mux      sync.RWMutex
-	Tasks    map[string]map[string]*model.Task `json:"tasks"`
-	is_dirty bool                              `json:"-"`
+	mux       sync.RWMutex
+	Tasks     map[string]map[string]*model.Task `json:"tasks"`
+	eventChan chan TaskEvent
 }
 
 var globalTaskManager = &TaskManager{
-	mux:   sync.RWMutex{},
-	Tasks: map[string]map[string]*model.Task{},
+	mux:       sync.RWMutex{},
+	Tasks:     map[string]map[string]*model.Task{},
+	eventChan: make(chan TaskEvent, 1000),
 }
 
 func CreateTask(cfg Config) (*model.Task, error) {
@@ -58,27 +66,41 @@ func CreateTask(cfg Config) (*model.Task, error) {
 	globalTaskManager.Tasks[cfg.SessionID][id] = &task
 	globalTaskManager.mux.Unlock()
 
-	globalTaskManager.is_dirty = true
+	globalTaskManager.eventChan <- TaskEvent{
+		Type:      "task",
+		AgentID:   cfg.AgentID,
+		SessionID: cfg.SessionID,
+		Data:      task,
+	}
 
 	return &task, nil
 }
 
 func UpdateStatus(sessionid, taskid string, status string) {
 	globalTaskManager.mux.Lock()
-	defer globalTaskManager.mux.Unlock()
-	if _, ok := globalTaskManager.Tasks[sessionid]; !ok {
-		return
+	var task *model.Task
+	if sess, ok := globalTaskManager.Tasks[sessionid]; ok {
+		if t, ok := sess[taskid]; ok {
+			t.Status = status
+			task = t
+		}
 	}
-	if task, ok := globalTaskManager.Tasks[sessionid][taskid]; ok {
-		task.Status = status
+	globalTaskManager.mux.Unlock()
+
+	if task != nil {
+		globalTaskManager.eventChan <- TaskEvent{
+			Type:      "task",
+			AgentID:   task.AgentID,
+			SessionID: sessionid,
+			Data:      *task,
+		}
 	}
-	globalTaskManager.is_dirty = true
 }
 
 func CreateStep(taskid, sessionid string, cfg StepConfig) *model.Step {
 	globalTaskManager.mux.Lock()
-	defer globalTaskManager.mux.Unlock()
 	if _, ok := globalTaskManager.Tasks[sessionid]; !ok {
+		globalTaskManager.mux.Unlock()
 		return nil
 	}
 	step := model.Step{
@@ -93,38 +115,60 @@ func CreateStep(taskid, sessionid string, cfg StepConfig) *model.Step {
 		CreatedAt: cfg.CreatedAt,
 		UpdatedAt: time.Now().UTC(),
 	}
+	var agentID string
 	if task, ok := globalTaskManager.Tasks[sessionid][taskid]; ok {
 		task.Steps = append(task.Steps, step)
+		agentID = task.AgentID
 	}
-	globalTaskManager.is_dirty = true
+	globalTaskManager.mux.Unlock()
+
+	if agentID != "" {
+		globalTaskManager.eventChan <- TaskEvent{
+			Type:      "step",
+			AgentID:   agentID,
+			SessionID: sessionid,
+			Data:      step,
+		}
+	}
 	return &step
 }
 
 func UpdateStep(sessionid, taskid, stepid string, cfg StepConfig) *model.Step {
 	globalTaskManager.mux.Lock()
-	defer globalTaskManager.mux.Unlock()
-	if _, ok := globalTaskManager.Tasks[sessionid]; !ok {
-		return nil
-	}
-	if task, ok := globalTaskManager.Tasks[sessionid][taskid]; ok {
-		for i, s := range task.Steps {
-			if s.ID == stepid {
-				if cfg.Status != "" {
-					task.Steps[i].Status = cfg.Status
+	var step *model.Step
+	var agentID string
+	if sess, ok := globalTaskManager.Tasks[sessionid]; ok {
+		if task, ok := sess[taskid]; ok {
+			agentID = task.AgentID
+			for i, s := range task.Steps {
+				if s.ID == stepid {
+					if cfg.Status != "" {
+						task.Steps[i].Status = cfg.Status
+					}
+					if cfg.Output != nil {
+						task.Steps[i].Output = cfg.Output
+					}
+					if cfg.Error != "" {
+						task.Steps[i].Error = cfg.Error
+					}
+					task.Steps[i].UpdatedAt = time.Now().UTC()
+					step = &task.Steps[i]
+					break
 				}
-				if cfg.Output != nil {
-					task.Steps[i].Output = cfg.Output
-				}
-				if cfg.Error != "" {
-					task.Steps[i].Error = cfg.Error
-				}
-				task.Steps[i].UpdatedAt = time.Now().UTC()
-				return &task.Steps[i]
 			}
 		}
 	}
-	globalTaskManager.is_dirty = true
-	return nil
+	globalTaskManager.mux.Unlock()
+
+	if step != nil && agentID != "" {
+		globalTaskManager.eventChan <- TaskEvent{
+			Type:      "step",
+			AgentID:   agentID,
+			SessionID: sessionid,
+			Data:      *step,
+		}
+	}
+	return step
 }
 
 func GetTask(sessionid, taskid string) *model.Task {
