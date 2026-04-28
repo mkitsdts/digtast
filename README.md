@@ -64,12 +64,6 @@ time=... level=INFO msg="server listening at" address=[::]:10086
 - `RestartTask`：恢复或重新启动被暂停的任务。
 - `RemoveTask`：中止并移除任务。
 
-### 🛠️ 4. 扩展能力层 (Skill, Tool, MCP)
-数字助理支持动态扩展自身能力：
-- **Skill 相关**：`CreateSkill`, `DisableSkill`, `RemoveSkill` (管理定制化技能)
-- **Tool 相关**：`CreateTool`, `DisableTool`, `RemoveTool` (管理原子工具调用)
-- **MCP 相关**：`CreateMCP`, `DisableMCP`, `RemoveMCP` (挂载与管理外部 MCP 协议扩展)
-
 ## 🔌 终端指南
 
 可通过终端在本地运行 digital ，后续会通过命令行参数区分启用 grpc 接口或终端。
