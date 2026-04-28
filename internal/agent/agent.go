@@ -54,6 +54,9 @@ func NewDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
 				Tools: registry.GetTools(),
+				ToolCallMiddlewares: []compose.ToolMiddleware{
+					{Invokable: registry.Invokable},
+				},
 			},
 		},
 		Description: cfg.Description,

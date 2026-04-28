@@ -2,7 +2,9 @@ package agent
 
 import (
 	"context"
+	"digital-labor/pkg/ctxmanager"
 	mmodel "digital-labor/pkg/model"
+	"digital-labor/pkg/task"
 	"digital-labor/pkg/workspace"
 	"errors"
 	"fmt"
@@ -32,7 +34,16 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 
 	msgs := buildMessages(session.GetMessages())
 
-	runCtx, cancel := context.WithCancel(ctx)
+	t, err := task.CreateTask(task.Config{
+		AgentID: dga.ID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	runCtx, cancel := context.WithCancel(ctxmanager.GetOrCreate(t.TaskID))
+	runCtx = context.WithValue(runCtx, "task_id", t.TaskID)
+	runCtx = context.WithValue(runCtx, "session_id", sessionID)
 	dga.bindRun(sessionID, cancel)
 
 	events := dga.agent.Run(runCtx, &adk.AgentInput{
@@ -62,7 +73,6 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 		for {
 			if runCtx.Err() != nil {
 				slog.Warn("agent execution cancelled or timeout", "session_id", sessionID, "err", runCtx.Err())
-				// TODO: cancel agent loop
 				return
 			}
 
