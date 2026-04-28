@@ -50,7 +50,7 @@ func (b *PromptBuilder) loadPrompt() string {
 			result += p + "\n\n"
 		}
 	}
-	return ""
+	return result
 }
 
 func renderTools(tools []tool.BaseTool) string {
