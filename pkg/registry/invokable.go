@@ -30,10 +30,20 @@ func Invokable(next compose.InvokableToolEndpoint) compose.InvokableToolEndpoint
 		output, err := next(ctx, input)
 
 		// 后置处理
-		task.UpdateStep(taskId, sessionId, step.ID, task.StepConfig{
-			Output: output,
-			Error:  output.Result,
-		})
+		if err != nil {
+			task.UpdateStep(taskId, sessionId, step.ID, task.StepConfig{
+				Status: model.StatusFailed,
+				Error:  err.Error(),
+			})
+			return nil, err
+		}
+		if output != nil {
+			task.UpdateStep(taskId, sessionId, step.ID, task.StepConfig{
+				Output: output,
+				Status: model.StatusDone,
+				Error:  output.Result,
+			})
+		}
 		return output, err
 	}
 }
