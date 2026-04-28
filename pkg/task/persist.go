@@ -3,6 +3,7 @@ package task
 import (
 	"digital-labor/pkg/workspace"
 	"encoding/json"
+	"log/slog"
 )
 
 func persist() {
@@ -13,6 +14,7 @@ func persist() {
 
 		data, err := json.Marshal(globalTaskManager.Tasks)
 		if err != nil {
+			slog.Error("failed to persist tasks")
 			return
 		}
 
