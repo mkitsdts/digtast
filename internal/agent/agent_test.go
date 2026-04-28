@@ -9,20 +9,9 @@ import (
 	"github.com/cloudwego/eino/schema"
 )
 
-func TestBuildMessages_ReturnsNil(t *testing.T) {
-	msgs := make([]*schema.Message, 0)
-	msgs, err := buildMessages("hello world", msgs)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-}
-
 func TestBuildMessages_CreatesUserMessage(t *testing.T) {
 	msgs := make([]*schema.Message, 0)
-	msgs, err := buildMessages("test content", msgs)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	msgs = buildMessages(msgs)
 
 	// buildMessages does: messages = append(messages, msg)
 	// and discards the result. With len=0, cap=0, append allocates a

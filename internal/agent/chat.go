@@ -3,9 +3,12 @@ package agent
 import (
 	"context"
 	mmodel "digital-labor/pkg/model"
+	"digital-labor/pkg/workspace"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
+	"strings"
 
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/schema"
@@ -18,18 +21,16 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 	if err != nil {
 		return nil, err
 	}
-	msgs, err := buildMessages(req.Content, session.GetMessages())
-	if err != nil {
-		return nil, err
-	}
-	// Persist the user's turn through internal memory. The agent still receives
-	// msgs above, which includes the same user input for this run.
+
+	// Persist the user's turn through internal memory.
 	if err := session.Append(&schema.Message{
 		Role:    schema.User,
 		Content: req.Content,
 	}); err != nil {
 		return nil, err
 	}
+
+	msgs := buildMessages(session.GetMessages())
 
 	runCtx, cancel := context.WithCancel(ctx)
 	dga.bindRun(sessionID, cancel)
@@ -98,6 +99,11 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 				continue
 			}
 
+			if mv.Role == schema.Tool {
+				// TODO:写入调用 tool 的日志
+				slog.Info("llm use tool", "tool", mv.ToolName)
+			}
+
 			if req.IsStream {
 				if mv.MessageStream != nil {
 					mv.MessageStream.SetAutomaticClose()
@@ -140,12 +146,38 @@ func (dga *DigitalAgent) stop(sessionId string) error {
 	return nil
 }
 
-func buildMessages(content string, messages []*schema.Message) ([]*schema.Message, error) {
-	// TODO:
-	msg := &schema.Message{
-		Role:    schema.User,
-		Content: content,
+func buildMessages(messages []*schema.Message) []*schema.Message {
+	// Gather all registered prompts from workspace
+	promptCreators := workspace.GetPromptCreators()
+	var systemPrompts []string
+
+	for _, creator := range promptCreators {
+		content, err := creator.GetPromptImpl()
+		if err != nil {
+			slog.Error("failed to get prompt content", "name", creator.GetPromptName(), "error", err)
+			continue
+		}
+		if content != "" {
+			systemPrompts = append(systemPrompts, fmt.Sprintf("### %s\n%s", creator.GetPromptName(), content))
+		}
 	}
-	messages = append(messages, msg)
-	return messages, nil
+
+	if len(systemPrompts) == 0 {
+		return messages
+	}
+
+	fullSystemPrompt := strings.Join(systemPrompts, "\n\n")
+
+	// If the first message is already a system message, don't inject again.
+	if len(messages) > 0 && messages[0].Role == schema.System {
+		return messages
+	}
+
+	sysMsg := &schema.Message{
+		Role:    schema.System,
+		Content: fullSystemPrompt,
+	}
+
+	// Prepend system message
+	return append([]*schema.Message{sysMsg}, messages...)
 }
