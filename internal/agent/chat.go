@@ -111,7 +111,7 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 			}
 
 			if mv.Role == schema.Tool {
-				// TODO:写入调用 tool 的日志
+				session.Append(mv.Message)
 				slog.Info("llm use tool", "tool", mv.ToolName)
 			}
 
