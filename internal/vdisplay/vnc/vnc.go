@@ -1,6 +1,7 @@
 package vnc
 
 import (
+	"digital-labor/pkg/conf"
 	"digital-labor/pkg/model"
 	"errors"
 	"sync"
@@ -21,17 +22,18 @@ type VNCServer struct {
 	path     string
 }
 
-var s *VNCServer
+var s *VNCServer = NewVNCServer(conf.Conf.VNC.MaxUser, 0, "", "/")
 
 // geometry is the desktop geometry in the format "widthxheight" (e.g. "1920x1080").
 func NewVNCServer(maxUser int, beginId int, geometry string, path string) *VNCServer {
+	vs := &VNCServer{}
 	if beginId == 0 {
 		beginId = default_beginId
 	}
 	if maxUser <= 0 {
 		maxUser = default_maxUser
 	}
-	s = &VNCServer{
+	vs = &VNCServer{
 		vncs:     make(map[string]int),
 		ids:      make([]int, maxUser),
 		states:   make([]bool, maxUser),
@@ -42,9 +44,9 @@ func NewVNCServer(maxUser int, beginId int, geometry string, path string) *VNCSe
 		mu:       sync.Mutex{},
 	}
 	for i := 0; i < maxUser; i++ {
-		s.ids[i] = beginId + i
+		vs.ids[i] = beginId + i
 	}
-	return s
+	return vs
 }
 
 func GetVNCServer() *VNCServer {
