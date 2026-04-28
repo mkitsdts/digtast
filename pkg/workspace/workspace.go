@@ -53,6 +53,12 @@ func InitWorkspace() {
 		return
 	}
 
+	taskPath := fmt.Sprintf("%s/tasks", path)
+	if err := os.MkdirAll(taskPath, 0755); err != nil {
+		slog.Error("Failed to create task directory", "path", taskPath, "err", err)
+		return
+	}
+
 	for _, promptCreator := range promptCreators {
 		err := promptCreator.CreatePromptImpl()
 		if err != nil {
