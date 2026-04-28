@@ -25,16 +25,6 @@ service ContainerService {
   // --- 任务相关 ---
   rpc StopTask(StopTaskRequest) returns (StopTaskResponse);
 
-  // --- Skill 相关 ---
-  rpc CreateSkill(CreateSkillRequest) returns (CreateSkillResponse);
-  rpc DisableSkill(DisableSkillRequest) returns (DisableSkillResponse);
-  rpc RemoveSkill(RemoveSkillRequest) returns (RemoveSkillResponse);
-
-  // --- Tool 相关 ---
-  rpc CreateTool(CreateToolRequest) returns (CreateToolResponse);
-  rpc DisableTool(DisableToolRequest) returns (DisableToolResponse);
-  rpc RemoveTool(RemoveToolRequest) returns (RemoveToolResponse);
-
   // --- MCP 相关 ---
   rpc CreateMCP(CreateMCPRequest) returns (CreateMCPResponse);
   rpc DisableMCP(DisableMCPRequest) returns (DisableMCPResponse);
@@ -150,64 +140,6 @@ message StopTaskRequest {
   string session_id = 3;
 }
 message StopTaskResponse {
-  bool success = 1;
-}
-
-// Skill Messages
-message CreateSkillRequest {
-  string container_id = 1;
-  string agent_id = 2;
-  string skill_name = 3;
-  map<string, string> metadata = 4;
-}
-message CreateSkillResponse {
-  string skill_id = 1;
-}
-
-message DisableSkillRequest {
-  string container_id = 1;
-  string agent_id = 2;
-  string skill_id = 3;
-}
-message DisableSkillResponse {
-  bool success = 1;
-}
-
-message RemoveSkillRequest {
-  string container_id = 1;
-  string agent_id = 2;
-  string skill_id = 3;
-}
-message RemoveSkillResponse {
-  bool success = 1;
-}
-
-// Tool Messages
-message CreateToolRequest {
-  string container_id = 1;
-  string agent_id = 2;
-  string tool_name = 3;
-  map<string, string> metadata = 4;
-}
-message CreateToolResponse {
-  string tool_id = 1;
-}
-
-message DisableToolRequest {
-  string container_id = 1;
-  string agent_id = 2;
-  string tool_id = 3;
-}
-message DisableToolResponse {
-  bool success = 1;
-}
-
-message RemoveToolRequest {
-  string container_id = 1;
-  string agent_id = 2;
-  string tool_id = 3;
-}
-message RemoveToolResponse {
   bool success = 1;
 }
 

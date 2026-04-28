@@ -29,12 +29,6 @@ const (
 	ContainerService_CompressSession_FullMethodName      = "/labor.ContainerService/CompressSession"
 	ContainerService_SendMessageToSession_FullMethodName = "/labor.ContainerService/SendMessageToSession"
 	ContainerService_StopTask_FullMethodName             = "/labor.ContainerService/StopTask"
-	ContainerService_CreateSkill_FullMethodName          = "/labor.ContainerService/CreateSkill"
-	ContainerService_DisableSkill_FullMethodName         = "/labor.ContainerService/DisableSkill"
-	ContainerService_RemoveSkill_FullMethodName          = "/labor.ContainerService/RemoveSkill"
-	ContainerService_CreateTool_FullMethodName           = "/labor.ContainerService/CreateTool"
-	ContainerService_DisableTool_FullMethodName          = "/labor.ContainerService/DisableTool"
-	ContainerService_RemoveTool_FullMethodName           = "/labor.ContainerService/RemoveTool"
 	ContainerService_CreateMCP_FullMethodName            = "/labor.ContainerService/CreateMCP"
 	ContainerService_DisableMCP_FullMethodName           = "/labor.ContainerService/DisableMCP"
 	ContainerService_RemoveMCP_FullMethodName            = "/labor.ContainerService/RemoveMCP"
@@ -61,14 +55,6 @@ type ContainerServiceClient interface {
 	SendMessageToSession(ctx context.Context, in *SendMessageToSessionRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[SendMessageToSessionResponse], error)
 	// --- 任务相关 ---
 	StopTask(ctx context.Context, in *StopTaskRequest, opts ...grpc.CallOption) (*StopTaskResponse, error)
-	// --- Skill 相关 ---
-	CreateSkill(ctx context.Context, in *CreateSkillRequest, opts ...grpc.CallOption) (*CreateSkillResponse, error)
-	DisableSkill(ctx context.Context, in *DisableSkillRequest, opts ...grpc.CallOption) (*DisableSkillResponse, error)
-	RemoveSkill(ctx context.Context, in *RemoveSkillRequest, opts ...grpc.CallOption) (*RemoveSkillResponse, error)
-	// --- Tool 相关 ---
-	CreateTool(ctx context.Context, in *CreateToolRequest, opts ...grpc.CallOption) (*CreateToolResponse, error)
-	DisableTool(ctx context.Context, in *DisableToolRequest, opts ...grpc.CallOption) (*DisableToolResponse, error)
-	RemoveTool(ctx context.Context, in *RemoveToolRequest, opts ...grpc.CallOption) (*RemoveToolResponse, error)
 	// --- MCP 相关 ---
 	CreateMCP(ctx context.Context, in *CreateMCPRequest, opts ...grpc.CallOption) (*CreateMCPResponse, error)
 	DisableMCP(ctx context.Context, in *DisableMCPRequest, opts ...grpc.CallOption) (*DisableMCPResponse, error)
@@ -192,66 +178,6 @@ func (c *containerServiceClient) StopTask(ctx context.Context, in *StopTaskReque
 	return out, nil
 }
 
-func (c *containerServiceClient) CreateSkill(ctx context.Context, in *CreateSkillRequest, opts ...grpc.CallOption) (*CreateSkillResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CreateSkillResponse)
-	err := c.cc.Invoke(ctx, ContainerService_CreateSkill_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *containerServiceClient) DisableSkill(ctx context.Context, in *DisableSkillRequest, opts ...grpc.CallOption) (*DisableSkillResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DisableSkillResponse)
-	err := c.cc.Invoke(ctx, ContainerService_DisableSkill_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *containerServiceClient) RemoveSkill(ctx context.Context, in *RemoveSkillRequest, opts ...grpc.CallOption) (*RemoveSkillResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RemoveSkillResponse)
-	err := c.cc.Invoke(ctx, ContainerService_RemoveSkill_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *containerServiceClient) CreateTool(ctx context.Context, in *CreateToolRequest, opts ...grpc.CallOption) (*CreateToolResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CreateToolResponse)
-	err := c.cc.Invoke(ctx, ContainerService_CreateTool_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *containerServiceClient) DisableTool(ctx context.Context, in *DisableToolRequest, opts ...grpc.CallOption) (*DisableToolResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DisableToolResponse)
-	err := c.cc.Invoke(ctx, ContainerService_DisableTool_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *containerServiceClient) RemoveTool(ctx context.Context, in *RemoveToolRequest, opts ...grpc.CallOption) (*RemoveToolResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RemoveToolResponse)
-	err := c.cc.Invoke(ctx, ContainerService_RemoveTool_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *containerServiceClient) CreateMCP(ctx context.Context, in *CreateMCPRequest, opts ...grpc.CallOption) (*CreateMCPResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateMCPResponse)
@@ -303,14 +229,6 @@ type ContainerServiceServer interface {
 	SendMessageToSession(*SendMessageToSessionRequest, grpc.ServerStreamingServer[SendMessageToSessionResponse]) error
 	// --- 任务相关 ---
 	StopTask(context.Context, *StopTaskRequest) (*StopTaskResponse, error)
-	// --- Skill 相关 ---
-	CreateSkill(context.Context, *CreateSkillRequest) (*CreateSkillResponse, error)
-	DisableSkill(context.Context, *DisableSkillRequest) (*DisableSkillResponse, error)
-	RemoveSkill(context.Context, *RemoveSkillRequest) (*RemoveSkillResponse, error)
-	// --- Tool 相关 ---
-	CreateTool(context.Context, *CreateToolRequest) (*CreateToolResponse, error)
-	DisableTool(context.Context, *DisableToolRequest) (*DisableToolResponse, error)
-	RemoveTool(context.Context, *RemoveToolRequest) (*RemoveToolResponse, error)
 	// --- MCP 相关 ---
 	CreateMCP(context.Context, *CreateMCPRequest) (*CreateMCPResponse, error)
 	DisableMCP(context.Context, *DisableMCPRequest) (*DisableMCPResponse, error)
@@ -354,24 +272,6 @@ func (UnimplementedContainerServiceServer) SendMessageToSession(*SendMessageToSe
 }
 func (UnimplementedContainerServiceServer) StopTask(context.Context, *StopTaskRequest) (*StopTaskResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method StopTask not implemented")
-}
-func (UnimplementedContainerServiceServer) CreateSkill(context.Context, *CreateSkillRequest) (*CreateSkillResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method CreateSkill not implemented")
-}
-func (UnimplementedContainerServiceServer) DisableSkill(context.Context, *DisableSkillRequest) (*DisableSkillResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method DisableSkill not implemented")
-}
-func (UnimplementedContainerServiceServer) RemoveSkill(context.Context, *RemoveSkillRequest) (*RemoveSkillResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method RemoveSkill not implemented")
-}
-func (UnimplementedContainerServiceServer) CreateTool(context.Context, *CreateToolRequest) (*CreateToolResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method CreateTool not implemented")
-}
-func (UnimplementedContainerServiceServer) DisableTool(context.Context, *DisableToolRequest) (*DisableToolResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method DisableTool not implemented")
-}
-func (UnimplementedContainerServiceServer) RemoveTool(context.Context, *RemoveToolRequest) (*RemoveToolResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method RemoveTool not implemented")
 }
 func (UnimplementedContainerServiceServer) CreateMCP(context.Context, *CreateMCPRequest) (*CreateMCPResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateMCP not implemented")
@@ -576,114 +476,6 @@ func _ContainerService_StopTask_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ContainerService_CreateSkill_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateSkillRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ContainerServiceServer).CreateSkill(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ContainerService_CreateSkill_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).CreateSkill(ctx, req.(*CreateSkillRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ContainerService_DisableSkill_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DisableSkillRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ContainerServiceServer).DisableSkill(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ContainerService_DisableSkill_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).DisableSkill(ctx, req.(*DisableSkillRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ContainerService_RemoveSkill_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RemoveSkillRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ContainerServiceServer).RemoveSkill(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ContainerService_RemoveSkill_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).RemoveSkill(ctx, req.(*RemoveSkillRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ContainerService_CreateTool_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateToolRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ContainerServiceServer).CreateTool(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ContainerService_CreateTool_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).CreateTool(ctx, req.(*CreateToolRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ContainerService_DisableTool_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DisableToolRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ContainerServiceServer).DisableTool(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ContainerService_DisableTool_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).DisableTool(ctx, req.(*DisableToolRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ContainerService_RemoveTool_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RemoveToolRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ContainerServiceServer).RemoveTool(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ContainerService_RemoveTool_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).RemoveTool(ctx, req.(*RemoveToolRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _ContainerService_CreateMCP_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateMCPRequest)
 	if err := dec(in); err != nil {
@@ -780,30 +572,6 @@ var ContainerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "StopTask",
 			Handler:    _ContainerService_StopTask_Handler,
-		},
-		{
-			MethodName: "CreateSkill",
-			Handler:    _ContainerService_CreateSkill_Handler,
-		},
-		{
-			MethodName: "DisableSkill",
-			Handler:    _ContainerService_DisableSkill_Handler,
-		},
-		{
-			MethodName: "RemoveSkill",
-			Handler:    _ContainerService_RemoveSkill_Handler,
-		},
-		{
-			MethodName: "CreateTool",
-			Handler:    _ContainerService_CreateTool_Handler,
-		},
-		{
-			MethodName: "DisableTool",
-			Handler:    _ContainerService_DisableTool_Handler,
-		},
-		{
-			MethodName: "RemoveTool",
-			Handler:    _ContainerService_RemoveTool_Handler,
 		},
 		{
 			MethodName: "CreateMCP",

@@ -1213,648 +1213,6 @@ func (x *StopTaskResponse) GetSuccess() bool {
 	return false
 }
 
-// Skill Messages
-type CreateSkillRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
-	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
-	SkillName     string                 `protobuf:"bytes,3,opt,name=skill_name,json=skillName,proto3" json:"skill_name,omitempty"`
-	Metadata      map[string]string      `protobuf:"bytes,4,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CreateSkillRequest) Reset() {
-	*x = CreateSkillRequest{}
-	mi := &file_proto_container_proto_msgTypes[21]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CreateSkillRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CreateSkillRequest) ProtoMessage() {}
-
-func (x *CreateSkillRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_container_proto_msgTypes[21]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CreateSkillRequest.ProtoReflect.Descriptor instead.
-func (*CreateSkillRequest) Descriptor() ([]byte, []int) {
-	return file_proto_container_proto_rawDescGZIP(), []int{21}
-}
-
-func (x *CreateSkillRequest) GetContainerId() string {
-	if x != nil {
-		return x.ContainerId
-	}
-	return ""
-}
-
-func (x *CreateSkillRequest) GetAgentId() string {
-	if x != nil {
-		return x.AgentId
-	}
-	return ""
-}
-
-func (x *CreateSkillRequest) GetSkillName() string {
-	if x != nil {
-		return x.SkillName
-	}
-	return ""
-}
-
-func (x *CreateSkillRequest) GetMetadata() map[string]string {
-	if x != nil {
-		return x.Metadata
-	}
-	return nil
-}
-
-type CreateSkillResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SkillId       string                 `protobuf:"bytes,1,opt,name=skill_id,json=skillId,proto3" json:"skill_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CreateSkillResponse) Reset() {
-	*x = CreateSkillResponse{}
-	mi := &file_proto_container_proto_msgTypes[22]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CreateSkillResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CreateSkillResponse) ProtoMessage() {}
-
-func (x *CreateSkillResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_container_proto_msgTypes[22]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CreateSkillResponse.ProtoReflect.Descriptor instead.
-func (*CreateSkillResponse) Descriptor() ([]byte, []int) {
-	return file_proto_container_proto_rawDescGZIP(), []int{22}
-}
-
-func (x *CreateSkillResponse) GetSkillId() string {
-	if x != nil {
-		return x.SkillId
-	}
-	return ""
-}
-
-type DisableSkillRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
-	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
-	SkillId       string                 `protobuf:"bytes,3,opt,name=skill_id,json=skillId,proto3" json:"skill_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DisableSkillRequest) Reset() {
-	*x = DisableSkillRequest{}
-	mi := &file_proto_container_proto_msgTypes[23]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DisableSkillRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DisableSkillRequest) ProtoMessage() {}
-
-func (x *DisableSkillRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_container_proto_msgTypes[23]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DisableSkillRequest.ProtoReflect.Descriptor instead.
-func (*DisableSkillRequest) Descriptor() ([]byte, []int) {
-	return file_proto_container_proto_rawDescGZIP(), []int{23}
-}
-
-func (x *DisableSkillRequest) GetContainerId() string {
-	if x != nil {
-		return x.ContainerId
-	}
-	return ""
-}
-
-func (x *DisableSkillRequest) GetAgentId() string {
-	if x != nil {
-		return x.AgentId
-	}
-	return ""
-}
-
-func (x *DisableSkillRequest) GetSkillId() string {
-	if x != nil {
-		return x.SkillId
-	}
-	return ""
-}
-
-type DisableSkillResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DisableSkillResponse) Reset() {
-	*x = DisableSkillResponse{}
-	mi := &file_proto_container_proto_msgTypes[24]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DisableSkillResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DisableSkillResponse) ProtoMessage() {}
-
-func (x *DisableSkillResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_container_proto_msgTypes[24]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DisableSkillResponse.ProtoReflect.Descriptor instead.
-func (*DisableSkillResponse) Descriptor() ([]byte, []int) {
-	return file_proto_container_proto_rawDescGZIP(), []int{24}
-}
-
-func (x *DisableSkillResponse) GetSuccess() bool {
-	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
-type RemoveSkillRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
-	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
-	SkillId       string                 `protobuf:"bytes,3,opt,name=skill_id,json=skillId,proto3" json:"skill_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RemoveSkillRequest) Reset() {
-	*x = RemoveSkillRequest{}
-	mi := &file_proto_container_proto_msgTypes[25]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RemoveSkillRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RemoveSkillRequest) ProtoMessage() {}
-
-func (x *RemoveSkillRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_container_proto_msgTypes[25]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RemoveSkillRequest.ProtoReflect.Descriptor instead.
-func (*RemoveSkillRequest) Descriptor() ([]byte, []int) {
-	return file_proto_container_proto_rawDescGZIP(), []int{25}
-}
-
-func (x *RemoveSkillRequest) GetContainerId() string {
-	if x != nil {
-		return x.ContainerId
-	}
-	return ""
-}
-
-func (x *RemoveSkillRequest) GetAgentId() string {
-	if x != nil {
-		return x.AgentId
-	}
-	return ""
-}
-
-func (x *RemoveSkillRequest) GetSkillId() string {
-	if x != nil {
-		return x.SkillId
-	}
-	return ""
-}
-
-type RemoveSkillResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RemoveSkillResponse) Reset() {
-	*x = RemoveSkillResponse{}
-	mi := &file_proto_container_proto_msgTypes[26]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RemoveSkillResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RemoveSkillResponse) ProtoMessage() {}
-
-func (x *RemoveSkillResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_container_proto_msgTypes[26]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RemoveSkillResponse.ProtoReflect.Descriptor instead.
-func (*RemoveSkillResponse) Descriptor() ([]byte, []int) {
-	return file_proto_container_proto_rawDescGZIP(), []int{26}
-}
-
-func (x *RemoveSkillResponse) GetSuccess() bool {
-	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
-// Tool Messages
-type CreateToolRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
-	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
-	ToolName      string                 `protobuf:"bytes,3,opt,name=tool_name,json=toolName,proto3" json:"tool_name,omitempty"`
-	Metadata      map[string]string      `protobuf:"bytes,4,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CreateToolRequest) Reset() {
-	*x = CreateToolRequest{}
-	mi := &file_proto_container_proto_msgTypes[27]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CreateToolRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CreateToolRequest) ProtoMessage() {}
-
-func (x *CreateToolRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_container_proto_msgTypes[27]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CreateToolRequest.ProtoReflect.Descriptor instead.
-func (*CreateToolRequest) Descriptor() ([]byte, []int) {
-	return file_proto_container_proto_rawDescGZIP(), []int{27}
-}
-
-func (x *CreateToolRequest) GetContainerId() string {
-	if x != nil {
-		return x.ContainerId
-	}
-	return ""
-}
-
-func (x *CreateToolRequest) GetAgentId() string {
-	if x != nil {
-		return x.AgentId
-	}
-	return ""
-}
-
-func (x *CreateToolRequest) GetToolName() string {
-	if x != nil {
-		return x.ToolName
-	}
-	return ""
-}
-
-func (x *CreateToolRequest) GetMetadata() map[string]string {
-	if x != nil {
-		return x.Metadata
-	}
-	return nil
-}
-
-type CreateToolResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ToolId        string                 `protobuf:"bytes,1,opt,name=tool_id,json=toolId,proto3" json:"tool_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CreateToolResponse) Reset() {
-	*x = CreateToolResponse{}
-	mi := &file_proto_container_proto_msgTypes[28]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CreateToolResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CreateToolResponse) ProtoMessage() {}
-
-func (x *CreateToolResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_container_proto_msgTypes[28]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CreateToolResponse.ProtoReflect.Descriptor instead.
-func (*CreateToolResponse) Descriptor() ([]byte, []int) {
-	return file_proto_container_proto_rawDescGZIP(), []int{28}
-}
-
-func (x *CreateToolResponse) GetToolId() string {
-	if x != nil {
-		return x.ToolId
-	}
-	return ""
-}
-
-type DisableToolRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
-	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
-	ToolId        string                 `protobuf:"bytes,3,opt,name=tool_id,json=toolId,proto3" json:"tool_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DisableToolRequest) Reset() {
-	*x = DisableToolRequest{}
-	mi := &file_proto_container_proto_msgTypes[29]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DisableToolRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DisableToolRequest) ProtoMessage() {}
-
-func (x *DisableToolRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_container_proto_msgTypes[29]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DisableToolRequest.ProtoReflect.Descriptor instead.
-func (*DisableToolRequest) Descriptor() ([]byte, []int) {
-	return file_proto_container_proto_rawDescGZIP(), []int{29}
-}
-
-func (x *DisableToolRequest) GetContainerId() string {
-	if x != nil {
-		return x.ContainerId
-	}
-	return ""
-}
-
-func (x *DisableToolRequest) GetAgentId() string {
-	if x != nil {
-		return x.AgentId
-	}
-	return ""
-}
-
-func (x *DisableToolRequest) GetToolId() string {
-	if x != nil {
-		return x.ToolId
-	}
-	return ""
-}
-
-type DisableToolResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DisableToolResponse) Reset() {
-	*x = DisableToolResponse{}
-	mi := &file_proto_container_proto_msgTypes[30]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DisableToolResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DisableToolResponse) ProtoMessage() {}
-
-func (x *DisableToolResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_container_proto_msgTypes[30]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DisableToolResponse.ProtoReflect.Descriptor instead.
-func (*DisableToolResponse) Descriptor() ([]byte, []int) {
-	return file_proto_container_proto_rawDescGZIP(), []int{30}
-}
-
-func (x *DisableToolResponse) GetSuccess() bool {
-	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
-type RemoveToolRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
-	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
-	ToolId        string                 `protobuf:"bytes,3,opt,name=tool_id,json=toolId,proto3" json:"tool_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RemoveToolRequest) Reset() {
-	*x = RemoveToolRequest{}
-	mi := &file_proto_container_proto_msgTypes[31]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RemoveToolRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RemoveToolRequest) ProtoMessage() {}
-
-func (x *RemoveToolRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_container_proto_msgTypes[31]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RemoveToolRequest.ProtoReflect.Descriptor instead.
-func (*RemoveToolRequest) Descriptor() ([]byte, []int) {
-	return file_proto_container_proto_rawDescGZIP(), []int{31}
-}
-
-func (x *RemoveToolRequest) GetContainerId() string {
-	if x != nil {
-		return x.ContainerId
-	}
-	return ""
-}
-
-func (x *RemoveToolRequest) GetAgentId() string {
-	if x != nil {
-		return x.AgentId
-	}
-	return ""
-}
-
-func (x *RemoveToolRequest) GetToolId() string {
-	if x != nil {
-		return x.ToolId
-	}
-	return ""
-}
-
-type RemoveToolResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RemoveToolResponse) Reset() {
-	*x = RemoveToolResponse{}
-	mi := &file_proto_container_proto_msgTypes[32]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RemoveToolResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RemoveToolResponse) ProtoMessage() {}
-
-func (x *RemoveToolResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_container_proto_msgTypes[32]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RemoveToolResponse.ProtoReflect.Descriptor instead.
-func (*RemoveToolResponse) Descriptor() ([]byte, []int) {
-	return file_proto_container_proto_rawDescGZIP(), []int{32}
-}
-
-func (x *RemoveToolResponse) GetSuccess() bool {
-	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
 // MCP Messages
 type CreateMCPRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1868,7 +1226,7 @@ type CreateMCPRequest struct {
 
 func (x *CreateMCPRequest) Reset() {
 	*x = CreateMCPRequest{}
-	mi := &file_proto_container_proto_msgTypes[33]
+	mi := &file_proto_container_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1880,7 +1238,7 @@ func (x *CreateMCPRequest) String() string {
 func (*CreateMCPRequest) ProtoMessage() {}
 
 func (x *CreateMCPRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_container_proto_msgTypes[33]
+	mi := &file_proto_container_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1893,7 +1251,7 @@ func (x *CreateMCPRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateMCPRequest.ProtoReflect.Descriptor instead.
 func (*CreateMCPRequest) Descriptor() ([]byte, []int) {
-	return file_proto_container_proto_rawDescGZIP(), []int{33}
+	return file_proto_container_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *CreateMCPRequest) GetContainerId() string {
@@ -1933,7 +1291,7 @@ type CreateMCPResponse struct {
 
 func (x *CreateMCPResponse) Reset() {
 	*x = CreateMCPResponse{}
-	mi := &file_proto_container_proto_msgTypes[34]
+	mi := &file_proto_container_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1945,7 +1303,7 @@ func (x *CreateMCPResponse) String() string {
 func (*CreateMCPResponse) ProtoMessage() {}
 
 func (x *CreateMCPResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_container_proto_msgTypes[34]
+	mi := &file_proto_container_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1958,7 +1316,7 @@ func (x *CreateMCPResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateMCPResponse.ProtoReflect.Descriptor instead.
 func (*CreateMCPResponse) Descriptor() ([]byte, []int) {
-	return file_proto_container_proto_rawDescGZIP(), []int{34}
+	return file_proto_container_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *CreateMCPResponse) GetMcpId() string {
@@ -1979,7 +1337,7 @@ type DisableMCPRequest struct {
 
 func (x *DisableMCPRequest) Reset() {
 	*x = DisableMCPRequest{}
-	mi := &file_proto_container_proto_msgTypes[35]
+	mi := &file_proto_container_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1991,7 +1349,7 @@ func (x *DisableMCPRequest) String() string {
 func (*DisableMCPRequest) ProtoMessage() {}
 
 func (x *DisableMCPRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_container_proto_msgTypes[35]
+	mi := &file_proto_container_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2004,7 +1362,7 @@ func (x *DisableMCPRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DisableMCPRequest.ProtoReflect.Descriptor instead.
 func (*DisableMCPRequest) Descriptor() ([]byte, []int) {
-	return file_proto_container_proto_rawDescGZIP(), []int{35}
+	return file_proto_container_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *DisableMCPRequest) GetContainerId() string {
@@ -2037,7 +1395,7 @@ type DisableMCPResponse struct {
 
 func (x *DisableMCPResponse) Reset() {
 	*x = DisableMCPResponse{}
-	mi := &file_proto_container_proto_msgTypes[36]
+	mi := &file_proto_container_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2049,7 +1407,7 @@ func (x *DisableMCPResponse) String() string {
 func (*DisableMCPResponse) ProtoMessage() {}
 
 func (x *DisableMCPResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_container_proto_msgTypes[36]
+	mi := &file_proto_container_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2062,7 +1420,7 @@ func (x *DisableMCPResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DisableMCPResponse.ProtoReflect.Descriptor instead.
 func (*DisableMCPResponse) Descriptor() ([]byte, []int) {
-	return file_proto_container_proto_rawDescGZIP(), []int{36}
+	return file_proto_container_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *DisableMCPResponse) GetSuccess() bool {
@@ -2083,7 +1441,7 @@ type RemoveMCPRequest struct {
 
 func (x *RemoveMCPRequest) Reset() {
 	*x = RemoveMCPRequest{}
-	mi := &file_proto_container_proto_msgTypes[37]
+	mi := &file_proto_container_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2095,7 +1453,7 @@ func (x *RemoveMCPRequest) String() string {
 func (*RemoveMCPRequest) ProtoMessage() {}
 
 func (x *RemoveMCPRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_container_proto_msgTypes[37]
+	mi := &file_proto_container_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2108,7 +1466,7 @@ func (x *RemoveMCPRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveMCPRequest.ProtoReflect.Descriptor instead.
 func (*RemoveMCPRequest) Descriptor() ([]byte, []int) {
-	return file_proto_container_proto_rawDescGZIP(), []int{37}
+	return file_proto_container_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *RemoveMCPRequest) GetContainerId() string {
@@ -2141,7 +1499,7 @@ type RemoveMCPResponse struct {
 
 func (x *RemoveMCPResponse) Reset() {
 	*x = RemoveMCPResponse{}
-	mi := &file_proto_container_proto_msgTypes[38]
+	mi := &file_proto_container_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2153,7 +1511,7 @@ func (x *RemoveMCPResponse) String() string {
 func (*RemoveMCPResponse) ProtoMessage() {}
 
 func (x *RemoveMCPResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_container_proto_msgTypes[38]
+	mi := &file_proto_container_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2166,7 +1524,7 @@ func (x *RemoveMCPResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveMCPResponse.ProtoReflect.Descriptor instead.
 func (*RemoveMCPResponse) Descriptor() ([]byte, []int) {
-	return file_proto_container_proto_rawDescGZIP(), []int{38}
+	return file_proto_container_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *RemoveMCPResponse) GetSuccess() bool {
@@ -2268,51 +1626,6 @@ const file_proto_container_proto_rawDesc = "" +
 	"\n" +
 	"session_id\x18\x03 \x01(\tR\tsessionId\",\n" +
 	"\x10StopTaskResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xf3\x01\n" +
-	"\x12CreateSkillRequest\x12!\n" +
-	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
-	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x1d\n" +
-	"\n" +
-	"skill_name\x18\x03 \x01(\tR\tskillName\x12C\n" +
-	"\bmetadata\x18\x04 \x03(\v2'.labor.CreateSkillRequest.MetadataEntryR\bmetadata\x1a;\n" +
-	"\rMetadataEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"0\n" +
-	"\x13CreateSkillResponse\x12\x19\n" +
-	"\bskill_id\x18\x01 \x01(\tR\askillId\"n\n" +
-	"\x13DisableSkillRequest\x12!\n" +
-	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
-	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x19\n" +
-	"\bskill_id\x18\x03 \x01(\tR\askillId\"0\n" +
-	"\x14DisableSkillResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"m\n" +
-	"\x12RemoveSkillRequest\x12!\n" +
-	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
-	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x19\n" +
-	"\bskill_id\x18\x03 \x01(\tR\askillId\"/\n" +
-	"\x13RemoveSkillResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xef\x01\n" +
-	"\x11CreateToolRequest\x12!\n" +
-	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
-	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x1b\n" +
-	"\ttool_name\x18\x03 \x01(\tR\btoolName\x12B\n" +
-	"\bmetadata\x18\x04 \x03(\v2&.labor.CreateToolRequest.MetadataEntryR\bmetadata\x1a;\n" +
-	"\rMetadataEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"-\n" +
-	"\x12CreateToolResponse\x12\x17\n" +
-	"\atool_id\x18\x01 \x01(\tR\x06toolId\"k\n" +
-	"\x12DisableToolRequest\x12!\n" +
-	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
-	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x17\n" +
-	"\atool_id\x18\x03 \x01(\tR\x06toolId\"/\n" +
-	"\x13DisableToolResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"j\n" +
-	"\x11RemoveToolRequest\x12!\n" +
-	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
-	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x17\n" +
-	"\atool_id\x18\x03 \x01(\tR\x06toolId\".\n" +
-	"\x12RemoveToolResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xeb\x01\n" +
 	"\x10CreateMCPRequest\x12!\n" +
 	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
@@ -2335,7 +1648,7 @@ const file_proto_container_proto_rawDesc = "" +
 	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x15\n" +
 	"\x06mcp_id\x18\x03 \x01(\tR\x05mcpId\"-\n" +
 	"\x11RemoveMCPResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess2\x85\v\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess2\xe4\a\n" +
 	"\x10ContainerService\x12G\n" +
 	"\fStartService\x12\x1a.labor.StartServiceRequest\x1a\x1b.labor.StartServiceResponse\x12D\n" +
 	"\vStopService\x12\x19.labor.StopServiceRequest\x1a\x1a.labor.StopServiceResponse\x12M\n" +
@@ -2346,15 +1659,7 @@ const file_proto_container_proto_rawDesc = "" +
 	"\rRemoveSession\x12\x1b.labor.RemoveSessionRequest\x1a\x1c.labor.RemoveSessionResponse\x12P\n" +
 	"\x0fCompressSession\x12\x1d.labor.CompressSessionRequest\x1a\x1e.labor.CompressSessionResponse\x12a\n" +
 	"\x14SendMessageToSession\x12\".labor.SendMessageToSessionRequest\x1a#.labor.SendMessageToSessionResponse0\x01\x12;\n" +
-	"\bStopTask\x12\x16.labor.StopTaskRequest\x1a\x17.labor.StopTaskResponse\x12D\n" +
-	"\vCreateSkill\x12\x19.labor.CreateSkillRequest\x1a\x1a.labor.CreateSkillResponse\x12G\n" +
-	"\fDisableSkill\x12\x1a.labor.DisableSkillRequest\x1a\x1b.labor.DisableSkillResponse\x12D\n" +
-	"\vRemoveSkill\x12\x19.labor.RemoveSkillRequest\x1a\x1a.labor.RemoveSkillResponse\x12A\n" +
-	"\n" +
-	"CreateTool\x12\x18.labor.CreateToolRequest\x1a\x19.labor.CreateToolResponse\x12D\n" +
-	"\vDisableTool\x12\x19.labor.DisableToolRequest\x1a\x1a.labor.DisableToolResponse\x12A\n" +
-	"\n" +
-	"RemoveTool\x12\x18.labor.RemoveToolRequest\x1a\x19.labor.RemoveToolResponse\x12>\n" +
+	"\bStopTask\x12\x16.labor.StopTaskRequest\x1a\x17.labor.StopTaskResponse\x12>\n" +
 	"\tCreateMCP\x12\x17.labor.CreateMCPRequest\x1a\x18.labor.CreateMCPResponse\x12A\n" +
 	"\n" +
 	"DisableMCP\x12\x18.labor.DisableMCPRequest\x1a\x19.labor.DisableMCPResponse\x12>\n" +
@@ -2373,7 +1678,7 @@ func file_proto_container_proto_rawDescGZIP() []byte {
 	return file_proto_container_proto_rawDescData
 }
 
-var file_proto_container_proto_msgTypes = make([]protoimpl.MessageInfo, 42)
+var file_proto_container_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
 var file_proto_container_proto_goTypes = []any{
 	(*StartServiceRequest)(nil),          // 0: labor.StartServiceRequest
 	(*StartServiceResponse)(nil),         // 1: labor.StartServiceResponse
@@ -2396,76 +1701,48 @@ var file_proto_container_proto_goTypes = []any{
 	(*SendMessageToSessionResponse)(nil), // 18: labor.SendMessageToSessionResponse
 	(*StopTaskRequest)(nil),              // 19: labor.StopTaskRequest
 	(*StopTaskResponse)(nil),             // 20: labor.StopTaskResponse
-	(*CreateSkillRequest)(nil),           // 21: labor.CreateSkillRequest
-	(*CreateSkillResponse)(nil),          // 22: labor.CreateSkillResponse
-	(*DisableSkillRequest)(nil),          // 23: labor.DisableSkillRequest
-	(*DisableSkillResponse)(nil),         // 24: labor.DisableSkillResponse
-	(*RemoveSkillRequest)(nil),           // 25: labor.RemoveSkillRequest
-	(*RemoveSkillResponse)(nil),          // 26: labor.RemoveSkillResponse
-	(*CreateToolRequest)(nil),            // 27: labor.CreateToolRequest
-	(*CreateToolResponse)(nil),           // 28: labor.CreateToolResponse
-	(*DisableToolRequest)(nil),           // 29: labor.DisableToolRequest
-	(*DisableToolResponse)(nil),          // 30: labor.DisableToolResponse
-	(*RemoveToolRequest)(nil),            // 31: labor.RemoveToolRequest
-	(*RemoveToolResponse)(nil),           // 32: labor.RemoveToolResponse
-	(*CreateMCPRequest)(nil),             // 33: labor.CreateMCPRequest
-	(*CreateMCPResponse)(nil),            // 34: labor.CreateMCPResponse
-	(*DisableMCPRequest)(nil),            // 35: labor.DisableMCPRequest
-	(*DisableMCPResponse)(nil),           // 36: labor.DisableMCPResponse
-	(*RemoveMCPRequest)(nil),             // 37: labor.RemoveMCPRequest
-	(*RemoveMCPResponse)(nil),            // 38: labor.RemoveMCPResponse
-	nil,                                  // 39: labor.CreateSkillRequest.MetadataEntry
-	nil,                                  // 40: labor.CreateToolRequest.MetadataEntry
-	nil,                                  // 41: labor.CreateMCPRequest.MetadataEntry
+	(*CreateMCPRequest)(nil),             // 21: labor.CreateMCPRequest
+	(*CreateMCPResponse)(nil),            // 22: labor.CreateMCPResponse
+	(*DisableMCPRequest)(nil),            // 23: labor.DisableMCPRequest
+	(*DisableMCPResponse)(nil),           // 24: labor.DisableMCPResponse
+	(*RemoveMCPRequest)(nil),             // 25: labor.RemoveMCPRequest
+	(*RemoveMCPResponse)(nil),            // 26: labor.RemoveMCPResponse
+	nil,                                  // 27: labor.CreateMCPRequest.MetadataEntry
 }
 var file_proto_container_proto_depIdxs = []int32{
 	11, // 0: labor.GetOrCreateSessionResponse.messages:type_name -> labor.Message
-	39, // 1: labor.CreateSkillRequest.metadata:type_name -> labor.CreateSkillRequest.MetadataEntry
-	40, // 2: labor.CreateToolRequest.metadata:type_name -> labor.CreateToolRequest.MetadataEntry
-	41, // 3: labor.CreateMCPRequest.metadata:type_name -> labor.CreateMCPRequest.MetadataEntry
-	0,  // 4: labor.ContainerService.StartService:input_type -> labor.StartServiceRequest
-	2,  // 5: labor.ContainerService.StopService:input_type -> labor.StopServiceRequest
-	4,  // 6: labor.ContainerService.RestartService:input_type -> labor.RestartServiceRequest
-	6,  // 7: labor.ContainerService.RemoveService:input_type -> labor.RemoveServiceRequest
-	8,  // 8: labor.ContainerService.BackupService:input_type -> labor.BackupServiceRequest
-	10, // 9: labor.ContainerService.GetOrCreateSession:input_type -> labor.GetOrCreateSessionRequest
-	15, // 10: labor.ContainerService.RemoveSession:input_type -> labor.RemoveSessionRequest
-	13, // 11: labor.ContainerService.CompressSession:input_type -> labor.CompressSessionRequest
-	17, // 12: labor.ContainerService.SendMessageToSession:input_type -> labor.SendMessageToSessionRequest
-	19, // 13: labor.ContainerService.StopTask:input_type -> labor.StopTaskRequest
-	21, // 14: labor.ContainerService.CreateSkill:input_type -> labor.CreateSkillRequest
-	23, // 15: labor.ContainerService.DisableSkill:input_type -> labor.DisableSkillRequest
-	25, // 16: labor.ContainerService.RemoveSkill:input_type -> labor.RemoveSkillRequest
-	27, // 17: labor.ContainerService.CreateTool:input_type -> labor.CreateToolRequest
-	29, // 18: labor.ContainerService.DisableTool:input_type -> labor.DisableToolRequest
-	31, // 19: labor.ContainerService.RemoveTool:input_type -> labor.RemoveToolRequest
-	33, // 20: labor.ContainerService.CreateMCP:input_type -> labor.CreateMCPRequest
-	35, // 21: labor.ContainerService.DisableMCP:input_type -> labor.DisableMCPRequest
-	37, // 22: labor.ContainerService.RemoveMCP:input_type -> labor.RemoveMCPRequest
-	1,  // 23: labor.ContainerService.StartService:output_type -> labor.StartServiceResponse
-	3,  // 24: labor.ContainerService.StopService:output_type -> labor.StopServiceResponse
-	5,  // 25: labor.ContainerService.RestartService:output_type -> labor.RestartServiceResponse
-	7,  // 26: labor.ContainerService.RemoveService:output_type -> labor.RemoveServiceResponse
-	9,  // 27: labor.ContainerService.BackupService:output_type -> labor.BackupServiceResponse
-	12, // 28: labor.ContainerService.GetOrCreateSession:output_type -> labor.GetOrCreateSessionResponse
-	16, // 29: labor.ContainerService.RemoveSession:output_type -> labor.RemoveSessionResponse
-	14, // 30: labor.ContainerService.CompressSession:output_type -> labor.CompressSessionResponse
-	18, // 31: labor.ContainerService.SendMessageToSession:output_type -> labor.SendMessageToSessionResponse
-	20, // 32: labor.ContainerService.StopTask:output_type -> labor.StopTaskResponse
-	22, // 33: labor.ContainerService.CreateSkill:output_type -> labor.CreateSkillResponse
-	24, // 34: labor.ContainerService.DisableSkill:output_type -> labor.DisableSkillResponse
-	26, // 35: labor.ContainerService.RemoveSkill:output_type -> labor.RemoveSkillResponse
-	28, // 36: labor.ContainerService.CreateTool:output_type -> labor.CreateToolResponse
-	30, // 37: labor.ContainerService.DisableTool:output_type -> labor.DisableToolResponse
-	32, // 38: labor.ContainerService.RemoveTool:output_type -> labor.RemoveToolResponse
-	34, // 39: labor.ContainerService.CreateMCP:output_type -> labor.CreateMCPResponse
-	36, // 40: labor.ContainerService.DisableMCP:output_type -> labor.DisableMCPResponse
-	38, // 41: labor.ContainerService.RemoveMCP:output_type -> labor.RemoveMCPResponse
-	23, // [23:42] is the sub-list for method output_type
-	4,  // [4:23] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	27, // 1: labor.CreateMCPRequest.metadata:type_name -> labor.CreateMCPRequest.MetadataEntry
+	0,  // 2: labor.ContainerService.StartService:input_type -> labor.StartServiceRequest
+	2,  // 3: labor.ContainerService.StopService:input_type -> labor.StopServiceRequest
+	4,  // 4: labor.ContainerService.RestartService:input_type -> labor.RestartServiceRequest
+	6,  // 5: labor.ContainerService.RemoveService:input_type -> labor.RemoveServiceRequest
+	8,  // 6: labor.ContainerService.BackupService:input_type -> labor.BackupServiceRequest
+	10, // 7: labor.ContainerService.GetOrCreateSession:input_type -> labor.GetOrCreateSessionRequest
+	15, // 8: labor.ContainerService.RemoveSession:input_type -> labor.RemoveSessionRequest
+	13, // 9: labor.ContainerService.CompressSession:input_type -> labor.CompressSessionRequest
+	17, // 10: labor.ContainerService.SendMessageToSession:input_type -> labor.SendMessageToSessionRequest
+	19, // 11: labor.ContainerService.StopTask:input_type -> labor.StopTaskRequest
+	21, // 12: labor.ContainerService.CreateMCP:input_type -> labor.CreateMCPRequest
+	23, // 13: labor.ContainerService.DisableMCP:input_type -> labor.DisableMCPRequest
+	25, // 14: labor.ContainerService.RemoveMCP:input_type -> labor.RemoveMCPRequest
+	1,  // 15: labor.ContainerService.StartService:output_type -> labor.StartServiceResponse
+	3,  // 16: labor.ContainerService.StopService:output_type -> labor.StopServiceResponse
+	5,  // 17: labor.ContainerService.RestartService:output_type -> labor.RestartServiceResponse
+	7,  // 18: labor.ContainerService.RemoveService:output_type -> labor.RemoveServiceResponse
+	9,  // 19: labor.ContainerService.BackupService:output_type -> labor.BackupServiceResponse
+	12, // 20: labor.ContainerService.GetOrCreateSession:output_type -> labor.GetOrCreateSessionResponse
+	16, // 21: labor.ContainerService.RemoveSession:output_type -> labor.RemoveSessionResponse
+	14, // 22: labor.ContainerService.CompressSession:output_type -> labor.CompressSessionResponse
+	18, // 23: labor.ContainerService.SendMessageToSession:output_type -> labor.SendMessageToSessionResponse
+	20, // 24: labor.ContainerService.StopTask:output_type -> labor.StopTaskResponse
+	22, // 25: labor.ContainerService.CreateMCP:output_type -> labor.CreateMCPResponse
+	24, // 26: labor.ContainerService.DisableMCP:output_type -> labor.DisableMCPResponse
+	26, // 27: labor.ContainerService.RemoveMCP:output_type -> labor.RemoveMCPResponse
+	15, // [15:28] is the sub-list for method output_type
+	2,  // [2:15] is the sub-list for method input_type
+	2,  // [2:2] is the sub-list for extension type_name
+	2,  // [2:2] is the sub-list for extension extendee
+	0,  // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_proto_container_proto_init() }
@@ -2479,7 +1756,7 @@ func file_proto_container_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_container_proto_rawDesc), len(file_proto_container_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   42,
+			NumMessages:   28,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
