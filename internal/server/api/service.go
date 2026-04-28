@@ -8,7 +8,7 @@ import (
 	"log/slog"
 )
 
-// StopService 启动服务
+// StartService 启动服务
 func (s *ContainerServer) StartService(ctx context.Context, req *pb.StartServiceRequest) (*pb.StartServiceResponse, error) {
 	slog.Info("StartService request received", "container_id", req.ContainerId, "agent_id", req.AgentId)
 
