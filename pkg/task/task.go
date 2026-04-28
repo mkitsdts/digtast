@@ -75,7 +75,7 @@ func UpdateStatus(sessionid, taskid string, status string) {
 	globalTaskManager.is_dirty = true
 }
 
-func CreateStep(sessionid, taskid string, cfg StepConfig) *model.Step {
+func CreateStep(taskid, sessionid string, cfg StepConfig) *model.Step {
 	globalTaskManager.mux.Lock()
 	defer globalTaskManager.mux.Unlock()
 	if _, ok := globalTaskManager.Tasks[sessionid]; !ok {

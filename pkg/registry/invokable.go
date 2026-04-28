@@ -4,6 +4,7 @@ import (
 	"context"
 	"digital-labor/pkg/model"
 	"digital-labor/pkg/task"
+	"errors"
 	"log/slog"
 
 	"github.com/cloudwego/eino/compose"
@@ -20,8 +21,9 @@ func Invokable(next compose.InvokableToolEndpoint) compose.InvokableToolEndpoint
 			Status: model.StatusRunning,
 			Input:  input,
 		})
-		if step != nil {
+		if step == nil {
 			slog.Error("failed to create step", "task_id", taskId, "session_id", sessionId)
+			return nil, errors.New("failed to create step")
 		}
 
 		// 调用真正的工具逻辑
