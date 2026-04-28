@@ -9,7 +9,7 @@ import (
 type Soul struct {
 }
 
-const agentSoulPrompt = `
+const prompt = `
 # Agent Soul: The Architect (Core)
 
 ## 1. Identity Definition
@@ -55,7 +55,7 @@ func (s *Soul) CreatePromptImpl() error {
 	}
 	defer file.Close()
 
-	_, err = file.WriteString(agentSoulPrompt)
+	_, err = file.WriteString(prompt)
 	return err
 }
 
@@ -68,7 +68,7 @@ func (s *Soul) GetPromptImpl() (string, error) {
 
 	content, err := os.ReadFile(fmt.Sprintf("%s/%s.md", workspacePath, prompt_name))
 	if err != nil {
-		return agentSoulPrompt, s.CreatePromptImpl()
+		return prompt, s.CreatePromptImpl()
 	}
 
 	return string(content), nil

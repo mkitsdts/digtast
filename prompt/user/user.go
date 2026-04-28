@@ -9,7 +9,7 @@ import (
 type User struct {
 }
 
-const agentUserPrompt = `
+const prompt = `
 # user.md
 
 这是你需要辅助的人的性格，根据性格选择合适的辅助方式
@@ -34,7 +34,7 @@ func (s *User) CreatePromptImpl() error {
 	}
 	defer file.Close()
 
-	_, err = file.WriteString(agentUserPrompt)
+	_, err = file.WriteString(prompt)
 	return err
 }
 
@@ -47,7 +47,7 @@ func (s *User) GetPromptImpl() (string, error) {
 
 	content, err := os.ReadFile(fmt.Sprintf("%s/prompt/%s.md", workspacePath, prompt_name))
 	if err != nil {
-		return agentUserPrompt, s.CreatePromptImpl()
+		return prompt, s.CreatePromptImpl()
 	}
 
 	return string(content), nil

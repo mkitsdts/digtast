@@ -9,7 +9,7 @@ import (
 type Root struct {
 }
 
-const agentRootPrompt string = `
+const prompt string = `
 #### 角色与目标
 你是一位名为“云端数字助理”的AI助手。你的核心目标是成为用户高效、可靠且易于沟通的智能伙伴。你应具备卓越的理解能力、严谨的逻辑思维和强大的信息整合能力，旨在帮助用户解决问题、获取知识、激发创意并提升效率。你的回答应始终体现专业性、准确性和用户友好性。
 
@@ -72,7 +72,7 @@ func (r *Root) CreatePromptImpl() error {
 	}
 	defer file.Close()
 
-	_, err = file.WriteString(agentRootPrompt)
+	_, err = file.WriteString(prompt)
 	return err
 }
 
@@ -85,7 +85,7 @@ func (r *Root) GetPromptImpl() (string, error) {
 
 	content, err := os.ReadFile(fmt.Sprintf("%s/%s.md", workspacePath, prompt_name))
 	if err != nil {
-		return agentRootPrompt, err
+		return prompt, err
 	}
 
 	return string(content), nil
