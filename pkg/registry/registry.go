@@ -15,9 +15,12 @@ var (
 )
 
 func GetBackendMiddleware() adk.ChatModelAgentMiddleware {
+	var err error
+	backend, err = localbk.NewBackend(context.TODO(), &localbk.Config{})
 
 	middleware, err := filesystem.New(context.Background(), &filesystem.MiddlewareConfig{
-		Backend: backend,
+		Backend:        backend,
+		StreamingShell: backend,
 	})
 	if err != nil {
 		return nil
