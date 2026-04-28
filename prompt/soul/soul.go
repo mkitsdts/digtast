@@ -66,7 +66,7 @@ func (s *Soul) GetPromptImpl() (string, error) {
 		return "", nil
 	}
 
-	content, err := os.ReadFile(fmt.Sprintf("%s/%s.md", workspacePath, prompt_name))
+	content, err := os.ReadFile(fmt.Sprintf("%s/prompt/%s.md", workspacePath, prompt_name))
 	if err != nil {
 		return prompt, s.CreatePromptImpl()
 	}
