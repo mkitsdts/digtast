@@ -42,6 +42,13 @@ func InitWorkspace() {
 		return
 	}
 
+	workspaceRoot := fmt.Sprintf("%s/workspace", path)
+	if err := os.MkdirAll(workspaceRoot, 0755); err != nil {
+		slog.Error("Failed to create workspace root", "path", workspaceRoot, "err", err)
+		return
+	}
+	conf.Conf.RootDir = workspaceRoot
+
 	// Load or create config.json
 	configPath := fmt.Sprintf("%s/config.json", path)
 	if err := conf.LoadConfig(configPath); err != nil {
