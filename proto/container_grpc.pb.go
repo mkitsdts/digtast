@@ -19,9 +19,15 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ContainerService_StartService_FullMethodName         = "/labor.v1.ContainerService/StartService"
-	ContainerService_StopService_FullMethodName          = "/labor.v1.ContainerService/StopService"
 	ContainerService_BackupService_FullMethodName        = "/labor.v1.ContainerService/BackupService"
+	ContainerService_StartFTPServer_FullMethodName       = "/labor.v1.ContainerService/StartFTPServer"
+	ContainerService_StopFTPServer_FullMethodName        = "/labor.v1.ContainerService/StopFTPServer"
+	ContainerService_StartVirtualDesktop_FullMethodName  = "/labor.v1.ContainerService/StartVirtualDesktop"
+	ContainerService_StopVirtualDesktop_FullMethodName   = "/labor.v1.ContainerService/StopVirtualDesktop"
+	ContainerService_CreateChatModel_FullMethodName      = "/labor.v1.ContainerService/CreateChatModel"
+	ContainerService_RemoveChatModel_FullMethodName      = "/labor.v1.ContainerService/RemoveChatModel"
+	ContainerService_CreateAgent_FullMethodName          = "/labor.v1.ContainerService/CreateAgent"
+	ContainerService_RemoveAgent_FullMethodName          = "/labor.v1.ContainerService/RemoveAgent"
 	ContainerService_GetOrCreateSession_FullMethodName   = "/labor.v1.ContainerService/GetOrCreateSession"
 	ContainerService_RemoveSession_FullMethodName        = "/labor.v1.ContainerService/RemoveSession"
 	ContainerService_CompressSession_FullMethodName      = "/labor.v1.ContainerService/CompressSession"
@@ -36,9 +42,19 @@ const (
 // 容器与会话管理服务
 type ContainerServiceClient interface {
 	// --- 容器相关 ---
-	StartService(ctx context.Context, in *StartServiceRequest, opts ...grpc.CallOption) (*StartServiceResponse, error)
-	StopService(ctx context.Context, in *StopServiceRequest, opts ...grpc.CallOption) (*StopServiceResponse, error)
-	BackupService(ctx context.Context, in *BackupServiceRequest, opts ...grpc.CallOption) (*BackupServiceResponse, error)
+	BackupService(ctx context.Context, in *BackupServiceRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[BackupServiceResponse], error)
+	// --- FTP相关 ---
+	StartFTPServer(ctx context.Context, in *StartFTPServerRequest, opts ...grpc.CallOption) (*StartFTPServerResponse, error)
+	StopFTPServer(ctx context.Context, in *StopFTPServerRequest, opts ...grpc.CallOption) (*StopFTPServerResponse, error)
+	// --- 虚拟桌面相关 ---
+	StartVirtualDesktop(ctx context.Context, in *StartVirtualDesktopRequest, opts ...grpc.CallOption) (*StartVirtualDesktopResponse, error)
+	StopVirtualDesktop(ctx context.Context, in *StopVirtualDesktopRequest, opts ...grpc.CallOption) (*StopVirtualDesktopResponse, error)
+	// --- 模型相关 ---
+	CreateChatModel(ctx context.Context, in *CreateChatModelRequest, opts ...grpc.CallOption) (*CreateChatModelResponse, error)
+	RemoveChatModel(ctx context.Context, in *RemoveChatModelRequest, opts ...grpc.CallOption) (*RemoveChatModelResponse, error)
+	// --- 智能体相关 ---
+	CreateAgent(ctx context.Context, in *CreateAgentRequest, opts ...grpc.CallOption) (*CreateAgentResponse, error)
+	RemoveAgent(ctx context.Context, in *RemoveAgentRequest, opts ...grpc.CallOption) (*RemoveAgentResponse, error)
 	// --- 会话相关 ---
 	GetOrCreateSession(ctx context.Context, in *GetOrCreateSessionRequest, opts ...grpc.CallOption) (*GetOrCreateSessionResponse, error)
 	RemoveSession(ctx context.Context, in *RemoveSessionRequest, opts ...grpc.CallOption) (*RemoveSessionResponse, error)
@@ -58,30 +74,99 @@ func NewContainerServiceClient(cc grpc.ClientConnInterface) ContainerServiceClie
 	return &containerServiceClient{cc}
 }
 
-func (c *containerServiceClient) StartService(ctx context.Context, in *StartServiceRequest, opts ...grpc.CallOption) (*StartServiceResponse, error) {
+func (c *containerServiceClient) BackupService(ctx context.Context, in *BackupServiceRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[BackupServiceResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(StartServiceResponse)
-	err := c.cc.Invoke(ctx, ContainerService_StartService_FullMethodName, in, out, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &ContainerService_ServiceDesc.Streams[0], ContainerService_BackupService_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[BackupServiceRequest, BackupServiceResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ContainerService_BackupServiceClient = grpc.ServerStreamingClient[BackupServiceResponse]
+
+func (c *containerServiceClient) StartFTPServer(ctx context.Context, in *StartFTPServerRequest, opts ...grpc.CallOption) (*StartFTPServerResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StartFTPServerResponse)
+	err := c.cc.Invoke(ctx, ContainerService_StartFTPServer_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *containerServiceClient) StopService(ctx context.Context, in *StopServiceRequest, opts ...grpc.CallOption) (*StopServiceResponse, error) {
+func (c *containerServiceClient) StopFTPServer(ctx context.Context, in *StopFTPServerRequest, opts ...grpc.CallOption) (*StopFTPServerResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(StopServiceResponse)
-	err := c.cc.Invoke(ctx, ContainerService_StopService_FullMethodName, in, out, cOpts...)
+	out := new(StopFTPServerResponse)
+	err := c.cc.Invoke(ctx, ContainerService_StopFTPServer_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *containerServiceClient) BackupService(ctx context.Context, in *BackupServiceRequest, opts ...grpc.CallOption) (*BackupServiceResponse, error) {
+func (c *containerServiceClient) StartVirtualDesktop(ctx context.Context, in *StartVirtualDesktopRequest, opts ...grpc.CallOption) (*StartVirtualDesktopResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(BackupServiceResponse)
-	err := c.cc.Invoke(ctx, ContainerService_BackupService_FullMethodName, in, out, cOpts...)
+	out := new(StartVirtualDesktopResponse)
+	err := c.cc.Invoke(ctx, ContainerService_StartVirtualDesktop_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *containerServiceClient) StopVirtualDesktop(ctx context.Context, in *StopVirtualDesktopRequest, opts ...grpc.CallOption) (*StopVirtualDesktopResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StopVirtualDesktopResponse)
+	err := c.cc.Invoke(ctx, ContainerService_StopVirtualDesktop_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *containerServiceClient) CreateChatModel(ctx context.Context, in *CreateChatModelRequest, opts ...grpc.CallOption) (*CreateChatModelResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateChatModelResponse)
+	err := c.cc.Invoke(ctx, ContainerService_CreateChatModel_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *containerServiceClient) RemoveChatModel(ctx context.Context, in *RemoveChatModelRequest, opts ...grpc.CallOption) (*RemoveChatModelResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RemoveChatModelResponse)
+	err := c.cc.Invoke(ctx, ContainerService_RemoveChatModel_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *containerServiceClient) CreateAgent(ctx context.Context, in *CreateAgentRequest, opts ...grpc.CallOption) (*CreateAgentResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateAgentResponse)
+	err := c.cc.Invoke(ctx, ContainerService_CreateAgent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *containerServiceClient) RemoveAgent(ctx context.Context, in *RemoveAgentRequest, opts ...grpc.CallOption) (*RemoveAgentResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RemoveAgentResponse)
+	err := c.cc.Invoke(ctx, ContainerService_RemoveAgent_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +205,7 @@ func (c *containerServiceClient) CompressSession(ctx context.Context, in *Compre
 
 func (c *containerServiceClient) SendMessageToSession(ctx context.Context, in *SendMessageToSessionRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[SendMessageToSessionResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &ContainerService_ServiceDesc.Streams[0], ContainerService_SendMessageToSession_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &ContainerService_ServiceDesc.Streams[1], ContainerService_SendMessageToSession_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -154,9 +239,19 @@ func (c *containerServiceClient) StopTask(ctx context.Context, in *StopTaskReque
 // 容器与会话管理服务
 type ContainerServiceServer interface {
 	// --- 容器相关 ---
-	StartService(context.Context, *StartServiceRequest) (*StartServiceResponse, error)
-	StopService(context.Context, *StopServiceRequest) (*StopServiceResponse, error)
-	BackupService(context.Context, *BackupServiceRequest) (*BackupServiceResponse, error)
+	BackupService(*BackupServiceRequest, grpc.ServerStreamingServer[BackupServiceResponse]) error
+	// --- FTP相关 ---
+	StartFTPServer(context.Context, *StartFTPServerRequest) (*StartFTPServerResponse, error)
+	StopFTPServer(context.Context, *StopFTPServerRequest) (*StopFTPServerResponse, error)
+	// --- 虚拟桌面相关 ---
+	StartVirtualDesktop(context.Context, *StartVirtualDesktopRequest) (*StartVirtualDesktopResponse, error)
+	StopVirtualDesktop(context.Context, *StopVirtualDesktopRequest) (*StopVirtualDesktopResponse, error)
+	// --- 模型相关 ---
+	CreateChatModel(context.Context, *CreateChatModelRequest) (*CreateChatModelResponse, error)
+	RemoveChatModel(context.Context, *RemoveChatModelRequest) (*RemoveChatModelResponse, error)
+	// --- 智能体相关 ---
+	CreateAgent(context.Context, *CreateAgentRequest) (*CreateAgentResponse, error)
+	RemoveAgent(context.Context, *RemoveAgentRequest) (*RemoveAgentResponse, error)
 	// --- 会话相关 ---
 	GetOrCreateSession(context.Context, *GetOrCreateSessionRequest) (*GetOrCreateSessionResponse, error)
 	RemoveSession(context.Context, *RemoveSessionRequest) (*RemoveSessionResponse, error)
@@ -176,14 +271,32 @@ type ContainerServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedContainerServiceServer struct{}
 
-func (UnimplementedContainerServiceServer) StartService(context.Context, *StartServiceRequest) (*StartServiceResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method StartService not implemented")
+func (UnimplementedContainerServiceServer) BackupService(*BackupServiceRequest, grpc.ServerStreamingServer[BackupServiceResponse]) error {
+	return status.Error(codes.Unimplemented, "method BackupService not implemented")
 }
-func (UnimplementedContainerServiceServer) StopService(context.Context, *StopServiceRequest) (*StopServiceResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method StopService not implemented")
+func (UnimplementedContainerServiceServer) StartFTPServer(context.Context, *StartFTPServerRequest) (*StartFTPServerResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method StartFTPServer not implemented")
 }
-func (UnimplementedContainerServiceServer) BackupService(context.Context, *BackupServiceRequest) (*BackupServiceResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method BackupService not implemented")
+func (UnimplementedContainerServiceServer) StopFTPServer(context.Context, *StopFTPServerRequest) (*StopFTPServerResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method StopFTPServer not implemented")
+}
+func (UnimplementedContainerServiceServer) StartVirtualDesktop(context.Context, *StartVirtualDesktopRequest) (*StartVirtualDesktopResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method StartVirtualDesktop not implemented")
+}
+func (UnimplementedContainerServiceServer) StopVirtualDesktop(context.Context, *StopVirtualDesktopRequest) (*StopVirtualDesktopResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method StopVirtualDesktop not implemented")
+}
+func (UnimplementedContainerServiceServer) CreateChatModel(context.Context, *CreateChatModelRequest) (*CreateChatModelResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateChatModel not implemented")
+}
+func (UnimplementedContainerServiceServer) RemoveChatModel(context.Context, *RemoveChatModelRequest) (*RemoveChatModelResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RemoveChatModel not implemented")
+}
+func (UnimplementedContainerServiceServer) CreateAgent(context.Context, *CreateAgentRequest) (*CreateAgentResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateAgent not implemented")
+}
+func (UnimplementedContainerServiceServer) RemoveAgent(context.Context, *RemoveAgentRequest) (*RemoveAgentResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RemoveAgent not implemented")
 }
 func (UnimplementedContainerServiceServer) GetOrCreateSession(context.Context, *GetOrCreateSessionRequest) (*GetOrCreateSessionResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetOrCreateSession not implemented")
@@ -221,56 +334,157 @@ func RegisterContainerServiceServer(s grpc.ServiceRegistrar, srv ContainerServic
 	s.RegisterService(&ContainerService_ServiceDesc, srv)
 }
 
-func _ContainerService_StartService_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StartServiceRequest)
+func _ContainerService_BackupService_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(BackupServiceRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ContainerServiceServer).BackupService(m, &grpc.GenericServerStream[BackupServiceRequest, BackupServiceResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ContainerService_BackupServiceServer = grpc.ServerStreamingServer[BackupServiceResponse]
+
+func _ContainerService_StartFTPServer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StartFTPServerRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ContainerServiceServer).StartService(ctx, in)
+		return srv.(ContainerServiceServer).StartFTPServer(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ContainerService_StartService_FullMethodName,
+		FullMethod: ContainerService_StartFTPServer_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).StartService(ctx, req.(*StartServiceRequest))
+		return srv.(ContainerServiceServer).StartFTPServer(ctx, req.(*StartFTPServerRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ContainerService_StopService_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StopServiceRequest)
+func _ContainerService_StopFTPServer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StopFTPServerRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ContainerServiceServer).StopService(ctx, in)
+		return srv.(ContainerServiceServer).StopFTPServer(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ContainerService_StopService_FullMethodName,
+		FullMethod: ContainerService_StopFTPServer_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).StopService(ctx, req.(*StopServiceRequest))
+		return srv.(ContainerServiceServer).StopFTPServer(ctx, req.(*StopFTPServerRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ContainerService_BackupService_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BackupServiceRequest)
+func _ContainerService_StartVirtualDesktop_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StartVirtualDesktopRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ContainerServiceServer).BackupService(ctx, in)
+		return srv.(ContainerServiceServer).StartVirtualDesktop(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ContainerService_BackupService_FullMethodName,
+		FullMethod: ContainerService_StartVirtualDesktop_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).BackupService(ctx, req.(*BackupServiceRequest))
+		return srv.(ContainerServiceServer).StartVirtualDesktop(ctx, req.(*StartVirtualDesktopRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContainerService_StopVirtualDesktop_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StopVirtualDesktopRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).StopVirtualDesktop(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_StopVirtualDesktop_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).StopVirtualDesktop(ctx, req.(*StopVirtualDesktopRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContainerService_CreateChatModel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateChatModelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).CreateChatModel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_CreateChatModel_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).CreateChatModel(ctx, req.(*CreateChatModelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContainerService_RemoveChatModel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveChatModelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).RemoveChatModel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_RemoveChatModel_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).RemoveChatModel(ctx, req.(*RemoveChatModelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContainerService_CreateAgent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateAgentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).CreateAgent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_CreateAgent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).CreateAgent(ctx, req.(*CreateAgentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContainerService_RemoveAgent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveAgentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).RemoveAgent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_RemoveAgent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).RemoveAgent(ctx, req.(*RemoveAgentRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -366,16 +580,36 @@ var ContainerService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ContainerServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "StartService",
-			Handler:    _ContainerService_StartService_Handler,
+			MethodName: "StartFTPServer",
+			Handler:    _ContainerService_StartFTPServer_Handler,
 		},
 		{
-			MethodName: "StopService",
-			Handler:    _ContainerService_StopService_Handler,
+			MethodName: "StopFTPServer",
+			Handler:    _ContainerService_StopFTPServer_Handler,
 		},
 		{
-			MethodName: "BackupService",
-			Handler:    _ContainerService_BackupService_Handler,
+			MethodName: "StartVirtualDesktop",
+			Handler:    _ContainerService_StartVirtualDesktop_Handler,
+		},
+		{
+			MethodName: "StopVirtualDesktop",
+			Handler:    _ContainerService_StopVirtualDesktop_Handler,
+		},
+		{
+			MethodName: "CreateChatModel",
+			Handler:    _ContainerService_CreateChatModel_Handler,
+		},
+		{
+			MethodName: "RemoveChatModel",
+			Handler:    _ContainerService_RemoveChatModel_Handler,
+		},
+		{
+			MethodName: "CreateAgent",
+			Handler:    _ContainerService_CreateAgent_Handler,
+		},
+		{
+			MethodName: "RemoveAgent",
+			Handler:    _ContainerService_RemoveAgent_Handler,
 		},
 		{
 			MethodName: "GetOrCreateSession",
@@ -395,6 +629,11 @@ var ContainerService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "BackupService",
+			Handler:       _ContainerService_BackupService_Handler,
+			ServerStreams: true,
+		},
 		{
 			StreamName:    "SendMessageToSession",
 			Handler:       _ContainerService_SendMessageToSession_Handler,

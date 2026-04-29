@@ -7,9 +7,23 @@ option go_package = "labor.v1";
 // 容器与会话管理服务
 service ContainerService {
   // --- 容器相关 ---
-  rpc StartService(StartServiceRequest) returns (StartServiceResponse);
-  rpc StopService(StopServiceRequest) returns (StopServiceResponse);
-  rpc BackupService(BackupServiceRequest) returns (BackupServiceResponse);
+  rpc BackupService(BackupServiceRequest) returns (stream BackupServiceResponse);
+
+  // --- FTP相关 ---
+  rpc StartFTPServer(StartFTPServerRequest) returns (StartFTPServerResponse);
+  rpc StopFTPServer(StopFTPServerRequest) returns (StopFTPServerResponse);
+
+  // --- 虚拟桌面相关 ---
+  rpc StartVirtualDesktop(StartVirtualDesktopRequest) returns (StartVirtualDesktopResponse);
+  rpc StopVirtualDesktop(StopVirtualDesktopRequest) returns (StopVirtualDesktopResponse);
+
+  // --- 模型相关 ---
+  rpc CreateChatModel(CreateChatModelRequest) returns (CreateChatModelResponse);
+  rpc RemoveChatModel(RemoveChatModelRequest) returns (RemoveChatModelResponse);
+
+  // --- 智能体相关 ---
+  rpc CreateAgent(CreateAgentRequest) returns (CreateAgentResponse);
+  rpc RemoveAgent(RemoveAgentRequest) returns (RemoveAgentResponse);
 
   // --- 会话相关 ---
   rpc GetOrCreateSession(GetOrCreateSessionRequest) returns (GetOrCreateSessionResponse);
@@ -25,48 +39,93 @@ service ContainerService {
 }
 
 // --- 消息定义 (遵循唯一性原则) ---
-
-message StartServiceRequest {
-  string container_id = 1;
-  string agent_id = 2;
-  string agent_name = 3;
-  string key = 4;
-  string url = 5;
-  string model_name = 6;
-  string provider = 7;
-  string agent_kind = 8;
-  bool vnc_enabled = 9;
-  bool ftp_enabled = 10;
-}
-message StartServiceResponse {
-  int32 visual_display_port = 1;
-  int32 ftp_port = 2;
-  bool success = 3;
-}
-
-// Service Messages
-message StopServiceRequest {
-  string container_id = 1;
-  string agent_id = 2;
-  string session_id = 3;
-}
-message StopServiceResponse {
-  bool success = 1;
-}
-
-message BackupServiceRequest {
-  string container_id = 1;
-  string agent_id = 2;
-}
+message BackupServiceRequest {}
 message BackupServiceResponse {
-  string backup_url = 1;
+  bytes data = 1; // 文件块的实际二进制数据
+  int32 chunk_number = 2; // 文件块的序号，可选
+}
+
+// --- FTP相关 ---
+message StartFTPServerRequest {
+  string agent_name = 1; // 需要启动 FTP 的数字助理名称
+}
+message StartFTPServerResponse {
+  bool success = 1;
+  int32 ftp_port = 2;
+  string message = 3;
+}
+message StopFTPServerRequest {
+  string agent_name = 1;
+}
+message StopFTPServerResponse {
+  bool success = 1;
+  string message = 3;
+}
+
+// --- 虚拟桌面相关 ---
+message StartVirtualDesktopRequest {
+  string agent_name = 1;
+}
+message StartVirtualDesktopResponse {
+  bool success = 1;
+  int32 vnc_port = 2;
+  string message = 3;
+}
+message StopVirtualDesktopRequest {
+  string agent_name = 1;
+  string container_id = 2;
+}
+message StopVirtualDesktopResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Model Messages
+message CreateChatModelRequest {
+  string model_name = 1;
+  string key = 2;
+  string base_url = 3;
+  string provider = 4;
+}
+message CreateChatModelResponse {
+  bool success = 1;
+  string chat_model_id = 2;
+  string message = 3;
+}
+
+message RemoveChatModelRequest {
+  string chat_model_id = 1;
+}
+message RemoveChatModelResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Agent Messages
+message CreateAgentRequest {
+  string agent_name = 1;
+  string chat_model_id = 2;
+}
+message CreateAgentResponse {
+  string agent_id = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+message RemoveAgentRequest {
+  string agent_id = 1;
+}
+message RemoveAgentResponse {
+  bool success = 1;
+  string message = 2;
 }
 
 // Session Messages
 message GetOrCreateSessionRequest {
-  string container_id = 1;
-  string agent_id = 2;
-  string session_id = 3;
+  string agent_id = 1;
+  string session_id = 2;
+  int32 page = 3;
+  int32 page_size = 4;
 }
 message Message {
   string role = 1;
@@ -80,31 +139,29 @@ message GetOrCreateSessionResponse {
 }
 
 message CompressSessionRequest {
-  string container_id = 1;
-  string agent_id = 2;
-  string session_id = 3;
+  string agent_id = 1;
+  string session_id = 2;
 }
 message CompressSessionResponse {
-  string session_id = 1;
-  bool success = 2;
+  bool success = 1;
+  string message = 2;
 }
 
 message RemoveSessionRequest {
-  string container_id = 1;
-  string agent_id = 2;
-  string session_id = 3;
+  string agent_id = 1;
+  string session_id = 2;
 }
 message RemoveSessionResponse {
   bool success = 1;
+  string message = 2;
 }
 
 // Dialogue Messages
 message SendMessageToSessionRequest {
-  string container_id = 1;
-  string agent_id = 2;
-  string session_id = 3;
-  string message = 4;
-  bool is_stream = 5;
+  string agent_id = 1;
+  string session_id = 2;
+  string message = 3;
+  bool is_stream = 4;
 }
 message SendMessageToSessionResponse {
   string delta_content = 1; // 流式返回时的片段内容
@@ -113,9 +170,7 @@ message SendMessageToSessionResponse {
 
 // Task Messages
 message StopTaskRequest {
-  string container_id = 1;
-  string agent_id = 2;
-  string session_id = 3;
+  string agent_id = 1;
 }
 message StopTaskResponse {
   bool success = 1;
