@@ -51,6 +51,12 @@ type ModelConfig struct {
 
 // FindModelConfig searches all configured models for the given model name.
 func FindModelConfig(modelName string) (ModelConfig, bool) {
+	// 1. Try exact match on map key
+	if mCfg, ok := Conf.Models[modelName]; ok {
+		return mCfg, true
+	}
+
+	// 2. Try match within ModelNames list
 	for _, mCfg := range Conf.Models {
 		for _, name := range mCfg.ModelNames {
 			if name == modelName {
@@ -68,33 +74,42 @@ type LocalRunningStateConfig struct {
 
 var Conf Config
 
-func LoadConfig(configPath string) error {
-	data, err := os.ReadFile(configPath)
+func init() {
+	homedir, _ := os.UserHomeDir()
+	Conf.WorkSpaceDir = filepath.Join(homedir, ".digtast")
+}
+
+func LoadConfig() error {
+	path := filepath.Join(Conf.WorkSpaceDir, "config.json")
+	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			slog.Info("Config file not found, using default config", "path", configPath)
+			slog.Info("Config file not found, using default config", "name", path)
 			Conf = DefaultConfig()
-			return SaveConfig(configPath)
+			return SaveConfig()
 		}
 		return err
 	}
 
 	err = json.Unmarshal(data, &Conf)
 	if err != nil {
-		return err
+		slog.Info("Config file parse failed, using default config", "name", path)
+		Conf = DefaultConfig()
+		return SaveConfig()
 	}
+	slog.Info("config loaded", "config", Conf)
 	return nil
 }
 
-func SaveConfig(name string) error {
-	configPath := filepath.Join(Conf.WorkSpaceDir, name, "config.json")
+func SaveConfig() error {
+	configPath := filepath.Join(Conf.WorkSpaceDir, "config.json")
 
 	dir := filepath.Dir(configPath)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
 
-	data, err := json.MarshalIndent(Conf, "", "  ")
+	data, err := json.MarshalIndent(&Conf, "", "  ")
 	if err != nil {
 		return err
 	}

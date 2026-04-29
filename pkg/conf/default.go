@@ -1,8 +1,22 @@
 package conf
 
+import (
+	"os"
+	"path"
+)
+
 func DefaultConfig() Config {
+	workspacePath, _ := os.UserHomeDir()
+
+	if workspacePath == "" {
+		workspacePath, _ = os.Getwd()
+	}
+
+	workspacePath = path.Join(workspacePath, "/.digtast")
+
 	return Config{
-		Mode: "local",
+		WorkSpaceDir: workspacePath,
+		Mode:         "local",
 		Memory: MemoryConfig{
 			MaxMessagesSize: 10 * 1024 * 1024, // 10MB
 		},

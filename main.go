@@ -21,7 +21,7 @@ func main() {
 	// 1. Get workspace path and load config
 	wp := workspace.GetWorkspacePath()
 	configPath := filepath.Join(wp, "config.json")
-	if err := conf.LoadConfig(configPath); err != nil {
+	if err := conf.LoadConfig(); err != nil {
 		panic(fmt.Sprintf("Failed to load config from %s: %v", configPath, err))
 	}
 
