@@ -6,7 +6,7 @@ import (
 )
 
 func TestVisualDisplayManager(t *testing.T) {
-	vdm := GetVisualDisplayManager()
+	vdm := NewVisualDisplayManager()
 	if vdm == nil {
 		t.Log("vdm is nil")
 	} else {
@@ -15,7 +15,7 @@ func TestVisualDisplayManager(t *testing.T) {
 }
 
 func TestVisualDisplayManagerDisplays(t *testing.T) {
-	vdm := GetVisualDisplayManager()
+	vdm := NewVisualDisplayManager()
 	if vdm == nil {
 		t.Log("vdm is nil")
 	} else {

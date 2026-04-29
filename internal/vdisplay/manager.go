@@ -2,10 +2,11 @@ package vdisplay
 
 import (
 	"digital-labor/pkg/model"
+	vd "digital-labor/pkg/vdisplay"
 )
 
 type VisualDisplayManager struct {
-	visualDisplays map[string]VirtualDisplay
+	visualDisplays map[string]vd.VirtualDisplay
 }
 
 const (
@@ -14,14 +15,10 @@ const (
 	default_visual_display_kind = "vnc"
 )
 
-var (
-	vdm *VisualDisplayManager = &VisualDisplayManager{
-		visualDisplays: make(map[string]VirtualDisplay),
+func NewVisualDisplayManager() *VisualDisplayManager {
+	return &VisualDisplayManager{
+		visualDisplays: vd.GetVisualDisplay(),
 	}
-)
-
-func GetVisualDisplayManager() *VisualDisplayManager {
-	return vdm
 }
 
 // don't need mutex because the map finish initial before it being read
@@ -37,8 +34,4 @@ func (vdm *VisualDisplayManager) ShutdownVisualDisplay(req model.ShutdownDesktop
 		return vdm.visualDisplays[default_visual_display_kind].ShutdownDesktopDisplay(req)
 	}
 	return vdm.visualDisplays[req.Kind].ShutdownDesktopDisplay(req)
-}
-
-func Register(kind string, vd VirtualDisplay) {
-	GetVisualDisplayManager().visualDisplays[kind] = vd
 }
