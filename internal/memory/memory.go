@@ -2,6 +2,7 @@ package mem
 
 import (
 	"digital-labor/pkg/workspace"
+	"fmt"
 	"log/slog"
 	"sync"
 	"time"
@@ -24,7 +25,7 @@ type Store struct {
 }
 
 // NewStore creates an in-memory session store backed by the workspace memory store.
-func NewStore(agentIDs ...string) *Store {
+func NewStore(agentIDs ...string) (*Store, error) {
 	agentID := workspace.DefaultAgentID()
 	if len(agentIDs) > 0 && agentIDs[0] != "" {
 		agentID = agentIDs[0]
@@ -33,14 +34,14 @@ func NewStore(agentIDs ...string) *Store {
 	persist, err := workspace.DefaultMemoryStore()
 	if err != nil {
 		slog.Error("failed to open memory store", "error", err)
-		return nil
+		return nil, fmt.Errorf("failed to open memory store: %w", err)
 	}
 
 	return &Store{
 		agentID: agentID,
 		cache:   make(map[string]*Session),
 		persist: persist,
-	}
+	}, nil
 }
 
 // GetOrCreate returns the session for id, creating it if it does not exist.

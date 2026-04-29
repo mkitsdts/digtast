@@ -26,9 +26,9 @@ func TestMemory_CreateGetAppendListDelete(t *testing.T) {
 	// As a workaround, we test with the real NewStore() and unique IDs,
 	// but this pollutes the workspace directory. A better fix is to
 	// export a SetDir method or accept dir as NewStore parameter.
-	s := mem.NewStore()
-	if s == nil {
-		t.Skip("NewStore returned nil — workspace path unavailable")
+	s, err := mem.NewStore()
+	if err != nil {
+		t.Skipf("NewStore failed: %v", err)
 	}
 
 	id := "integration-test-" + time.Now().Format("20060102150405.000000")

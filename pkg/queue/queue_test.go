@@ -84,18 +84,22 @@ func TestEmpty(t *testing.T) {
 }
 
 func TestMessageQueue(t *testing.T) {
-	// MessageQueue will panic if Push/Pop on uninitialized key — this tests current behavior
 	mq := NewMessageQueue()
-	// Note: current implementation panics if key doesn't exist — this is a known issue
-	// Test documents expected behavior once fixed
-	defer func() {
-		if r := recover(); r == nil {
-			t.Fatal("expected panic on uninitialized key")
-		}
-	}()
-	mq.Push("nonexistent", &schema.Message{
-		Content: "1",
-	})
+
+	// Push to nonexistent key should be a no-op, not panic
+	mq.Push("nonexistent", &schema.Message{Content: "1"})
+
+	// Pop from nonexistent key should return nil, false
+	msg, ok := mq.Pop("nonexistent")
+	if ok || msg != nil {
+		t.Fatal("expected nil, false for Pop on nonexistent key")
+	}
+
+	// Front on nonexistent key should return nil, false
+	msg, ok = mq.Front("nonexistent")
+	if ok || msg != nil {
+		t.Fatal("expected nil, false for Front on nonexistent key")
+	}
 }
 
 func TestConcurrency_Queue(t *testing.T) {

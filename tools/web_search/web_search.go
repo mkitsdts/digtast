@@ -3,7 +3,6 @@ package websearch
 import (
 	"context"
 	"digital-labor/pkg/registry"
-	"log"
 	"log/slog"
 
 	"github.com/cloudwego/eino-ext/components/tool/duckduckgo/ddgsearch"
@@ -20,12 +19,17 @@ func NewWebSearchTool() tool.InvokableTool {
 		Region:     duckduckgo.Region(ddgsearch.RegionCN),
 	})
 	if err != nil {
-		log.Fatalf("NewTool of duckduckgo failed, err=%v", err)
+		slog.Error("NewTool of duckduckgo failed", "err", err)
 	}
 	return searchTool
 }
 
 func init() {
-	registry.RegisterTool(NewWebSearchTool())
+	t := NewWebSearchTool()
+	if t == nil {
+		slog.Error("web_search tool not registered due to creation failure")
+		return
+	}
+	registry.RegisterTool(t)
 	slog.Info("web_search tool registered")
 }

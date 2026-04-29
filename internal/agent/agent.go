@@ -43,11 +43,16 @@ func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 		cfg.ID = uuid.New().String()
 	}
 
+	store, err := mem.NewStore(cfg.Name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create memory store: %w", err)
+	}
+
 	dga := &DigitalAgent{
 		prompts: NewPromptBuilder(),
 		ID:      cfg.ID,
 		Name:    cfg.Name,
-		memory:  mem.NewStore(cfg.Name),
+		memory:  store,
 	}
 
 	// Fetch model config from global config

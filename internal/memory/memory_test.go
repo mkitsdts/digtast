@@ -87,8 +87,12 @@ func TestGetOrCreate_LoadExisting(t *testing.T) {
 func TestList(t *testing.T) {
 	s := newTestStore(t)
 
-	s.GetOrCreate("sess-a")
-	s.GetOrCreate("sess-b")
+	if _, err := s.GetOrCreate("sess-a"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.GetOrCreate("sess-b"); err != nil {
+		t.Fatal(err)
+	}
 
 	metas, err := s.List()
 	if err != nil {
@@ -102,7 +106,9 @@ func TestList(t *testing.T) {
 func TestDelete(t *testing.T) {
 	s := newTestStore(t)
 
-	s.GetOrCreate("to-delete")
+	if _, err := s.GetOrCreate("to-delete"); err != nil {
+		t.Fatal(err)
+	}
 	if err := s.persist.PersistMessage("test-agent", "to-delete", &schema.Message{Role: schema.User, Content: "hello"}); err != nil {
 		t.Fatal(err)
 	}
@@ -124,8 +130,12 @@ func TestDelete(t *testing.T) {
 func TestDelete_EvictsCache(t *testing.T) {
 	s := newTestStore(t)
 
-	s.GetOrCreate("cache-del")
-	s.Delete("cache-del")
+	if _, err := s.GetOrCreate("cache-del"); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Delete("cache-del"); err != nil {
+		t.Fatal(err)
+	}
 
 	// After delete, GetOrCreate should return a new instance
 	sess, err := s.GetOrCreate("cache-del")
@@ -161,11 +171,14 @@ func TestConcurrency_GetOrCreate(t *testing.T) {
 }
 
 func TestNewStore_Default(t *testing.T) {
-	// Documents that NewStore() uses global workspace path and returns nil on failure.
+	// Documents that NewStore() uses global workspace path and returns error on failure.
 	// This test cannot run in isolation because dir is unexported in Store.
 	// The returned Store may use the user's home directory — a design issue to fix later.
-	s := NewStore()
+	s, err := NewStore()
+	if err != nil {
+		t.Skipf("NewStore failed: %v", err)
+	}
 	if s == nil {
-		t.Skip("NewStore returned nil, workspace path may be unavailable")
+		t.Fatal("expected non-nil store when err is nil")
 	}
 }

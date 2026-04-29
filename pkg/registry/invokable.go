@@ -13,8 +13,12 @@ import (
 func Invokable(next compose.InvokableToolEndpoint) compose.InvokableToolEndpoint {
 	return func(ctx context.Context, input *compose.ToolInput) (*compose.ToolOutput, error) {
 		// 前置处理
-		taskId := ctx.Value("task_id").(string)
-		sessionId := ctx.Value("session_id").(string)
+		taskId, _ := ctx.Value("task_id").(string)
+		sessionId, _ := ctx.Value("session_id").(string)
+		if taskId == "" || sessionId == "" {
+			slog.Error("missing context values for tool middleware", "task_id", taskId, "session_id", sessionId)
+			return nil, errors.New("task_id and session_id must be set in context")
+		}
 
 		// TODO: 如果后续加了子任务，需要判断任务名
 		step := task.CreateStep(taskId, sessionId, task.StepConfig{
