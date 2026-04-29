@@ -17,18 +17,16 @@ func newTestSessionWithFile(t *testing.T) (*Session, *workspace.MemoryStore) {
 	}
 	store := &Store{
 		agentID: "test-agent",
-		cache:   make(map[string]*Session),
 		persist: persist,
 	}
 
 	sess := &Session{
-		ID:        "test-sess",
 		AgentID:   "test-agent",
 		CreatedAt: time.Now(),
 		store:     store,
 		messages:  make([]*schema.Message, 0),
 	}
-	store.cache[sess.ID] = sess
+	store.session = sess
 	return sess, persist
 }
 
@@ -101,7 +99,7 @@ func TestTitle_Truncation(t *testing.T) {
 	sess.Append(&schema.Message{Role: schema.User, Content: longContent})
 
 	title := sess.Title()
-	if len([]rune(title)) > 63 { // 60 + "..."
+	if len([]rune(title)) > 63 {
 		t.Fatalf("expected truncated title, got length %d", len([]rune(title)))
 	}
 }
@@ -137,7 +135,7 @@ func TestAppend_PersistsToDisk(t *testing.T) {
 
 	sess.Append(&schema.Message{Role: schema.User, Content: "persisted"})
 
-	msgs, err := persist.LoadSession("test-agent", "test-sess")
+	msgs, err := persist.LoadSession("test-agent")
 	if err != nil {
 		t.Fatal(err)
 	}

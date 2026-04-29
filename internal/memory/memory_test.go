@@ -18,7 +18,6 @@ func newTestStore(t *testing.T) *Store {
 	}
 	return &Store{
 		agentID: "test-agent",
-		cache:   make(map[string]*Session),
 		persist: persist,
 	}
 }
@@ -26,12 +25,12 @@ func newTestStore(t *testing.T) *Store {
 func TestGetOrCreate_NewSession(t *testing.T) {
 	s := newTestStore(t)
 
-	sess, err := s.GetOrCreate("new-session-1")
+	sess, err := s.GetOrCreate()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if sess.ID != "new-session-1" {
-		t.Fatalf("expected ID 'new-session-1', got '%s'", sess.ID)
+	if sess.AgentID != "test-agent" {
+		t.Fatalf("expected AgentID 'test-agent', got '%s'", sess.AgentID)
 	}
 
 	if len(s.persist.ListSessions("test-agent")) != 1 {
@@ -42,12 +41,12 @@ func TestGetOrCreate_NewSession(t *testing.T) {
 func TestGetOrCreate_ReturnsCached(t *testing.T) {
 	s := newTestStore(t)
 
-	sess1, err := s.GetOrCreate("cached-session")
+	sess1, err := s.GetOrCreate()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	sess2, err := s.GetOrCreate("cached-session")
+	sess2, err := s.GetOrCreate()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -60,19 +59,19 @@ func TestGetOrCreate_ReturnsCached(t *testing.T) {
 func TestGetOrCreate_LoadExisting(t *testing.T) {
 	s := newTestStore(t)
 
-	if _, err := s.persist.NewSessionFile("test-agent", "existing"); err != nil {
+	if _, err := s.persist.NewSessionFile("test-agent"); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.persist.PersistMessage("test-agent", "existing", &schema.Message{Role: schema.User, Content: "hello"}); err != nil {
+	if err := s.persist.PersistMessage("test-agent", &schema.Message{Role: schema.User, Content: "hello"}); err != nil {
 		t.Fatal(err)
 	}
 
-	sess, err := s.GetOrCreate("existing")
+	sess, err := s.GetOrCreate()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if sess.ID != "existing" {
-		t.Fatalf("expected ID 'existing', got '%s'", sess.ID)
+	if sess.AgentID != "test-agent" {
+		t.Fatalf("expected AgentID 'test-agent', got '%s'", sess.AgentID)
 	}
 
 	msgs := sess.GetMessages()
@@ -84,36 +83,17 @@ func TestGetOrCreate_LoadExisting(t *testing.T) {
 	}
 }
 
-func TestList(t *testing.T) {
-	s := newTestStore(t)
-
-	if _, err := s.GetOrCreate("sess-a"); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := s.GetOrCreate("sess-b"); err != nil {
-		t.Fatal(err)
-	}
-
-	metas, err := s.List()
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(metas) != 2 {
-		t.Fatalf("expected 2 sessions, got %d", len(metas))
-	}
-}
-
 func TestDelete(t *testing.T) {
 	s := newTestStore(t)
 
-	if _, err := s.GetOrCreate("to-delete"); err != nil {
+	if _, err := s.GetOrCreate(); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.persist.PersistMessage("test-agent", "to-delete", &schema.Message{Role: schema.User, Content: "hello"}); err != nil {
+	if err := s.persist.PersistMessage("test-agent", &schema.Message{Role: schema.User, Content: "hello"}); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := s.Delete("to-delete"); err != nil {
+	if err := s.Delete(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
@@ -122,7 +102,7 @@ func TestDelete(t *testing.T) {
 	}
 
 	// Double delete should not error
-	if err := s.Delete("to-delete"); err != nil {
+	if err := s.Delete(); err != nil {
 		t.Fatalf("expected no error on double delete, got: %v", err)
 	}
 }
@@ -130,15 +110,15 @@ func TestDelete(t *testing.T) {
 func TestDelete_EvictsCache(t *testing.T) {
 	s := newTestStore(t)
 
-	if _, err := s.GetOrCreate("cache-del"); err != nil {
+	if _, err := s.GetOrCreate(); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.Delete("cache-del"); err != nil {
+	if err := s.Delete(); err != nil {
 		t.Fatal(err)
 	}
 
 	// After delete, GetOrCreate should return a new instance
-	sess, err := s.GetOrCreate("cache-del")
+	sess, err := s.GetOrCreate()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -154,7 +134,7 @@ func TestConcurrency_GetOrCreate(t *testing.T) {
 	done := make(chan bool, 50)
 	for i := 0; i < 50; i++ {
 		go func() {
-			sess, err := s.GetOrCreate("concurrent-session")
+			sess, err := s.GetOrCreate()
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
@@ -171,10 +151,7 @@ func TestConcurrency_GetOrCreate(t *testing.T) {
 }
 
 func TestNewStore_Default(t *testing.T) {
-	// Documents that NewStore() uses global workspace path and returns error on failure.
-	// This test cannot run in isolation because dir is unexported in Store.
-	// The returned Store may use the user's home directory — a design issue to fix later.
-	s, err := NewStore()
+	s, err := NewStore("")
 	if err != nil {
 		t.Skipf("NewStore failed: %v", err)
 	}
