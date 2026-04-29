@@ -6,8 +6,10 @@ import (
 	"digital-labor/internal/center"
 	"digital-labor/pkg/conf"
 	"digital-labor/pkg/model"
+	"digital-labor/pkg/workspace"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/google/uuid"
@@ -24,23 +26,42 @@ const (
 
 func RunLocalREPL() {
 	scanner := bufio.NewScanner(os.Stdin)
-	currentAgentID := ""
-	sessionID := uuid.New().String()
+	currentAgentID := conf.Conf.State.LastUsedAgent
+	sessionID := conf.Conf.State.LastSession
+
+	configPath := filepath.Join(workspace.GetWorkspacePath(), "config.json")
+
+	if sessionID == "" {
+		sessionID = uuid.New().String()
+		conf.Conf.State.LastSession = sessionID
+		conf.SaveConfig(configPath)
+	}
 
 	fmt.Printf("%s=== Digital Labor Local Interactive Mode ===%s\n", colorCyan, colorReset)
 	fmt.Println("Type '/ls' to list agents, '/use <id>' to switch, '/exit' to quit.")
 
-	// Auto-select first agent if available
-	if conf.Conf.State.LastUsedAgent != "" {
-		currentAgentID = conf.Conf.State.LastUsedAgent
-	}
-	_, err := center.AgentManager.GetAgent(currentAgentID)
+	// Auto-select agent if not set or invalid
+	ag, err := center.AgentManager.GetAgent(currentAgentID)
 	if err != nil {
 		ags := center.AgentManager.GetAgents()
 		if len(ags) == 0 {
-			fmt.Printf("%s[System] No agents found. Please create one via API or config first.%s\n", colorYellow, colorReset)
+			fmt.Printf("%s[System] No agents found. Please create one via '/new' or config first.%s\n", colorYellow, colorReset)
 		} else {
 			currentAgentID = ags[0].ID
+			conf.Conf.State.LastUsedAgent = currentAgentID
+			conf.SaveConfig(configPath)
+			ag = ags[0]
+		}
+	}
+
+	if currentAgentID != "" {
+		fmt.Printf("%s[System] Selected Agent: %s, Session: %s%s\n", colorGreen, currentAgentID, sessionID, colorReset)
+		// Try to load history if it exists
+		if ag != nil {
+			sess, _ := ag.GetSession(sessionID)
+			if sess != nil && len(sess.GetMessages()) > 0 {
+				fmt.Printf("%s[System] Loaded %d messages from history.%s\n", colorGreen, len(sess.GetMessages()), colorReset)
+			}
 		}
 	}
 
@@ -77,49 +98,135 @@ func RunLocalREPL() {
 						fmt.Printf("- %s (ID: %s)\n", ag.ID, ag.ID)
 					}
 				}
+			case "/use":
+				if len(parts) < 2 {
+					fmt.Println("Usage: /use <agent_id>")
+					continue
+				}
+				targetID := parts[1]
+				ag, err := center.AgentManager.GetAgent(targetID)
+				if err != nil {
+					fmt.Printf("%sError: Agent '%s' not found.%s\n", colorRed, targetID, colorReset)
+				} else {
+					currentAgentID = targetID
+					conf.Conf.State.LastUsedAgent = currentAgentID
+					conf.SaveConfig(configPath)
+					fmt.Printf("%sSwitched to agent '%s'.%s\n", colorGreen, currentAgentID, colorReset)
+
+					// Check history for the new agent in current session
+					sess, _ := ag.GetSession(sessionID)
+					if sess != nil && len(sess.GetMessages()) > 0 {
+						fmt.Printf("%s[System] Loaded %d messages from history.%s\n", colorGreen, len(sess.GetMessages()), colorReset)
+					}
+				}
 			case "/new":
 				fmt.Println("Creating new Agent (Interactive):")
-				fmt.Print("Enter ID (e.g., my-agent): ")
-				scanner.Scan()
-				id := strings.TrimSpace(scanner.Text())
-				fmt.Print("Enter Name: ")
+
+				fmt.Print("Enter Name (e.g., my-agent): ")
 				scanner.Scan()
 				name := strings.TrimSpace(scanner.Text())
-				fmt.Print("Enter LLM Provider (ark/openai/qwen/deepseek): ")
-				scanner.Scan()
-				provider := strings.TrimSpace(scanner.Text())
-				fmt.Print("Enter API Key: ")
-				scanner.Scan()
-				key := strings.TrimSpace(scanner.Text())
-				fmt.Print("Enter Model: ")
+
+				fmt.Print("Enter Model Name (from config.json, e.g., deepseek): ")
 				scanner.Scan()
 				modelName := strings.TrimSpace(scanner.Text())
-				fmt.Print("Enter Base URL: ")
+
+				fmt.Print("Enter Description: ")
 				scanner.Scan()
-				baseURL := strings.TrimSpace(scanner.Text())
+				description := strings.TrimSpace(scanner.Text())
 
 				cfg := &model.DigitalAgentConfig{
-					ID:       id,
-					Name:     name,
-					Provider: provider,
-					Key:      key,
-					Model:    modelName,
-					URL:      baseURL,
+					Name:        name,
+					Model:       modelName,
+					Description: description,
 				}
+
 				ag, err := center.AgentManager.CreateAgent(name, cfg)
 				if err != nil {
 					fmt.Printf("%sError creating agent: %v%s\n", colorRed, err, colorReset)
 				} else {
 					currentAgentID = ag.ID
-					fmt.Printf("%sAgent '%s' created and selected!%s\n", colorGreen, currentAgentID, colorReset)
+					conf.Conf.State.LastUsedAgent = currentAgentID
+					conf.SaveConfig(configPath)
+					fmt.Printf("%sAgent created! ID: %s, Name: %s%s\n", colorGreen, ag.ID, name, colorReset)
+				}
+			case "/model":
+				if len(parts) < 2 {
+					fmt.Println("Usage: /model <subcommand>")
+					fmt.Println("Subcommands: ls, add")
+					continue
+				}
+				subCmd := parts[1]
+				switch subCmd {
+				case "ls":
+					fmt.Println("Configured Providers & Models:")
+					for name, cfg := range conf.Conf.Models {
+						fmt.Printf("- Provider Config: %s\n", name)
+						fmt.Printf("  Provider: %s\n", cfg.Provider)
+						fmt.Printf("  Models: %s\n", strings.Join(cfg.ModelNames, ", "))
+					}
+				case "add":
+					fmt.Print("Enter Provider Config Name (e.g., my-openai): ")
+					scanner.Scan()
+					configName := strings.TrimSpace(scanner.Text())
+					fmt.Print("Enter LLM Provider (ark/openai/qwen/deepseek): ")
+					scanner.Scan()
+					provider := strings.TrimSpace(scanner.Text())
+					fmt.Print("Enter API Key: ")
+					scanner.Scan()
+					key := strings.TrimSpace(scanner.Text())
+					fmt.Print("Enter Model Names (comma separated, e.g., gpt-4,gpt-3.5-turbo): ")
+					scanner.Scan()
+					modelsInput := strings.TrimSpace(scanner.Text())
+					fmt.Print("Enter Base URL (optional): ")
+					scanner.Scan()
+					baseURL := strings.TrimSpace(scanner.Text())
+
+					modelNames := strings.Split(modelsInput, ",")
+					for i := range modelNames {
+						modelNames[i] = strings.TrimSpace(modelNames[i])
+					}
+
+					if conf.Conf.Models == nil {
+						conf.Conf.Models = make(map[string]conf.ModelConfig)
+					}
+					conf.Conf.Models[configName] = conf.ModelConfig{
+						Provider:   provider,
+						Key:        key,
+						ModelNames: modelNames,
+						URL:        baseURL,
+					}
+					conf.SaveConfig(configPath)
+					fmt.Printf("%sModel configuration '%s' saved!%s\n", colorGreen, configName, colorReset)
+				}
+			case "/session":
+				if len(parts) < 2 {
+					fmt.Printf("Current Session ID: %s\n", sessionID)
+					fmt.Println("To switch: /session <id>")
+					continue
+				}
+				sessionID = parts[1]
+				conf.Conf.State.LastSession = sessionID
+				conf.SaveConfig(configPath)
+				fmt.Printf("%sSwitched to session '%s'.%s\n", colorGreen, sessionID, colorReset)
+
+				// Check history
+				if currentAgentID != "" {
+					ag, _ := center.AgentManager.GetAgent(currentAgentID)
+					if ag != nil {
+						sess, _ := ag.GetSession(sessionID)
+						if sess != nil && len(sess.GetMessages()) > 0 {
+							fmt.Printf("%s[System] Loaded %d messages from history.%s\n", colorGreen, len(sess.GetMessages()), colorReset)
+						}
+					}
 				}
 			case "/help":
 				fmt.Println("Commands:")
-				fmt.Println("  /ls          - List all agents")
-				fmt.Println("  /new         - Create a new agent interactively")
-				fmt.Println("  /use <id>    - Switch to a different agent")
-				fmt.Println("  /exit        - Exit the application")
-				fmt.Println("  /help        - Show this help message")
+				fmt.Println("  /ls              - List all agents")
+				fmt.Println("  /new             - Create a new agent interactively")
+				fmt.Println("  /use <id>        - Switch to a different agent")
+				fmt.Println("  /session <id>    - Switch to a different session")
+				fmt.Println("  /exit            - Exit the application")
+				fmt.Println("  /help            - Show this help message")
 			default:
 				fmt.Printf("%sUnknown command: %s%s\n", colorRed, cmd, colorReset)
 			}
