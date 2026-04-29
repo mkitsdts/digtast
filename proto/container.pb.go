@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        (unknown)
-// source: labor/v1/container.proto
+// source: container.proto
 
-package labor_v1
+package proto
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -21,7 +21,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// --- 消息定义 (遵循唯一性原则) ---
+// --- 消息定义 ---
 type BackupServiceRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -30,7 +30,7 @@ type BackupServiceRequest struct {
 
 func (x *BackupServiceRequest) Reset() {
 	*x = BackupServiceRequest{}
-	mi := &file_labor_v1_container_proto_msgTypes[0]
+	mi := &file_container_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -42,7 +42,7 @@ func (x *BackupServiceRequest) String() string {
 func (*BackupServiceRequest) ProtoMessage() {}
 
 func (x *BackupServiceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[0]
+	mi := &file_container_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -55,20 +55,20 @@ func (x *BackupServiceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BackupServiceRequest.ProtoReflect.Descriptor instead.
 func (*BackupServiceRequest) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{0}
+	return file_container_proto_rawDescGZIP(), []int{0}
 }
 
 type BackupServiceResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Data          []byte                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`                                   // 文件块的实际二进制数据
-	ChunkNumber   int32                  `protobuf:"varint,2,opt,name=chunk_number,json=chunkNumber,proto3" json:"chunk_number,omitempty"` // 文件块的序号，可选
+	Data          []byte                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
+	ChunkNumber   int32                  `protobuf:"varint,2,opt,name=chunk_number,json=chunkNumber,proto3" json:"chunk_number,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *BackupServiceResponse) Reset() {
 	*x = BackupServiceResponse{}
-	mi := &file_labor_v1_container_proto_msgTypes[1]
+	mi := &file_container_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -80,7 +80,7 @@ func (x *BackupServiceResponse) String() string {
 func (*BackupServiceResponse) ProtoMessage() {}
 
 func (x *BackupServiceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[1]
+	mi := &file_container_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -93,7 +93,7 @@ func (x *BackupServiceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BackupServiceResponse.ProtoReflect.Descriptor instead.
 func (*BackupServiceResponse) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{1}
+	return file_container_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *BackupServiceResponse) GetData() []byte {
@@ -110,17 +110,17 @@ func (x *BackupServiceResponse) GetChunkNumber() int32 {
 	return 0
 }
 
-// --- FTP相关 ---
+// --- FTP ---
 type StartFTPServerRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	AgentName     string                 `protobuf:"bytes,1,opt,name=agent_name,json=agentName,proto3" json:"agent_name,omitempty"` // 需要启动 FTP 的数字助理名称
+	AgentName     string                 `protobuf:"bytes,1,opt,name=agent_name,json=agentName,proto3" json:"agent_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *StartFTPServerRequest) Reset() {
 	*x = StartFTPServerRequest{}
-	mi := &file_labor_v1_container_proto_msgTypes[2]
+	mi := &file_container_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -132,7 +132,7 @@ func (x *StartFTPServerRequest) String() string {
 func (*StartFTPServerRequest) ProtoMessage() {}
 
 func (x *StartFTPServerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[2]
+	mi := &file_container_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -145,7 +145,7 @@ func (x *StartFTPServerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartFTPServerRequest.ProtoReflect.Descriptor instead.
 func (*StartFTPServerRequest) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{2}
+	return file_container_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *StartFTPServerRequest) GetAgentName() string {
@@ -166,7 +166,7 @@ type StartFTPServerResponse struct {
 
 func (x *StartFTPServerResponse) Reset() {
 	*x = StartFTPServerResponse{}
-	mi := &file_labor_v1_container_proto_msgTypes[3]
+	mi := &file_container_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -178,7 +178,7 @@ func (x *StartFTPServerResponse) String() string {
 func (*StartFTPServerResponse) ProtoMessage() {}
 
 func (x *StartFTPServerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[3]
+	mi := &file_container_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -191,7 +191,7 @@ func (x *StartFTPServerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartFTPServerResponse.ProtoReflect.Descriptor instead.
 func (*StartFTPServerResponse) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{3}
+	return file_container_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *StartFTPServerResponse) GetSuccess() bool {
@@ -224,7 +224,7 @@ type StopFTPServerRequest struct {
 
 func (x *StopFTPServerRequest) Reset() {
 	*x = StopFTPServerRequest{}
-	mi := &file_labor_v1_container_proto_msgTypes[4]
+	mi := &file_container_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -236,7 +236,7 @@ func (x *StopFTPServerRequest) String() string {
 func (*StopFTPServerRequest) ProtoMessage() {}
 
 func (x *StopFTPServerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[4]
+	mi := &file_container_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -249,7 +249,7 @@ func (x *StopFTPServerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopFTPServerRequest.ProtoReflect.Descriptor instead.
 func (*StopFTPServerRequest) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{4}
+	return file_container_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *StopFTPServerRequest) GetAgentName() string {
@@ -269,7 +269,7 @@ type StopFTPServerResponse struct {
 
 func (x *StopFTPServerResponse) Reset() {
 	*x = StopFTPServerResponse{}
-	mi := &file_labor_v1_container_proto_msgTypes[5]
+	mi := &file_container_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -281,7 +281,7 @@ func (x *StopFTPServerResponse) String() string {
 func (*StopFTPServerResponse) ProtoMessage() {}
 
 func (x *StopFTPServerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[5]
+	mi := &file_container_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -294,7 +294,7 @@ func (x *StopFTPServerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopFTPServerResponse.ProtoReflect.Descriptor instead.
 func (*StopFTPServerResponse) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{5}
+	return file_container_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *StopFTPServerResponse) GetSuccess() bool {
@@ -311,7 +311,7 @@ func (x *StopFTPServerResponse) GetMessage() string {
 	return ""
 }
 
-// --- 虚拟桌面相关 ---
+// --- 虚拟桌面 ---
 type StartVirtualDesktopRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AgentName     string                 `protobuf:"bytes,1,opt,name=agent_name,json=agentName,proto3" json:"agent_name,omitempty"`
@@ -321,7 +321,7 @@ type StartVirtualDesktopRequest struct {
 
 func (x *StartVirtualDesktopRequest) Reset() {
 	*x = StartVirtualDesktopRequest{}
-	mi := &file_labor_v1_container_proto_msgTypes[6]
+	mi := &file_container_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -333,7 +333,7 @@ func (x *StartVirtualDesktopRequest) String() string {
 func (*StartVirtualDesktopRequest) ProtoMessage() {}
 
 func (x *StartVirtualDesktopRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[6]
+	mi := &file_container_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -346,7 +346,7 @@ func (x *StartVirtualDesktopRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartVirtualDesktopRequest.ProtoReflect.Descriptor instead.
 func (*StartVirtualDesktopRequest) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{6}
+	return file_container_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *StartVirtualDesktopRequest) GetAgentName() string {
@@ -367,7 +367,7 @@ type StartVirtualDesktopResponse struct {
 
 func (x *StartVirtualDesktopResponse) Reset() {
 	*x = StartVirtualDesktopResponse{}
-	mi := &file_labor_v1_container_proto_msgTypes[7]
+	mi := &file_container_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -379,7 +379,7 @@ func (x *StartVirtualDesktopResponse) String() string {
 func (*StartVirtualDesktopResponse) ProtoMessage() {}
 
 func (x *StartVirtualDesktopResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[7]
+	mi := &file_container_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -392,7 +392,7 @@ func (x *StartVirtualDesktopResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartVirtualDesktopResponse.ProtoReflect.Descriptor instead.
 func (*StartVirtualDesktopResponse) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{7}
+	return file_container_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *StartVirtualDesktopResponse) GetSuccess() bool {
@@ -426,7 +426,7 @@ type StopVirtualDesktopRequest struct {
 
 func (x *StopVirtualDesktopRequest) Reset() {
 	*x = StopVirtualDesktopRequest{}
-	mi := &file_labor_v1_container_proto_msgTypes[8]
+	mi := &file_container_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -438,7 +438,7 @@ func (x *StopVirtualDesktopRequest) String() string {
 func (*StopVirtualDesktopRequest) ProtoMessage() {}
 
 func (x *StopVirtualDesktopRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[8]
+	mi := &file_container_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -451,7 +451,7 @@ func (x *StopVirtualDesktopRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopVirtualDesktopRequest.ProtoReflect.Descriptor instead.
 func (*StopVirtualDesktopRequest) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{8}
+	return file_container_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *StopVirtualDesktopRequest) GetAgentName() string {
@@ -478,7 +478,7 @@ type StopVirtualDesktopResponse struct {
 
 func (x *StopVirtualDesktopResponse) Reset() {
 	*x = StopVirtualDesktopResponse{}
-	mi := &file_labor_v1_container_proto_msgTypes[9]
+	mi := &file_container_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -490,7 +490,7 @@ func (x *StopVirtualDesktopResponse) String() string {
 func (*StopVirtualDesktopResponse) ProtoMessage() {}
 
 func (x *StopVirtualDesktopResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[9]
+	mi := &file_container_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -503,7 +503,7 @@ func (x *StopVirtualDesktopResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopVirtualDesktopResponse.ProtoReflect.Descriptor instead.
 func (*StopVirtualDesktopResponse) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{9}
+	return file_container_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *StopVirtualDesktopResponse) GetSuccess() bool {
@@ -520,7 +520,7 @@ func (x *StopVirtualDesktopResponse) GetMessage() string {
 	return ""
 }
 
-// Model Messages
+// --- 模型 ---
 type CreateChatModelRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ModelName     string                 `protobuf:"bytes,1,opt,name=model_name,json=modelName,proto3" json:"model_name,omitempty"`
@@ -533,7 +533,7 @@ type CreateChatModelRequest struct {
 
 func (x *CreateChatModelRequest) Reset() {
 	*x = CreateChatModelRequest{}
-	mi := &file_labor_v1_container_proto_msgTypes[10]
+	mi := &file_container_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -545,7 +545,7 @@ func (x *CreateChatModelRequest) String() string {
 func (*CreateChatModelRequest) ProtoMessage() {}
 
 func (x *CreateChatModelRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[10]
+	mi := &file_container_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -558,7 +558,7 @@ func (x *CreateChatModelRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateChatModelRequest.ProtoReflect.Descriptor instead.
 func (*CreateChatModelRequest) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{10}
+	return file_container_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *CreateChatModelRequest) GetModelName() string {
@@ -600,7 +600,7 @@ type CreateChatModelResponse struct {
 
 func (x *CreateChatModelResponse) Reset() {
 	*x = CreateChatModelResponse{}
-	mi := &file_labor_v1_container_proto_msgTypes[11]
+	mi := &file_container_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -612,7 +612,7 @@ func (x *CreateChatModelResponse) String() string {
 func (*CreateChatModelResponse) ProtoMessage() {}
 
 func (x *CreateChatModelResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[11]
+	mi := &file_container_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -625,7 +625,7 @@ func (x *CreateChatModelResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateChatModelResponse.ProtoReflect.Descriptor instead.
 func (*CreateChatModelResponse) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{11}
+	return file_container_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *CreateChatModelResponse) GetSuccess() bool {
@@ -658,7 +658,7 @@ type RemoveChatModelRequest struct {
 
 func (x *RemoveChatModelRequest) Reset() {
 	*x = RemoveChatModelRequest{}
-	mi := &file_labor_v1_container_proto_msgTypes[12]
+	mi := &file_container_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -670,7 +670,7 @@ func (x *RemoveChatModelRequest) String() string {
 func (*RemoveChatModelRequest) ProtoMessage() {}
 
 func (x *RemoveChatModelRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[12]
+	mi := &file_container_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -683,7 +683,7 @@ func (x *RemoveChatModelRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveChatModelRequest.ProtoReflect.Descriptor instead.
 func (*RemoveChatModelRequest) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{12}
+	return file_container_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *RemoveChatModelRequest) GetChatModelId() string {
@@ -703,7 +703,7 @@ type RemoveChatModelResponse struct {
 
 func (x *RemoveChatModelResponse) Reset() {
 	*x = RemoveChatModelResponse{}
-	mi := &file_labor_v1_container_proto_msgTypes[13]
+	mi := &file_container_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -715,7 +715,7 @@ func (x *RemoveChatModelResponse) String() string {
 func (*RemoveChatModelResponse) ProtoMessage() {}
 
 func (x *RemoveChatModelResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[13]
+	mi := &file_container_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -728,7 +728,7 @@ func (x *RemoveChatModelResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveChatModelResponse.ProtoReflect.Descriptor instead.
 func (*RemoveChatModelResponse) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{13}
+	return file_container_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *RemoveChatModelResponse) GetSuccess() bool {
@@ -745,7 +745,7 @@ func (x *RemoveChatModelResponse) GetMessage() string {
 	return ""
 }
 
-// Agent Messages
+// --- 智能体 ---
 type CreateAgentRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AgentName     string                 `protobuf:"bytes,1,opt,name=agent_name,json=agentName,proto3" json:"agent_name,omitempty"`
@@ -756,7 +756,7 @@ type CreateAgentRequest struct {
 
 func (x *CreateAgentRequest) Reset() {
 	*x = CreateAgentRequest{}
-	mi := &file_labor_v1_container_proto_msgTypes[14]
+	mi := &file_container_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -768,7 +768,7 @@ func (x *CreateAgentRequest) String() string {
 func (*CreateAgentRequest) ProtoMessage() {}
 
 func (x *CreateAgentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[14]
+	mi := &file_container_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -781,7 +781,7 @@ func (x *CreateAgentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAgentRequest.ProtoReflect.Descriptor instead.
 func (*CreateAgentRequest) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{14}
+	return file_container_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *CreateAgentRequest) GetAgentName() string {
@@ -809,7 +809,7 @@ type CreateAgentResponse struct {
 
 func (x *CreateAgentResponse) Reset() {
 	*x = CreateAgentResponse{}
-	mi := &file_labor_v1_container_proto_msgTypes[15]
+	mi := &file_container_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -821,7 +821,7 @@ func (x *CreateAgentResponse) String() string {
 func (*CreateAgentResponse) ProtoMessage() {}
 
 func (x *CreateAgentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[15]
+	mi := &file_container_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -834,7 +834,7 @@ func (x *CreateAgentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAgentResponse.ProtoReflect.Descriptor instead.
 func (*CreateAgentResponse) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{15}
+	return file_container_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *CreateAgentResponse) GetAgentId() string {
@@ -867,7 +867,7 @@ type RemoveAgentRequest struct {
 
 func (x *RemoveAgentRequest) Reset() {
 	*x = RemoveAgentRequest{}
-	mi := &file_labor_v1_container_proto_msgTypes[16]
+	mi := &file_container_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -879,7 +879,7 @@ func (x *RemoveAgentRequest) String() string {
 func (*RemoveAgentRequest) ProtoMessage() {}
 
 func (x *RemoveAgentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[16]
+	mi := &file_container_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -892,7 +892,7 @@ func (x *RemoveAgentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveAgentRequest.ProtoReflect.Descriptor instead.
 func (*RemoveAgentRequest) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{16}
+	return file_container_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *RemoveAgentRequest) GetAgentId() string {
@@ -912,7 +912,7 @@ type RemoveAgentResponse struct {
 
 func (x *RemoveAgentResponse) Reset() {
 	*x = RemoveAgentResponse{}
-	mi := &file_labor_v1_container_proto_msgTypes[17]
+	mi := &file_container_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -924,7 +924,7 @@ func (x *RemoveAgentResponse) String() string {
 func (*RemoveAgentResponse) ProtoMessage() {}
 
 func (x *RemoveAgentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[17]
+	mi := &file_container_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -937,7 +937,7 @@ func (x *RemoveAgentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveAgentResponse.ProtoReflect.Descriptor instead.
 func (*RemoveAgentResponse) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{17}
+	return file_container_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *RemoveAgentResponse) GetSuccess() bool {
@@ -954,32 +954,29 @@ func (x *RemoveAgentResponse) GetMessage() string {
 	return ""
 }
 
-// Session Messages
-type GetOrCreateSessionRequest struct {
+// --- 会话 ---
+type GetAgentSessionRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AgentId       string                 `protobuf:"bytes,1,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
-	SessionId     string                 `protobuf:"bytes,2,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	Page          int32                  `protobuf:"varint,3,opt,name=page,proto3" json:"page,omitempty"`
-	PageSize      int32                  `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetOrCreateSessionRequest) Reset() {
-	*x = GetOrCreateSessionRequest{}
-	mi := &file_labor_v1_container_proto_msgTypes[18]
+func (x *GetAgentSessionRequest) Reset() {
+	*x = GetAgentSessionRequest{}
+	mi := &file_container_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetOrCreateSessionRequest) String() string {
+func (x *GetAgentSessionRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetOrCreateSessionRequest) ProtoMessage() {}
+func (*GetAgentSessionRequest) ProtoMessage() {}
 
-func (x *GetOrCreateSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[18]
+func (x *GetAgentSessionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_container_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -990,37 +987,16 @@ func (x *GetOrCreateSessionRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetOrCreateSessionRequest.ProtoReflect.Descriptor instead.
-func (*GetOrCreateSessionRequest) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{18}
+// Deprecated: Use GetAgentSessionRequest.ProtoReflect.Descriptor instead.
+func (*GetAgentSessionRequest) Descriptor() ([]byte, []int) {
+	return file_container_proto_rawDescGZIP(), []int{18}
 }
 
-func (x *GetOrCreateSessionRequest) GetAgentId() string {
+func (x *GetAgentSessionRequest) GetAgentId() string {
 	if x != nil {
 		return x.AgentId
 	}
 	return ""
-}
-
-func (x *GetOrCreateSessionRequest) GetSessionId() string {
-	if x != nil {
-		return x.SessionId
-	}
-	return ""
-}
-
-func (x *GetOrCreateSessionRequest) GetPage() int32 {
-	if x != nil {
-		return x.Page
-	}
-	return 0
-}
-
-func (x *GetOrCreateSessionRequest) GetPageSize() int32 {
-	if x != nil {
-		return x.PageSize
-	}
-	return 0
 }
 
 type Message struct {
@@ -1035,7 +1011,7 @@ type Message struct {
 
 func (x *Message) Reset() {
 	*x = Message{}
-	mi := &file_labor_v1_container_proto_msgTypes[19]
+	mi := &file_container_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1047,7 +1023,7 @@ func (x *Message) String() string {
 func (*Message) ProtoMessage() {}
 
 func (x *Message) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[19]
+	mi := &file_container_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1060,7 +1036,7 @@ func (x *Message) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Message.ProtoReflect.Descriptor instead.
 func (*Message) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{19}
+	return file_container_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *Message) GetRole() string {
@@ -1091,29 +1067,29 @@ func (x *Message) GetKind() string {
 	return ""
 }
 
-type GetOrCreateSessionResponse struct {
+type GetAgentSessionResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	AgentId       string                 `protobuf:"bytes,1,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
 	Messages      []*Message             `protobuf:"bytes,2,rep,name=messages,proto3" json:"messages,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetOrCreateSessionResponse) Reset() {
-	*x = GetOrCreateSessionResponse{}
-	mi := &file_labor_v1_container_proto_msgTypes[20]
+func (x *GetAgentSessionResponse) Reset() {
+	*x = GetAgentSessionResponse{}
+	mi := &file_container_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetOrCreateSessionResponse) String() string {
+func (x *GetAgentSessionResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetOrCreateSessionResponse) ProtoMessage() {}
+func (*GetAgentSessionResponse) ProtoMessage() {}
 
-func (x *GetOrCreateSessionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[20]
+func (x *GetAgentSessionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_container_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1124,48 +1100,47 @@ func (x *GetOrCreateSessionResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetOrCreateSessionResponse.ProtoReflect.Descriptor instead.
-func (*GetOrCreateSessionResponse) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{20}
+// Deprecated: Use GetAgentSessionResponse.ProtoReflect.Descriptor instead.
+func (*GetAgentSessionResponse) Descriptor() ([]byte, []int) {
+	return file_container_proto_rawDescGZIP(), []int{20}
 }
 
-func (x *GetOrCreateSessionResponse) GetSessionId() string {
+func (x *GetAgentSessionResponse) GetAgentId() string {
 	if x != nil {
-		return x.SessionId
+		return x.AgentId
 	}
 	return ""
 }
 
-func (x *GetOrCreateSessionResponse) GetMessages() []*Message {
+func (x *GetAgentSessionResponse) GetMessages() []*Message {
 	if x != nil {
 		return x.Messages
 	}
 	return nil
 }
 
-type CompressSessionRequest struct {
+type ClearAgentHistoryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AgentId       string                 `protobuf:"bytes,1,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
-	SessionId     string                 `protobuf:"bytes,2,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CompressSessionRequest) Reset() {
-	*x = CompressSessionRequest{}
-	mi := &file_labor_v1_container_proto_msgTypes[21]
+func (x *ClearAgentHistoryRequest) Reset() {
+	*x = ClearAgentHistoryRequest{}
+	mi := &file_container_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CompressSessionRequest) String() string {
+func (x *ClearAgentHistoryRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CompressSessionRequest) ProtoMessage() {}
+func (*ClearAgentHistoryRequest) ProtoMessage() {}
 
-func (x *CompressSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[21]
+func (x *ClearAgentHistoryRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_container_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1176,26 +1151,19 @@ func (x *CompressSessionRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CompressSessionRequest.ProtoReflect.Descriptor instead.
-func (*CompressSessionRequest) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{21}
+// Deprecated: Use ClearAgentHistoryRequest.ProtoReflect.Descriptor instead.
+func (*ClearAgentHistoryRequest) Descriptor() ([]byte, []int) {
+	return file_container_proto_rawDescGZIP(), []int{21}
 }
 
-func (x *CompressSessionRequest) GetAgentId() string {
+func (x *ClearAgentHistoryRequest) GetAgentId() string {
 	if x != nil {
 		return x.AgentId
 	}
 	return ""
 }
 
-func (x *CompressSessionRequest) GetSessionId() string {
-	if x != nil {
-		return x.SessionId
-	}
-	return ""
-}
-
-type CompressSessionResponse struct {
+type ClearAgentHistoryResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
 	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
@@ -1203,21 +1171,21 @@ type CompressSessionResponse struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CompressSessionResponse) Reset() {
-	*x = CompressSessionResponse{}
-	mi := &file_labor_v1_container_proto_msgTypes[22]
+func (x *ClearAgentHistoryResponse) Reset() {
+	*x = ClearAgentHistoryResponse{}
+	mi := &file_container_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CompressSessionResponse) String() string {
+func (x *ClearAgentHistoryResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CompressSessionResponse) ProtoMessage() {}
+func (*ClearAgentHistoryResponse) ProtoMessage() {}
 
-func (x *CompressSessionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[22]
+func (x *ClearAgentHistoryResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_container_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1228,48 +1196,47 @@ func (x *CompressSessionResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CompressSessionResponse.ProtoReflect.Descriptor instead.
-func (*CompressSessionResponse) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{22}
+// Deprecated: Use ClearAgentHistoryResponse.ProtoReflect.Descriptor instead.
+func (*ClearAgentHistoryResponse) Descriptor() ([]byte, []int) {
+	return file_container_proto_rawDescGZIP(), []int{22}
 }
 
-func (x *CompressSessionResponse) GetSuccess() bool {
+func (x *ClearAgentHistoryResponse) GetSuccess() bool {
 	if x != nil {
 		return x.Success
 	}
 	return false
 }
 
-func (x *CompressSessionResponse) GetMessage() string {
+func (x *ClearAgentHistoryResponse) GetMessage() string {
 	if x != nil {
 		return x.Message
 	}
 	return ""
 }
 
-type RemoveSessionRequest struct {
+type CompressAgentHistoryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AgentId       string                 `protobuf:"bytes,1,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
-	SessionId     string                 `protobuf:"bytes,2,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *RemoveSessionRequest) Reset() {
-	*x = RemoveSessionRequest{}
-	mi := &file_labor_v1_container_proto_msgTypes[23]
+func (x *CompressAgentHistoryRequest) Reset() {
+	*x = CompressAgentHistoryRequest{}
+	mi := &file_container_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *RemoveSessionRequest) String() string {
+func (x *CompressAgentHistoryRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RemoveSessionRequest) ProtoMessage() {}
+func (*CompressAgentHistoryRequest) ProtoMessage() {}
 
-func (x *RemoveSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[23]
+func (x *CompressAgentHistoryRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_container_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1280,26 +1247,19 @@ func (x *RemoveSessionRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RemoveSessionRequest.ProtoReflect.Descriptor instead.
-func (*RemoveSessionRequest) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{23}
+// Deprecated: Use CompressAgentHistoryRequest.ProtoReflect.Descriptor instead.
+func (*CompressAgentHistoryRequest) Descriptor() ([]byte, []int) {
+	return file_container_proto_rawDescGZIP(), []int{23}
 }
 
-func (x *RemoveSessionRequest) GetAgentId() string {
+func (x *CompressAgentHistoryRequest) GetAgentId() string {
 	if x != nil {
 		return x.AgentId
 	}
 	return ""
 }
 
-func (x *RemoveSessionRequest) GetSessionId() string {
-	if x != nil {
-		return x.SessionId
-	}
-	return ""
-}
-
-type RemoveSessionResponse struct {
+type CompressAgentHistoryResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
 	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
@@ -1307,21 +1267,21 @@ type RemoveSessionResponse struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *RemoveSessionResponse) Reset() {
-	*x = RemoveSessionResponse{}
-	mi := &file_labor_v1_container_proto_msgTypes[24]
+func (x *CompressAgentHistoryResponse) Reset() {
+	*x = CompressAgentHistoryResponse{}
+	mi := &file_container_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *RemoveSessionResponse) String() string {
+func (x *CompressAgentHistoryResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RemoveSessionResponse) ProtoMessage() {}
+func (*CompressAgentHistoryResponse) ProtoMessage() {}
 
-func (x *RemoveSessionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[24]
+func (x *CompressAgentHistoryResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_container_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1332,51 +1292,50 @@ func (x *RemoveSessionResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RemoveSessionResponse.ProtoReflect.Descriptor instead.
-func (*RemoveSessionResponse) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{24}
+// Deprecated: Use CompressAgentHistoryResponse.ProtoReflect.Descriptor instead.
+func (*CompressAgentHistoryResponse) Descriptor() ([]byte, []int) {
+	return file_container_proto_rawDescGZIP(), []int{24}
 }
 
-func (x *RemoveSessionResponse) GetSuccess() bool {
+func (x *CompressAgentHistoryResponse) GetSuccess() bool {
 	if x != nil {
 		return x.Success
 	}
 	return false
 }
 
-func (x *RemoveSessionResponse) GetMessage() string {
+func (x *CompressAgentHistoryResponse) GetMessage() string {
 	if x != nil {
 		return x.Message
 	}
 	return ""
 }
 
-// Dialogue Messages
-type SendMessageToSessionRequest struct {
+// --- 对话 ---
+type SendMessageRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AgentId       string                 `protobuf:"bytes,1,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
-	SessionId     string                 `protobuf:"bytes,2,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
-	IsStream      bool                   `protobuf:"varint,4,opt,name=is_stream,json=isStream,proto3" json:"is_stream,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	IsStream      bool                   `protobuf:"varint,3,opt,name=is_stream,json=isStream,proto3" json:"is_stream,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SendMessageToSessionRequest) Reset() {
-	*x = SendMessageToSessionRequest{}
-	mi := &file_labor_v1_container_proto_msgTypes[25]
+func (x *SendMessageRequest) Reset() {
+	*x = SendMessageRequest{}
+	mi := &file_container_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SendMessageToSessionRequest) String() string {
+func (x *SendMessageRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SendMessageToSessionRequest) ProtoMessage() {}
+func (*SendMessageRequest) ProtoMessage() {}
 
-func (x *SendMessageToSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[25]
+func (x *SendMessageRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_container_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1387,62 +1346,55 @@ func (x *SendMessageToSessionRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SendMessageToSessionRequest.ProtoReflect.Descriptor instead.
-func (*SendMessageToSessionRequest) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{25}
+// Deprecated: Use SendMessageRequest.ProtoReflect.Descriptor instead.
+func (*SendMessageRequest) Descriptor() ([]byte, []int) {
+	return file_container_proto_rawDescGZIP(), []int{25}
 }
 
-func (x *SendMessageToSessionRequest) GetAgentId() string {
+func (x *SendMessageRequest) GetAgentId() string {
 	if x != nil {
 		return x.AgentId
 	}
 	return ""
 }
 
-func (x *SendMessageToSessionRequest) GetSessionId() string {
-	if x != nil {
-		return x.SessionId
-	}
-	return ""
-}
-
-func (x *SendMessageToSessionRequest) GetMessage() string {
+func (x *SendMessageRequest) GetMessage() string {
 	if x != nil {
 		return x.Message
 	}
 	return ""
 }
 
-func (x *SendMessageToSessionRequest) GetIsStream() bool {
+func (x *SendMessageRequest) GetIsStream() bool {
 	if x != nil {
 		return x.IsStream
 	}
 	return false
 }
 
-type SendMessageToSessionResponse struct {
+type SendMessageResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	DeltaContent  string                 `protobuf:"bytes,1,opt,name=delta_content,json=deltaContent,proto3" json:"delta_content,omitempty"` // 流式返回时的片段内容
-	IsFinal       bool                   `protobuf:"varint,2,opt,name=is_final,json=isFinal,proto3" json:"is_final,omitempty"`               // 是否是最后一段
+	DeltaContent  string                 `protobuf:"bytes,1,opt,name=delta_content,json=deltaContent,proto3" json:"delta_content,omitempty"`
+	IsFinal       bool                   `protobuf:"varint,2,opt,name=is_final,json=isFinal,proto3" json:"is_final,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SendMessageToSessionResponse) Reset() {
-	*x = SendMessageToSessionResponse{}
-	mi := &file_labor_v1_container_proto_msgTypes[26]
+func (x *SendMessageResponse) Reset() {
+	*x = SendMessageResponse{}
+	mi := &file_container_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SendMessageToSessionResponse) String() string {
+func (x *SendMessageResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SendMessageToSessionResponse) ProtoMessage() {}
+func (*SendMessageResponse) ProtoMessage() {}
 
-func (x *SendMessageToSessionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[26]
+func (x *SendMessageResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_container_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1453,26 +1405,26 @@ func (x *SendMessageToSessionResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SendMessageToSessionResponse.ProtoReflect.Descriptor instead.
-func (*SendMessageToSessionResponse) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{26}
+// Deprecated: Use SendMessageResponse.ProtoReflect.Descriptor instead.
+func (*SendMessageResponse) Descriptor() ([]byte, []int) {
+	return file_container_proto_rawDescGZIP(), []int{26}
 }
 
-func (x *SendMessageToSessionResponse) GetDeltaContent() string {
+func (x *SendMessageResponse) GetDeltaContent() string {
 	if x != nil {
 		return x.DeltaContent
 	}
 	return ""
 }
 
-func (x *SendMessageToSessionResponse) GetIsFinal() bool {
+func (x *SendMessageResponse) GetIsFinal() bool {
 	if x != nil {
 		return x.IsFinal
 	}
 	return false
 }
 
-// Task Messages
+// --- 任务 ---
 type StopTaskRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AgentId       string                 `protobuf:"bytes,1,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
@@ -1482,7 +1434,7 @@ type StopTaskRequest struct {
 
 func (x *StopTaskRequest) Reset() {
 	*x = StopTaskRequest{}
-	mi := &file_labor_v1_container_proto_msgTypes[27]
+	mi := &file_container_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1494,7 +1446,7 @@ func (x *StopTaskRequest) String() string {
 func (*StopTaskRequest) ProtoMessage() {}
 
 func (x *StopTaskRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[27]
+	mi := &file_container_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1507,7 +1459,7 @@ func (x *StopTaskRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopTaskRequest.ProtoReflect.Descriptor instead.
 func (*StopTaskRequest) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{27}
+	return file_container_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *StopTaskRequest) GetAgentId() string {
@@ -1526,7 +1478,7 @@ type StopTaskResponse struct {
 
 func (x *StopTaskResponse) Reset() {
 	*x = StopTaskResponse{}
-	mi := &file_labor_v1_container_proto_msgTypes[28]
+	mi := &file_container_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1538,7 +1490,7 @@ func (x *StopTaskResponse) String() string {
 func (*StopTaskResponse) ProtoMessage() {}
 
 func (x *StopTaskResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[28]
+	mi := &file_container_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1551,7 +1503,7 @@ func (x *StopTaskResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopTaskResponse.ProtoReflect.Descriptor instead.
 func (*StopTaskResponse) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{28}
+	return file_container_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *StopTaskResponse) GetSuccess() bool {
@@ -1561,11 +1513,11 @@ func (x *StopTaskResponse) GetSuccess() bool {
 	return false
 }
 
-var File_labor_v1_container_proto protoreflect.FileDescriptor
+var File_container_proto protoreflect.FileDescriptor
 
-const file_labor_v1_container_proto_rawDesc = "" +
+const file_container_proto_rawDesc = "" +
 	"\n" +
-	"\x18labor/v1/container.proto\x12\blabor.v1\"\x16\n" +
+	"\x0fcontainer.proto\x12\blabor.v1\"\x16\n" +
 	"\x14BackupServiceRequest\"N\n" +
 	"\x15BackupServiceResponse\x12\x12\n" +
 	"\x04data\x18\x01 \x01(\fR\x04data\x12!\n" +
@@ -1624,49 +1576,38 @@ const file_labor_v1_container_proto_rawDesc = "" +
 	"\bagent_id\x18\x01 \x01(\tR\aagentId\"I\n" +
 	"\x13RemoveAgentResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"\x86\x01\n" +
-	"\x19GetOrCreateSessionRequest\x12\x19\n" +
-	"\bagent_id\x18\x01 \x01(\tR\aagentId\x12\x1d\n" +
-	"\n" +
-	"session_id\x18\x02 \x01(\tR\tsessionId\x12\x12\n" +
-	"\x04page\x18\x03 \x01(\x05R\x04page\x12\x1b\n" +
-	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\"i\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"3\n" +
+	"\x16GetAgentSessionRequest\x12\x19\n" +
+	"\bagent_id\x18\x01 \x01(\tR\aagentId\"i\n" +
 	"\aMessage\x12\x12\n" +
 	"\x04role\x18\x01 \x01(\tR\x04role\x12\x18\n" +
 	"\acontent\x18\x02 \x01(\tR\acontent\x12\x1c\n" +
 	"\ttimestamp\x18\x03 \x01(\tR\ttimestamp\x12\x12\n" +
-	"\x04kind\x18\x04 \x01(\tR\x04kind\"j\n" +
-	"\x1aGetOrCreateSessionResponse\x12\x1d\n" +
-	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\x12-\n" +
-	"\bmessages\x18\x02 \x03(\v2\x11.labor.v1.MessageR\bmessages\"R\n" +
-	"\x16CompressSessionRequest\x12\x19\n" +
-	"\bagent_id\x18\x01 \x01(\tR\aagentId\x12\x1d\n" +
-	"\n" +
-	"session_id\x18\x02 \x01(\tR\tsessionId\"M\n" +
-	"\x17CompressSessionResponse\x12\x18\n" +
+	"\x04kind\x18\x04 \x01(\tR\x04kind\"c\n" +
+	"\x17GetAgentSessionResponse\x12\x19\n" +
+	"\bagent_id\x18\x01 \x01(\tR\aagentId\x12-\n" +
+	"\bmessages\x18\x02 \x03(\v2\x11.labor.v1.MessageR\bmessages\"5\n" +
+	"\x18ClearAgentHistoryRequest\x12\x19\n" +
+	"\bagent_id\x18\x01 \x01(\tR\aagentId\"O\n" +
+	"\x19ClearAgentHistoryResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"P\n" +
-	"\x14RemoveSessionRequest\x12\x19\n" +
-	"\bagent_id\x18\x01 \x01(\tR\aagentId\x12\x1d\n" +
-	"\n" +
-	"session_id\x18\x02 \x01(\tR\tsessionId\"K\n" +
-	"\x15RemoveSessionResponse\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"8\n" +
+	"\x1bCompressAgentHistoryRequest\x12\x19\n" +
+	"\bagent_id\x18\x01 \x01(\tR\aagentId\"R\n" +
+	"\x1cCompressAgentHistoryResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"\x8e\x01\n" +
-	"\x1bSendMessageToSessionRequest\x12\x19\n" +
-	"\bagent_id\x18\x01 \x01(\tR\aagentId\x12\x1d\n" +
-	"\n" +
-	"session_id\x18\x02 \x01(\tR\tsessionId\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\x12\x1b\n" +
-	"\tis_stream\x18\x04 \x01(\bR\bisStream\"^\n" +
-	"\x1cSendMessageToSessionResponse\x12#\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"f\n" +
+	"\x12SendMessageRequest\x12\x19\n" +
+	"\bagent_id\x18\x01 \x01(\tR\aagentId\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12\x1b\n" +
+	"\tis_stream\x18\x03 \x01(\bR\bisStream\"U\n" +
+	"\x13SendMessageResponse\x12#\n" +
 	"\rdelta_content\x18\x01 \x01(\tR\fdeltaContent\x12\x19\n" +
 	"\bis_final\x18\x02 \x01(\bR\aisFinal\",\n" +
 	"\x0fStopTaskRequest\x12\x19\n" +
 	"\bagent_id\x18\x01 \x01(\tR\aagentId\",\n" +
 	"\x10StopTaskResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess2\xd1\t\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess2\xc8\t\n" +
 	"\x10ContainerService\x12R\n" +
 	"\rBackupService\x12\x1e.labor.v1.BackupServiceRequest\x1a\x1f.labor.v1.BackupServiceResponse0\x01\x12S\n" +
 	"\x0eStartFTPServer\x12\x1f.labor.v1.StartFTPServerRequest\x1a .labor.v1.StartFTPServerResponse\x12P\n" +
@@ -1676,28 +1617,27 @@ const file_labor_v1_container_proto_rawDesc = "" +
 	"\x0fCreateChatModel\x12 .labor.v1.CreateChatModelRequest\x1a!.labor.v1.CreateChatModelResponse\x12V\n" +
 	"\x0fRemoveChatModel\x12 .labor.v1.RemoveChatModelRequest\x1a!.labor.v1.RemoveChatModelResponse\x12J\n" +
 	"\vCreateAgent\x12\x1c.labor.v1.CreateAgentRequest\x1a\x1d.labor.v1.CreateAgentResponse\x12J\n" +
-	"\vRemoveAgent\x12\x1c.labor.v1.RemoveAgentRequest\x1a\x1d.labor.v1.RemoveAgentResponse\x12_\n" +
-	"\x12GetOrCreateSession\x12#.labor.v1.GetOrCreateSessionRequest\x1a$.labor.v1.GetOrCreateSessionResponse\x12P\n" +
-	"\rRemoveSession\x12\x1e.labor.v1.RemoveSessionRequest\x1a\x1f.labor.v1.RemoveSessionResponse\x12V\n" +
-	"\x0fCompressSession\x12 .labor.v1.CompressSessionRequest\x1a!.labor.v1.CompressSessionResponse\x12g\n" +
-	"\x14SendMessageToSession\x12%.labor.v1.SendMessageToSessionRequest\x1a&.labor.v1.SendMessageToSessionResponse0\x01\x12A\n" +
-	"\bStopTask\x12\x19.labor.v1.StopTaskRequest\x1a\x1a.labor.v1.StopTaskResponseB\n" +
-	"Z\blabor.v1b\x06proto3"
+	"\vRemoveAgent\x12\x1c.labor.v1.RemoveAgentRequest\x1a\x1d.labor.v1.RemoveAgentResponse\x12V\n" +
+	"\x0fGetAgentSession\x12 .labor.v1.GetAgentSessionRequest\x1a!.labor.v1.GetAgentSessionResponse\x12\\\n" +
+	"\x11ClearAgentHistory\x12\".labor.v1.ClearAgentHistoryRequest\x1a#.labor.v1.ClearAgentHistoryResponse\x12e\n" +
+	"\x14CompressAgentHistory\x12%.labor.v1.CompressAgentHistoryRequest\x1a&.labor.v1.CompressAgentHistoryResponse\x12L\n" +
+	"\vSendMessage\x12\x1c.labor.v1.SendMessageRequest\x1a\x1d.labor.v1.SendMessageResponse0\x01\x12A\n" +
+	"\bStopTask\x12\x19.labor.v1.StopTaskRequest\x1a\x1a.labor.v1.StopTaskResponseB\x15Z\x13digital-labor/protob\x06proto3"
 
 var (
-	file_labor_v1_container_proto_rawDescOnce sync.Once
-	file_labor_v1_container_proto_rawDescData []byte
+	file_container_proto_rawDescOnce sync.Once
+	file_container_proto_rawDescData []byte
 )
 
-func file_labor_v1_container_proto_rawDescGZIP() []byte {
-	file_labor_v1_container_proto_rawDescOnce.Do(func() {
-		file_labor_v1_container_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_labor_v1_container_proto_rawDesc), len(file_labor_v1_container_proto_rawDesc)))
+func file_container_proto_rawDescGZIP() []byte {
+	file_container_proto_rawDescOnce.Do(func() {
+		file_container_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_container_proto_rawDesc), len(file_container_proto_rawDesc)))
 	})
-	return file_labor_v1_container_proto_rawDescData
+	return file_container_proto_rawDescData
 }
 
-var file_labor_v1_container_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
-var file_labor_v1_container_proto_goTypes = []any{
+var file_container_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
+var file_container_proto_goTypes = []any{
 	(*BackupServiceRequest)(nil),         // 0: labor.v1.BackupServiceRequest
 	(*BackupServiceResponse)(nil),        // 1: labor.v1.BackupServiceResponse
 	(*StartFTPServerRequest)(nil),        // 2: labor.v1.StartFTPServerRequest
@@ -1716,20 +1656,20 @@ var file_labor_v1_container_proto_goTypes = []any{
 	(*CreateAgentResponse)(nil),          // 15: labor.v1.CreateAgentResponse
 	(*RemoveAgentRequest)(nil),           // 16: labor.v1.RemoveAgentRequest
 	(*RemoveAgentResponse)(nil),          // 17: labor.v1.RemoveAgentResponse
-	(*GetOrCreateSessionRequest)(nil),    // 18: labor.v1.GetOrCreateSessionRequest
+	(*GetAgentSessionRequest)(nil),       // 18: labor.v1.GetAgentSessionRequest
 	(*Message)(nil),                      // 19: labor.v1.Message
-	(*GetOrCreateSessionResponse)(nil),   // 20: labor.v1.GetOrCreateSessionResponse
-	(*CompressSessionRequest)(nil),       // 21: labor.v1.CompressSessionRequest
-	(*CompressSessionResponse)(nil),      // 22: labor.v1.CompressSessionResponse
-	(*RemoveSessionRequest)(nil),         // 23: labor.v1.RemoveSessionRequest
-	(*RemoveSessionResponse)(nil),        // 24: labor.v1.RemoveSessionResponse
-	(*SendMessageToSessionRequest)(nil),  // 25: labor.v1.SendMessageToSessionRequest
-	(*SendMessageToSessionResponse)(nil), // 26: labor.v1.SendMessageToSessionResponse
+	(*GetAgentSessionResponse)(nil),      // 20: labor.v1.GetAgentSessionResponse
+	(*ClearAgentHistoryRequest)(nil),     // 21: labor.v1.ClearAgentHistoryRequest
+	(*ClearAgentHistoryResponse)(nil),    // 22: labor.v1.ClearAgentHistoryResponse
+	(*CompressAgentHistoryRequest)(nil),  // 23: labor.v1.CompressAgentHistoryRequest
+	(*CompressAgentHistoryResponse)(nil), // 24: labor.v1.CompressAgentHistoryResponse
+	(*SendMessageRequest)(nil),           // 25: labor.v1.SendMessageRequest
+	(*SendMessageResponse)(nil),          // 26: labor.v1.SendMessageResponse
 	(*StopTaskRequest)(nil),              // 27: labor.v1.StopTaskRequest
 	(*StopTaskResponse)(nil),             // 28: labor.v1.StopTaskResponse
 }
-var file_labor_v1_container_proto_depIdxs = []int32{
-	19, // 0: labor.v1.GetOrCreateSessionResponse.messages:type_name -> labor.v1.Message
+var file_container_proto_depIdxs = []int32{
+	19, // 0: labor.v1.GetAgentSessionResponse.messages:type_name -> labor.v1.Message
 	0,  // 1: labor.v1.ContainerService.BackupService:input_type -> labor.v1.BackupServiceRequest
 	2,  // 2: labor.v1.ContainerService.StartFTPServer:input_type -> labor.v1.StartFTPServerRequest
 	4,  // 3: labor.v1.ContainerService.StopFTPServer:input_type -> labor.v1.StopFTPServerRequest
@@ -1739,10 +1679,10 @@ var file_labor_v1_container_proto_depIdxs = []int32{
 	12, // 7: labor.v1.ContainerService.RemoveChatModel:input_type -> labor.v1.RemoveChatModelRequest
 	14, // 8: labor.v1.ContainerService.CreateAgent:input_type -> labor.v1.CreateAgentRequest
 	16, // 9: labor.v1.ContainerService.RemoveAgent:input_type -> labor.v1.RemoveAgentRequest
-	18, // 10: labor.v1.ContainerService.GetOrCreateSession:input_type -> labor.v1.GetOrCreateSessionRequest
-	23, // 11: labor.v1.ContainerService.RemoveSession:input_type -> labor.v1.RemoveSessionRequest
-	21, // 12: labor.v1.ContainerService.CompressSession:input_type -> labor.v1.CompressSessionRequest
-	25, // 13: labor.v1.ContainerService.SendMessageToSession:input_type -> labor.v1.SendMessageToSessionRequest
+	18, // 10: labor.v1.ContainerService.GetAgentSession:input_type -> labor.v1.GetAgentSessionRequest
+	21, // 11: labor.v1.ContainerService.ClearAgentHistory:input_type -> labor.v1.ClearAgentHistoryRequest
+	23, // 12: labor.v1.ContainerService.CompressAgentHistory:input_type -> labor.v1.CompressAgentHistoryRequest
+	25, // 13: labor.v1.ContainerService.SendMessage:input_type -> labor.v1.SendMessageRequest
 	27, // 14: labor.v1.ContainerService.StopTask:input_type -> labor.v1.StopTaskRequest
 	1,  // 15: labor.v1.ContainerService.BackupService:output_type -> labor.v1.BackupServiceResponse
 	3,  // 16: labor.v1.ContainerService.StartFTPServer:output_type -> labor.v1.StartFTPServerResponse
@@ -1753,10 +1693,10 @@ var file_labor_v1_container_proto_depIdxs = []int32{
 	13, // 21: labor.v1.ContainerService.RemoveChatModel:output_type -> labor.v1.RemoveChatModelResponse
 	15, // 22: labor.v1.ContainerService.CreateAgent:output_type -> labor.v1.CreateAgentResponse
 	17, // 23: labor.v1.ContainerService.RemoveAgent:output_type -> labor.v1.RemoveAgentResponse
-	20, // 24: labor.v1.ContainerService.GetOrCreateSession:output_type -> labor.v1.GetOrCreateSessionResponse
-	24, // 25: labor.v1.ContainerService.RemoveSession:output_type -> labor.v1.RemoveSessionResponse
-	22, // 26: labor.v1.ContainerService.CompressSession:output_type -> labor.v1.CompressSessionResponse
-	26, // 27: labor.v1.ContainerService.SendMessageToSession:output_type -> labor.v1.SendMessageToSessionResponse
+	20, // 24: labor.v1.ContainerService.GetAgentSession:output_type -> labor.v1.GetAgentSessionResponse
+	22, // 25: labor.v1.ContainerService.ClearAgentHistory:output_type -> labor.v1.ClearAgentHistoryResponse
+	24, // 26: labor.v1.ContainerService.CompressAgentHistory:output_type -> labor.v1.CompressAgentHistoryResponse
+	26, // 27: labor.v1.ContainerService.SendMessage:output_type -> labor.v1.SendMessageResponse
 	28, // 28: labor.v1.ContainerService.StopTask:output_type -> labor.v1.StopTaskResponse
 	15, // [15:29] is the sub-list for method output_type
 	1,  // [1:15] is the sub-list for method input_type
@@ -1765,26 +1705,26 @@ var file_labor_v1_container_proto_depIdxs = []int32{
 	0,  // [0:1] is the sub-list for field type_name
 }
 
-func init() { file_labor_v1_container_proto_init() }
-func file_labor_v1_container_proto_init() {
-	if File_labor_v1_container_proto != nil {
+func init() { file_container_proto_init() }
+func file_container_proto_init() {
+	if File_container_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_labor_v1_container_proto_rawDesc), len(file_labor_v1_container_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_container_proto_rawDesc), len(file_container_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   29,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_labor_v1_container_proto_goTypes,
-		DependencyIndexes: file_labor_v1_container_proto_depIdxs,
-		MessageInfos:      file_labor_v1_container_proto_msgTypes,
+		GoTypes:           file_container_proto_goTypes,
+		DependencyIndexes: file_container_proto_depIdxs,
+		MessageInfos:      file_container_proto_msgTypes,
 	}.Build()
-	File_labor_v1_container_proto = out.File
-	file_labor_v1_container_proto_goTypes = nil
-	file_labor_v1_container_proto_depIdxs = nil
+	File_container_proto = out.File
+	file_container_proto_goTypes = nil
+	file_container_proto_depIdxs = nil
 }

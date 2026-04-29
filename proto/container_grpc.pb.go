@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             (unknown)
-// source: labor/v1/container.proto
+// source: container.proto
 
-package labor_v1
+package proto
 
 import (
 	context "context"
@@ -28,10 +28,10 @@ const (
 	ContainerService_RemoveChatModel_FullMethodName      = "/labor.v1.ContainerService/RemoveChatModel"
 	ContainerService_CreateAgent_FullMethodName          = "/labor.v1.ContainerService/CreateAgent"
 	ContainerService_RemoveAgent_FullMethodName          = "/labor.v1.ContainerService/RemoveAgent"
-	ContainerService_GetOrCreateSession_FullMethodName   = "/labor.v1.ContainerService/GetOrCreateSession"
-	ContainerService_RemoveSession_FullMethodName        = "/labor.v1.ContainerService/RemoveSession"
-	ContainerService_CompressSession_FullMethodName      = "/labor.v1.ContainerService/CompressSession"
-	ContainerService_SendMessageToSession_FullMethodName = "/labor.v1.ContainerService/SendMessageToSession"
+	ContainerService_GetAgentSession_FullMethodName      = "/labor.v1.ContainerService/GetAgentSession"
+	ContainerService_ClearAgentHistory_FullMethodName    = "/labor.v1.ContainerService/ClearAgentHistory"
+	ContainerService_CompressAgentHistory_FullMethodName = "/labor.v1.ContainerService/CompressAgentHistory"
+	ContainerService_SendMessage_FullMethodName          = "/labor.v1.ContainerService/SendMessage"
 	ContainerService_StopTask_FullMethodName             = "/labor.v1.ContainerService/StopTask"
 )
 
@@ -39,30 +39,30 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// 容器与会话管理服务
+// 数字助理容器服务
+// 一个 Agent 绑定一个 Session，agent_id 即 session_id
 type ContainerServiceClient interface {
-	// --- 容器相关 ---
+	// --- 容器 ---
 	BackupService(ctx context.Context, in *BackupServiceRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[BackupServiceResponse], error)
-	// --- FTP相关 ---
+	// --- FTP ---
 	StartFTPServer(ctx context.Context, in *StartFTPServerRequest, opts ...grpc.CallOption) (*StartFTPServerResponse, error)
 	StopFTPServer(ctx context.Context, in *StopFTPServerRequest, opts ...grpc.CallOption) (*StopFTPServerResponse, error)
-	// --- 虚拟桌面相关 ---
+	// --- 虚拟桌面 ---
 	StartVirtualDesktop(ctx context.Context, in *StartVirtualDesktopRequest, opts ...grpc.CallOption) (*StartVirtualDesktopResponse, error)
 	StopVirtualDesktop(ctx context.Context, in *StopVirtualDesktopRequest, opts ...grpc.CallOption) (*StopVirtualDesktopResponse, error)
-	// --- 模型相关 ---
+	// --- 模型 ---
 	CreateChatModel(ctx context.Context, in *CreateChatModelRequest, opts ...grpc.CallOption) (*CreateChatModelResponse, error)
 	RemoveChatModel(ctx context.Context, in *RemoveChatModelRequest, opts ...grpc.CallOption) (*RemoveChatModelResponse, error)
-	// --- 智能体相关 ---
+	// --- 智能体 ---
 	CreateAgent(ctx context.Context, in *CreateAgentRequest, opts ...grpc.CallOption) (*CreateAgentResponse, error)
 	RemoveAgent(ctx context.Context, in *RemoveAgentRequest, opts ...grpc.CallOption) (*RemoveAgentResponse, error)
-	// --- 会话相关 ---
-	GetOrCreateSession(ctx context.Context, in *GetOrCreateSessionRequest, opts ...grpc.CallOption) (*GetOrCreateSessionResponse, error)
-	RemoveSession(ctx context.Context, in *RemoveSessionRequest, opts ...grpc.CallOption) (*RemoveSessionResponse, error)
-	CompressSession(ctx context.Context, in *CompressSessionRequest, opts ...grpc.CallOption) (*CompressSessionResponse, error)
-	// --- 对话相关 ---
-	// 使用 stream 返回，支持打字机效果或长时生成
-	SendMessageToSession(ctx context.Context, in *SendMessageToSessionRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[SendMessageToSessionResponse], error)
-	// --- 任务相关 ---
+	// --- 会话 (agent 维度) ---
+	GetAgentSession(ctx context.Context, in *GetAgentSessionRequest, opts ...grpc.CallOption) (*GetAgentSessionResponse, error)
+	ClearAgentHistory(ctx context.Context, in *ClearAgentHistoryRequest, opts ...grpc.CallOption) (*ClearAgentHistoryResponse, error)
+	CompressAgentHistory(ctx context.Context, in *CompressAgentHistoryRequest, opts ...grpc.CallOption) (*CompressAgentHistoryResponse, error)
+	// --- 对话 ---
+	SendMessage(ctx context.Context, in *SendMessageRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[SendMessageResponse], error)
+	// --- 任务 ---
 	StopTask(ctx context.Context, in *StopTaskRequest, opts ...grpc.CallOption) (*StopTaskResponse, error)
 }
 
@@ -173,43 +173,43 @@ func (c *containerServiceClient) RemoveAgent(ctx context.Context, in *RemoveAgen
 	return out, nil
 }
 
-func (c *containerServiceClient) GetOrCreateSession(ctx context.Context, in *GetOrCreateSessionRequest, opts ...grpc.CallOption) (*GetOrCreateSessionResponse, error) {
+func (c *containerServiceClient) GetAgentSession(ctx context.Context, in *GetAgentSessionRequest, opts ...grpc.CallOption) (*GetAgentSessionResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetOrCreateSessionResponse)
-	err := c.cc.Invoke(ctx, ContainerService_GetOrCreateSession_FullMethodName, in, out, cOpts...)
+	out := new(GetAgentSessionResponse)
+	err := c.cc.Invoke(ctx, ContainerService_GetAgentSession_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *containerServiceClient) RemoveSession(ctx context.Context, in *RemoveSessionRequest, opts ...grpc.CallOption) (*RemoveSessionResponse, error) {
+func (c *containerServiceClient) ClearAgentHistory(ctx context.Context, in *ClearAgentHistoryRequest, opts ...grpc.CallOption) (*ClearAgentHistoryResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RemoveSessionResponse)
-	err := c.cc.Invoke(ctx, ContainerService_RemoveSession_FullMethodName, in, out, cOpts...)
+	out := new(ClearAgentHistoryResponse)
+	err := c.cc.Invoke(ctx, ContainerService_ClearAgentHistory_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *containerServiceClient) CompressSession(ctx context.Context, in *CompressSessionRequest, opts ...grpc.CallOption) (*CompressSessionResponse, error) {
+func (c *containerServiceClient) CompressAgentHistory(ctx context.Context, in *CompressAgentHistoryRequest, opts ...grpc.CallOption) (*CompressAgentHistoryResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CompressSessionResponse)
-	err := c.cc.Invoke(ctx, ContainerService_CompressSession_FullMethodName, in, out, cOpts...)
+	out := new(CompressAgentHistoryResponse)
+	err := c.cc.Invoke(ctx, ContainerService_CompressAgentHistory_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *containerServiceClient) SendMessageToSession(ctx context.Context, in *SendMessageToSessionRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[SendMessageToSessionResponse], error) {
+func (c *containerServiceClient) SendMessage(ctx context.Context, in *SendMessageRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[SendMessageResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &ContainerService_ServiceDesc.Streams[1], ContainerService_SendMessageToSession_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &ContainerService_ServiceDesc.Streams[1], ContainerService_SendMessage_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[SendMessageToSessionRequest, SendMessageToSessionResponse]{ClientStream: stream}
+	x := &grpc.GenericClientStream[SendMessageRequest, SendMessageResponse]{ClientStream: stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -220,7 +220,7 @@ func (c *containerServiceClient) SendMessageToSession(ctx context.Context, in *S
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type ContainerService_SendMessageToSessionClient = grpc.ServerStreamingClient[SendMessageToSessionResponse]
+type ContainerService_SendMessageClient = grpc.ServerStreamingClient[SendMessageResponse]
 
 func (c *containerServiceClient) StopTask(ctx context.Context, in *StopTaskRequest, opts ...grpc.CallOption) (*StopTaskResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
@@ -236,30 +236,30 @@ func (c *containerServiceClient) StopTask(ctx context.Context, in *StopTaskReque
 // All implementations must embed UnimplementedContainerServiceServer
 // for forward compatibility.
 //
-// 容器与会话管理服务
+// 数字助理容器服务
+// 一个 Agent 绑定一个 Session，agent_id 即 session_id
 type ContainerServiceServer interface {
-	// --- 容器相关 ---
+	// --- 容器 ---
 	BackupService(*BackupServiceRequest, grpc.ServerStreamingServer[BackupServiceResponse]) error
-	// --- FTP相关 ---
+	// --- FTP ---
 	StartFTPServer(context.Context, *StartFTPServerRequest) (*StartFTPServerResponse, error)
 	StopFTPServer(context.Context, *StopFTPServerRequest) (*StopFTPServerResponse, error)
-	// --- 虚拟桌面相关 ---
+	// --- 虚拟桌面 ---
 	StartVirtualDesktop(context.Context, *StartVirtualDesktopRequest) (*StartVirtualDesktopResponse, error)
 	StopVirtualDesktop(context.Context, *StopVirtualDesktopRequest) (*StopVirtualDesktopResponse, error)
-	// --- 模型相关 ---
+	// --- 模型 ---
 	CreateChatModel(context.Context, *CreateChatModelRequest) (*CreateChatModelResponse, error)
 	RemoveChatModel(context.Context, *RemoveChatModelRequest) (*RemoveChatModelResponse, error)
-	// --- 智能体相关 ---
+	// --- 智能体 ---
 	CreateAgent(context.Context, *CreateAgentRequest) (*CreateAgentResponse, error)
 	RemoveAgent(context.Context, *RemoveAgentRequest) (*RemoveAgentResponse, error)
-	// --- 会话相关 ---
-	GetOrCreateSession(context.Context, *GetOrCreateSessionRequest) (*GetOrCreateSessionResponse, error)
-	RemoveSession(context.Context, *RemoveSessionRequest) (*RemoveSessionResponse, error)
-	CompressSession(context.Context, *CompressSessionRequest) (*CompressSessionResponse, error)
-	// --- 对话相关 ---
-	// 使用 stream 返回，支持打字机效果或长时生成
-	SendMessageToSession(*SendMessageToSessionRequest, grpc.ServerStreamingServer[SendMessageToSessionResponse]) error
-	// --- 任务相关 ---
+	// --- 会话 (agent 维度) ---
+	GetAgentSession(context.Context, *GetAgentSessionRequest) (*GetAgentSessionResponse, error)
+	ClearAgentHistory(context.Context, *ClearAgentHistoryRequest) (*ClearAgentHistoryResponse, error)
+	CompressAgentHistory(context.Context, *CompressAgentHistoryRequest) (*CompressAgentHistoryResponse, error)
+	// --- 对话 ---
+	SendMessage(*SendMessageRequest, grpc.ServerStreamingServer[SendMessageResponse]) error
+	// --- 任务 ---
 	StopTask(context.Context, *StopTaskRequest) (*StopTaskResponse, error)
 	mustEmbedUnimplementedContainerServiceServer()
 }
@@ -298,17 +298,17 @@ func (UnimplementedContainerServiceServer) CreateAgent(context.Context, *CreateA
 func (UnimplementedContainerServiceServer) RemoveAgent(context.Context, *RemoveAgentRequest) (*RemoveAgentResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RemoveAgent not implemented")
 }
-func (UnimplementedContainerServiceServer) GetOrCreateSession(context.Context, *GetOrCreateSessionRequest) (*GetOrCreateSessionResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetOrCreateSession not implemented")
+func (UnimplementedContainerServiceServer) GetAgentSession(context.Context, *GetAgentSessionRequest) (*GetAgentSessionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetAgentSession not implemented")
 }
-func (UnimplementedContainerServiceServer) RemoveSession(context.Context, *RemoveSessionRequest) (*RemoveSessionResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method RemoveSession not implemented")
+func (UnimplementedContainerServiceServer) ClearAgentHistory(context.Context, *ClearAgentHistoryRequest) (*ClearAgentHistoryResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ClearAgentHistory not implemented")
 }
-func (UnimplementedContainerServiceServer) CompressSession(context.Context, *CompressSessionRequest) (*CompressSessionResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method CompressSession not implemented")
+func (UnimplementedContainerServiceServer) CompressAgentHistory(context.Context, *CompressAgentHistoryRequest) (*CompressAgentHistoryResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CompressAgentHistory not implemented")
 }
-func (UnimplementedContainerServiceServer) SendMessageToSession(*SendMessageToSessionRequest, grpc.ServerStreamingServer[SendMessageToSessionResponse]) error {
-	return status.Error(codes.Unimplemented, "method SendMessageToSession not implemented")
+func (UnimplementedContainerServiceServer) SendMessage(*SendMessageRequest, grpc.ServerStreamingServer[SendMessageResponse]) error {
+	return status.Error(codes.Unimplemented, "method SendMessage not implemented")
 }
 func (UnimplementedContainerServiceServer) StopTask(context.Context, *StopTaskRequest) (*StopTaskResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method StopTask not implemented")
@@ -489,70 +489,70 @@ func _ContainerService_RemoveAgent_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ContainerService_GetOrCreateSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetOrCreateSessionRequest)
+func _ContainerService_GetAgentSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAgentSessionRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ContainerServiceServer).GetOrCreateSession(ctx, in)
+		return srv.(ContainerServiceServer).GetAgentSession(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ContainerService_GetOrCreateSession_FullMethodName,
+		FullMethod: ContainerService_GetAgentSession_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).GetOrCreateSession(ctx, req.(*GetOrCreateSessionRequest))
+		return srv.(ContainerServiceServer).GetAgentSession(ctx, req.(*GetAgentSessionRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ContainerService_RemoveSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RemoveSessionRequest)
+func _ContainerService_ClearAgentHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClearAgentHistoryRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ContainerServiceServer).RemoveSession(ctx, in)
+		return srv.(ContainerServiceServer).ClearAgentHistory(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ContainerService_RemoveSession_FullMethodName,
+		FullMethod: ContainerService_ClearAgentHistory_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).RemoveSession(ctx, req.(*RemoveSessionRequest))
+		return srv.(ContainerServiceServer).ClearAgentHistory(ctx, req.(*ClearAgentHistoryRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ContainerService_CompressSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CompressSessionRequest)
+func _ContainerService_CompressAgentHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CompressAgentHistoryRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ContainerServiceServer).CompressSession(ctx, in)
+		return srv.(ContainerServiceServer).CompressAgentHistory(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ContainerService_CompressSession_FullMethodName,
+		FullMethod: ContainerService_CompressAgentHistory_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).CompressSession(ctx, req.(*CompressSessionRequest))
+		return srv.(ContainerServiceServer).CompressAgentHistory(ctx, req.(*CompressAgentHistoryRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ContainerService_SendMessageToSession_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(SendMessageToSessionRequest)
+func _ContainerService_SendMessage_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(SendMessageRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(ContainerServiceServer).SendMessageToSession(m, &grpc.GenericServerStream[SendMessageToSessionRequest, SendMessageToSessionResponse]{ServerStream: stream})
+	return srv.(ContainerServiceServer).SendMessage(m, &grpc.GenericServerStream[SendMessageRequest, SendMessageResponse]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type ContainerService_SendMessageToSessionServer = grpc.ServerStreamingServer[SendMessageToSessionResponse]
+type ContainerService_SendMessageServer = grpc.ServerStreamingServer[SendMessageResponse]
 
 func _ContainerService_StopTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(StopTaskRequest)
@@ -612,16 +612,16 @@ var ContainerService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ContainerService_RemoveAgent_Handler,
 		},
 		{
-			MethodName: "GetOrCreateSession",
-			Handler:    _ContainerService_GetOrCreateSession_Handler,
+			MethodName: "GetAgentSession",
+			Handler:    _ContainerService_GetAgentSession_Handler,
 		},
 		{
-			MethodName: "RemoveSession",
-			Handler:    _ContainerService_RemoveSession_Handler,
+			MethodName: "ClearAgentHistory",
+			Handler:    _ContainerService_ClearAgentHistory_Handler,
 		},
 		{
-			MethodName: "CompressSession",
-			Handler:    _ContainerService_CompressSession_Handler,
+			MethodName: "CompressAgentHistory",
+			Handler:    _ContainerService_CompressAgentHistory_Handler,
 		},
 		{
 			MethodName: "StopTask",
@@ -635,10 +635,10 @@ var ContainerService_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 		{
-			StreamName:    "SendMessageToSession",
-			Handler:       _ContainerService_SendMessageToSession_Handler,
+			StreamName:    "SendMessage",
+			Handler:       _ContainerService_SendMessage_Handler,
 			ServerStreams: true,
 		},
 	},
-	Metadata: "labor/v1/container.proto",
+	Metadata: "container.proto",
 }

@@ -2,52 +2,52 @@ syntax = "proto3";
 
 package labor.v1;
 
-option go_package = "labor.v1";
+option go_package = "digital-labor/proto";
 
-// 容器与会话管理服务
+// 数字助理容器服务
+// 一个 Agent 绑定一个 Session，agent_id 即 session_id
 service ContainerService {
-  // --- 容器相关 ---
+  // --- 容器 ---
   rpc BackupService(BackupServiceRequest) returns (stream BackupServiceResponse);
 
-  // --- FTP相关 ---
+  // --- FTP ---
   rpc StartFTPServer(StartFTPServerRequest) returns (StartFTPServerResponse);
   rpc StopFTPServer(StopFTPServerRequest) returns (StopFTPServerResponse);
 
-  // --- 虚拟桌面相关 ---
+  // --- 虚拟桌面 ---
   rpc StartVirtualDesktop(StartVirtualDesktopRequest) returns (StartVirtualDesktopResponse);
   rpc StopVirtualDesktop(StopVirtualDesktopRequest) returns (StopVirtualDesktopResponse);
 
-  // --- 模型相关 ---
+  // --- 模型 ---
   rpc CreateChatModel(CreateChatModelRequest) returns (CreateChatModelResponse);
   rpc RemoveChatModel(RemoveChatModelRequest) returns (RemoveChatModelResponse);
 
-  // --- 智能体相关 ---
+  // --- 智能体 ---
   rpc CreateAgent(CreateAgentRequest) returns (CreateAgentResponse);
   rpc RemoveAgent(RemoveAgentRequest) returns (RemoveAgentResponse);
 
-  // --- 会话相关 ---
-  rpc GetOrCreateSession(GetOrCreateSessionRequest) returns (GetOrCreateSessionResponse);
-  rpc RemoveSession(RemoveSessionRequest) returns (RemoveSessionResponse);
-  rpc CompressSession(CompressSessionRequest) returns (CompressSessionResponse);
+  // --- 会话 (agent 维度) ---
+  rpc GetAgentSession(GetAgentSessionRequest) returns (GetAgentSessionResponse);
+  rpc ClearAgentHistory(ClearAgentHistoryRequest) returns (ClearAgentHistoryResponse);
+  rpc CompressAgentHistory(CompressAgentHistoryRequest) returns (CompressAgentHistoryResponse);
 
-  // --- 对话相关 ---
-  // 使用 stream 返回，支持打字机效果或长时生成
-  rpc SendMessageToSession(SendMessageToSessionRequest) returns (stream SendMessageToSessionResponse);
+  // --- 对话 ---
+  rpc SendMessage(SendMessageRequest) returns (stream SendMessageResponse);
 
-  // --- 任务相关 ---
+  // --- 任务 ---
   rpc StopTask(StopTaskRequest) returns (StopTaskResponse);
 }
 
-// --- 消息定义 (遵循唯一性原则) ---
+// --- 消息定义 ---
 message BackupServiceRequest {}
 message BackupServiceResponse {
-  bytes data = 1; // 文件块的实际二进制数据
-  int32 chunk_number = 2; // 文件块的序号，可选
+  bytes data = 1;
+  int32 chunk_number = 2;
 }
 
-// --- FTP相关 ---
+// --- FTP ---
 message StartFTPServerRequest {
-  string agent_name = 1; // 需要启动 FTP 的数字助理名称
+  string agent_name = 1;
 }
 message StartFTPServerResponse {
   bool success = 1;
@@ -62,7 +62,7 @@ message StopFTPServerResponse {
   string message = 3;
 }
 
-// --- 虚拟桌面相关 ---
+// --- 虚拟桌面 ---
 message StartVirtualDesktopRequest {
   string agent_name = 1;
 }
@@ -80,7 +80,7 @@ message StopVirtualDesktopResponse {
   string message = 2;
 }
 
-// Model Messages
+// --- 模型 ---
 message CreateChatModelRequest {
   string model_name = 1;
   string key = 2;
@@ -92,7 +92,6 @@ message CreateChatModelResponse {
   string chat_model_id = 2;
   string message = 3;
 }
-
 message RemoveChatModelRequest {
   string chat_model_id = 1;
 }
@@ -101,7 +100,7 @@ message RemoveChatModelResponse {
   string message = 2;
 }
 
-// Agent Messages
+// --- 智能体 ---
 message CreateAgentRequest {
   string agent_name = 1;
   string chat_model_id = 2;
@@ -111,7 +110,6 @@ message CreateAgentResponse {
   bool success = 2;
   string message = 3;
 }
-
 message RemoveAgentRequest {
   string agent_id = 1;
 }
@@ -120,12 +118,9 @@ message RemoveAgentResponse {
   string message = 2;
 }
 
-// Session Messages
-message GetOrCreateSessionRequest {
+// --- 会话 ---
+message GetAgentSessionRequest {
   string agent_id = 1;
-  string session_id = 2;
-  int32 page = 3;
-  int32 page_size = 4;
 }
 message Message {
   string role = 1;
@@ -133,42 +128,37 @@ message Message {
   string timestamp = 3;
   string kind = 4;
 }
-message GetOrCreateSessionResponse {
-  string session_id = 1;
+message GetAgentSessionResponse {
+  string agent_id = 1;
   repeated Message messages = 2;
 }
-
-message CompressSessionRequest {
+message ClearAgentHistoryRequest {
   string agent_id = 1;
-  string session_id = 2;
 }
-message CompressSessionResponse {
+message ClearAgentHistoryResponse {
+  bool success = 1;
+  string message = 2;
+}
+message CompressAgentHistoryRequest {
+  string agent_id = 1;
+}
+message CompressAgentHistoryResponse {
   bool success = 1;
   string message = 2;
 }
 
-message RemoveSessionRequest {
+// --- 对话 ---
+message SendMessageRequest {
   string agent_id = 1;
-  string session_id = 2;
-}
-message RemoveSessionResponse {
-  bool success = 1;
   string message = 2;
+  bool is_stream = 3;
+}
+message SendMessageResponse {
+  string delta_content = 1;
+  bool is_final = 2;
 }
 
-// Dialogue Messages
-message SendMessageToSessionRequest {
-  string agent_id = 1;
-  string session_id = 2;
-  string message = 3;
-  bool is_stream = 4;
-}
-message SendMessageToSessionResponse {
-  string delta_content = 1; // 流式返回时的片段内容
-  bool is_final = 2; // 是否是最后一段
-}
-
-// Task Messages
+// --- 任务 ---
 message StopTaskRequest {
   string agent_id = 1;
 }
