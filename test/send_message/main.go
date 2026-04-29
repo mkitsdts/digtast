@@ -129,6 +129,8 @@ func defaultConfig() appConfig {
 	}
 }
 
+var agentId string
+
 func findConfigPath(args []string) string {
 	for i, arg := range args {
 		if arg == "-config" || arg == "--config" {
@@ -173,20 +175,30 @@ func registerAgent(ctx context.Context, client pb.ContainerServiceClient, cfg se
 		return errors.New("--provider, --model, and --key or LLM_API_KEY are required to register the agent")
 	}
 
-	resp, err := client.StartService(ctx, &pb.StartServiceRequest{
-		ContainerId: cfg.containerID,
-		AgentId:     cfg.agentID,
-		Key:         cfg.apiKey,
-		Url:         cfg.baseURL,
-		ModelName:   cfg.modelName,
-		Provider:    cfg.provider,
+	resp1, err := client.CreateChatModel(ctx, &pb.CreateChatModelRequest{
+		Provider:  cfg.provider,
+		Key:       cfg.apiKey,
+		BaseUrl:   cfg.baseURL,
+		ModelName: cfg.modelName,
 	})
 	if err != nil {
-		return fmt.Errorf("StartService failed: %w", err)
+		return fmt.Errorf("CreateChatModel failed: %w", err)
 	}
-	if !resp.GetSuccess() {
-		return errors.New("StartService returned success=false")
+	if !resp1.GetSuccess() {
+		return errors.New("CreateChatModel returned success=false")
 	}
+
+	resp2, err := client.CreateAgent(ctx, &pb.CreateAgentRequest{
+		AgentName:   "114514",
+		ChatModelId: resp1.GetChatModelId(),
+	})
+	if err != nil {
+		return fmt.Errorf("CreateAgent failed: %w", err)
+	}
+	if !resp2.GetSuccess() {
+		return errors.New("CreateAgent returned success=false")
+	}
+	agentId = resp2.GetAgentId()
 
 	fmt.Println("StartService: success")
 	return nil
@@ -194,11 +206,10 @@ func registerAgent(ctx context.Context, client pb.ContainerServiceClient, cfg se
 
 func sendMessage(ctx context.Context, client pb.ContainerServiceClient, cfg messageConfig) (string, error) {
 	respStream, err := client.SendMessageToSession(ctx, &pb.SendMessageToSessionRequest{
-		ContainerId: cfg.containerID,
-		AgentId:     cfg.agentID,
-		SessionId:   cfg.sessionID,
-		Message:     cfg.message,
-		IsStream:    false,
+		AgentId:   agentId,
+		SessionId: cfg.sessionID,
+		Message:   cfg.message,
+		IsStream:  false,
 	})
 	if err != nil {
 		return "", fmt.Errorf("SendMessageToSession failed: %w", err)
