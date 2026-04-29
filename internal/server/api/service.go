@@ -1,105 +1,76 @@
 package api
 
 import (
-	"context"
-	"digital-labor/internal/center"
-	"digital-labor/pkg/conf"
-	"digital-labor/pkg/model"
+	"archive/zip"
+	"digital-labor/pkg/workspace"
 	pb "digital-labor/proto"
-	"errors"
-	"log/slog"
+	"io"
+	"os"
+	"path/filepath"
 )
-
-const (
-	default_ftp_port            int    = 2121
-	default_visual_display_kind string = "vnc"
-)
-
-// StartService 启动服务
-func (s *ContainerServer) StartService(ctx context.Context, req *pb.StartServiceRequest) (*pb.StartServiceResponse, error) {
-	slog.Info("StartService request received", "container_id", req.ContainerId, "agent_id", req.AgentId)
-
-	id := buildAgentKey(req.ContainerId, req.AgentId)
-	_, err := center.AgentManager.CreateAgent(req.AgentName, &model.DigitalAgentConfig{
-		ID:       id,
-		Key:      req.Key,
-		Name:     req.ModelName,
-		Model:    req.ModelName,
-		URL:      req.Url,
-		Provider: req.Provider,
-	})
-	if err != nil {
-		slog.Error("Failed to create agent", "error", err)
-	}
-
-	ftp_port := -1
-	if req.FtpEnabled {
-		if conf.Conf.FTP.Port != 0 {
-			ftp_port = conf.Conf.FTP.Port
-		} else {
-			ftp_port = default_ftp_port
-		}
-		err := center.FtpServer.Start()
-		if err != nil {
-			slog.Error("Failed to start FTP server", "error", err)
-			return nil, err
-		}
-	}
-
-	port := -1
-	if req.VncEnabled {
-		resp, err := center.Vdisplay.GetOrStartVisualDisplay(model.GetDesktopDisplayRequest{
-			Key:  id,
-			Kind: default_visual_display_kind,
-		})
-		if err != nil {
-			slog.Error("Failed to start VNC server", "error", err)
-		} else {
-			port = resp.Port
-		}
-	}
-
-	return &pb.StartServiceResponse{
-		VisualDisplayPort: int32(port),
-		FtpPort:           int32(ftp_port),
-		Success:           err == nil,
-	}, err
-}
-
-// StopService 暂停服务
-func (s *ContainerServer) StopService(ctx context.Context, req *pb.StopServiceRequest) (*pb.StopServiceResponse, error) {
-	slog.Info("StopService request received", "container_id", req.ContainerId, "agent_id", req.AgentId)
-	id := buildAgentKey(req.ContainerId, req.AgentId)
-
-	var errs error
-	// Stop VNC if it was running
-	if _, err := center.Vdisplay.ShutdownVisualDisplay(model.ShutdownDesktopDisplayRequest{
-		Key:  id,
-		Kind: default_visual_display_kind,
-	}); err != nil {
-		slog.Error("Failed to stop visual display")
-		errs = errors.New(err.Error())
-	}
-
-	// Stop FTP Server (global)
-	if err := center.FtpServer.Stop(); err != nil {
-		slog.Error("Failed to stop FTP server", "error", err)
-		errs = errors.New(errs.Error() + err.Error())
-	}
-
-	return &pb.StopServiceResponse{
-		Success: errs == nil,
-	}, errs
-}
 
 // BackupService 备份服务
-func (s *ContainerServer) BackupService(ctx context.Context, req *pb.BackupServiceRequest) (*pb.BackupServiceResponse, error) {
+func (s *ContainerServer) BackupService(req *pb.BackupServiceRequest, stream pb.ContainerService_BackupServiceServer) error {
+	wp := workspace.GetWorkspacePath()
+	
+	// Create a temporary zip file
+	tmpFile, err := os.CreateTemp("", "backup-*.zip")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmpFile.Name())
+	defer tmpFile.Close()
 
-	return &pb.BackupServiceResponse{
-		BackupUrl: "http://backup-server/container-" + req.ContainerId + "/agent-" + req.AgentId + ".tar.gz",
-	}, nil
-}
+	zw := zip.NewWriter(tmpFile)
+	err = filepath.Walk(wp, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		relPath, err := filepath.Rel(wp, path)
+		if err != nil {
+			return err
+		}
+		w, err := zw.Create(relPath)
+		if err != nil {
+			return err
+		}
+		f, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		_, err = io.Copy(w, f)
+		return err
+	})
+	if err != nil {
+		return err
+	}
+	zw.Close()
 
-func buildAgentKey(containerID, agentID string) string {
-	return containerID + "/" + agentID
+	// Stream the zip file back
+	_, err = tmpFile.Seek(0, 0)
+	if err != nil {
+		return err
+	}
+
+	buf := make([]byte, 1024*64) // 64KB chunks
+	for {
+		n, err := tmpFile.Read(buf)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		if err := stream.Send(&pb.BackupServiceResponse{
+			Data: buf[:n],
+		}); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

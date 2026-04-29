@@ -12,8 +12,7 @@ import (
 )
 
 func (s *ContainerServer) GetOrCreateSession(ctx context.Context, req *pb.GetOrCreateSessionRequest) (*pb.GetOrCreateSessionResponse, error) {
-	id := buildAgentKey(req.ContainerId, req.AgentId)
-	ag, err := center.AgentManager.GetAgent(id)
+	ag, err := center.AgentManager.GetAgent(req.AgentId)
 	if err != nil {
 		return nil, err
 	}
@@ -36,6 +35,18 @@ func (s *ContainerServer) GetOrCreateSession(ctx context.Context, req *pb.GetOrC
 
 // RemoveSession 删除会话
 func (s *ContainerServer) RemoveSession(ctx context.Context, req *pb.RemoveSessionRequest) (*pb.RemoveSessionResponse, error) {
+	ag, err := center.AgentManager.GetAgent(req.AgentId)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := ag.RemoveSession(req.SessionId); err != nil {
+		return &pb.RemoveSessionResponse{
+			Success: false,
+			Message: err.Error(),
+		}, nil
+	}
+
 	return &pb.RemoveSessionResponse{
 		Success: true,
 	}, nil
@@ -51,8 +62,7 @@ func (s *ContainerServer) SendMessageToSession(req *pb.SendMessageToSessionReque
 	}
 
 	ctx = context.WithValue(ctx, "session_id", req.SessionId)
-	id := buildAgentKey(req.ContainerId, req.AgentId)
-	digitalAgent, err := center.AgentManager.GetAgent(id)
+	digitalAgent, err := center.AgentManager.GetAgent(req.AgentId)
 	if err != nil {
 		return err
 	}
@@ -78,18 +88,12 @@ func (s *ContainerServer) SendMessageToSession(req *pb.SendMessageToSessionReque
 }
 
 func (s *ContainerServer) StopTask(ctx context.Context, req *pb.StopTaskRequest) (*pb.StopTaskResponse, error) {
-	key := buildAgentKey(req.ContainerId, req.AgentId)
-
-	if key == "" {
-		return nil, errors.New("container id and session id is necessary")
-	}
-
-	ag, err := center.AgentManager.GetAgent(key)
+	ag, err := center.AgentManager.GetAgent(req.AgentId)
 	if err != nil {
 		return nil, errors.New("invaild container id or session id")
 	}
 
-	if err := ag.Cancel(req.SessionId); err != nil {
+	if err := ag.Cancel(); err != nil {
 		slog.Error("cancel task failed", "error", err)
 		return nil, err
 	}
@@ -99,9 +103,10 @@ func (s *ContainerServer) StopTask(ctx context.Context, req *pb.StopTaskRequest)
 
 func (s *ContainerServer) CompressSession(ctx context.Context, req *pb.CompressSessionRequest) (*pb.CompressSessionResponse, error) {
 	// TODO: 需要对应记忆模块的压缩
+	// 目前仅作为占位符，未来可以调用 LLM 进行会话总结并替换历史记录
 
 	return &pb.CompressSessionResponse{
-		SessionId: req.SessionId,
-		Success:   true,
+		Success: true,
+		Message: "Session compression is not yet implemented, but the request was received.",
 	}, nil
 }

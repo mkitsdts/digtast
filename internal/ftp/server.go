@@ -10,6 +10,7 @@ import (
 type FTPServer struct {
 	server *server.FtpServer
 	ch     chan error
+	Port   int
 }
 
 func NewFTPServer(cfg *ServerConfig) *FTPServer {
@@ -17,7 +18,9 @@ func NewFTPServer(cfg *ServerConfig) *FTPServer {
 		return nil
 	}
 
-	s := &FTPServer{}
+	s := &FTPServer{
+		Port: cfg.Port,
+	}
 	// default base dir is root dir
 	if cfg.BaseDir == "" {
 		cfg.BaseDir = "/"
