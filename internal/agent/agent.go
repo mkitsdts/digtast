@@ -25,7 +25,7 @@ type DigitalAgent struct {
 	memory   *mem.Store
 }
 
-func NewDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
+func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 	if cfg.Name == "" {
 		cfg.Name = uuid.New().String()
 	}
@@ -110,4 +110,35 @@ func (dga *DigitalAgent) unbindRun(sessionID string) {
 	dga.runMu.Lock()
 	defer dga.runMu.Unlock()
 	delete(dga.runStops, sessionID)
+}
+
+func (dga *DigitalAgent) UpdateTools() error {
+	if dga.agent == nil {
+		return nil
+	}
+
+	ctx := ctxmanager.GetOrCreate(dga.agent.Name(context.Background()))
+	ag, err := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
+		Name:  dga.agent.Name(context.Background()),
+		Model: dga.cm,
+		ToolsConfig: adk.ToolsConfig{
+			ToolsNodeConfig: compose.ToolsNodeConfig{
+				Tools: registry.GetTools(),
+				ToolCallMiddlewares: []compose.ToolMiddleware{
+					{Invokable: registry.Invokable},
+				},
+			},
+		},
+		Description: dga.agent.Description(ctx),
+		Handlers:    []adk.ChatModelAgentMiddleware{registry.GetBackendMiddleware()},
+	})
+	if err != nil {
+		return err
+	}
+
+	dga.runMu.Lock()
+	dga.agent = ag
+	dga.runMu.Unlock()
+
+	return nil
 }

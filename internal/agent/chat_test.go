@@ -7,7 +7,7 @@ import (
 )
 
 func TestChat(t *testing.T) {
-	agent, err := NewDigitalAgent(&model.DigitalAgentConfig{
+	agent, err := newDigitalAgent(&model.DigitalAgentConfig{
 		Provider:    "doubao",
 		Key:         ark_api_key,
 		URL:         "https://ark.cn-beijing.volces.com/api/v3",

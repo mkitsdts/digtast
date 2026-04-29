@@ -8,8 +8,7 @@ import (
 )
 
 func TestCreateAgent_MissingKey(t *testing.T) {
-	c := GetCenter()
-	_, err := c.CreateAgent(nil)
+	_, err := AgentManager.CreateAgent("nil", nil)
 	if err == nil {
 		t.Fatal("expected error for nil config")
 	}
@@ -17,31 +16,27 @@ func TestCreateAgent_MissingKey(t *testing.T) {
 
 func TestCreateAgent_EmptyFields(t *testing.T) {
 	// Create a fresh center for testing
-	c := &Center{agents: make(map[string]*agent.DigitalAgent)}
-
 	// Empty key
-	_, err := c.CreateAgent(&model.DigitalAgentConfig{Key: ""})
+	_, err := AgentManager.CreateAgent("", &model.DigitalAgentConfig{Key: ""})
 	if err == nil || err.Error() != "key is empty" {
 		t.Fatalf("expected 'key is empty' error, got: %v", err)
 	}
 
 	// Empty name
-	_, err = c.CreateAgent(&model.DigitalAgentConfig{Key: "some-key", Name: ""})
+	_, err = AgentManager.CreateAgent("", &model.DigitalAgentConfig{Key: "some-key", Name: ""})
 	if err == nil || err.Error() != "name is empty" {
 		t.Fatalf("expected 'name is empty' error, got: %v", err)
 	}
 
 	// Empty model
-	_, err = c.CreateAgent(&model.DigitalAgentConfig{Key: "some-key", Name: "test", Model: ""})
+	_, err = AgentManager.CreateAgent("", &model.DigitalAgentConfig{Key: "some-key", Name: "test", Model: ""})
 	if err == nil || err.Error() != "model is empty" {
 		t.Fatalf("expected 'model is empty' error, got: %v", err)
 	}
 }
 
 func TestGet_NotFound(t *testing.T) {
-	c := &Center{agents: make(map[string]*agent.DigitalAgent)}
-
-	_, err := c.GetAgent("nonexistent")
+	_, err := AgentManager.GetAgent("nonexistent")
 	if err == nil {
 		t.Fatal("expected error for nonexistent agent")
 	}
@@ -51,42 +46,35 @@ func TestGet_NotFound(t *testing.T) {
 }
 
 func TestGet_EmptyID(t *testing.T) {
-	c := &Center{agents: make(map[string]*agent.DigitalAgent)}
-
-	_, err := c.GetAgent("")
+	_, err := AgentManager.GetAgent("")
 	if err == nil {
 		t.Fatal("expected error for empty id")
 	}
 }
 
 func TestRemove_NotFound(t *testing.T) {
-	c := &Center{agents: make(map[string]*agent.DigitalAgent)}
-
-	err := c.RemoveAgent("nonexistent")
+	err := AgentManager.RemoveAgent("nonexistent")
 	if err == nil {
 		t.Fatal("expected error for nonexistent agent")
 	}
 }
 
 func TestRemove_EmptyID(t *testing.T) {
-	c := &Center{agents: make(map[string]*agent.DigitalAgent)}
-
-	err := c.RemoveAgent("")
+	AgentManager = agent.NewManager()
+	err := AgentManager.RemoveAgent("")
 	if err == nil {
 		t.Fatal("expected error for empty id")
 	}
 }
 
 func TestConcurrency_Agents(t *testing.T) {
-	c := &Center{agents: make(map[string]*agent.DigitalAgent)}
-
 	var wg sync.WaitGroup
 	// Concurrent reads
 	for i := 0; i < 50; i++ {
 		wg.Add(1)
 		go func(n int) {
 			defer wg.Done()
-			c.GetAgent("key")
+			AgentManager.GetAgent("key")
 		}(i)
 	}
 	wg.Wait()
