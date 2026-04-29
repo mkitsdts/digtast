@@ -25,13 +25,14 @@ type StartServiceRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
 	AgentId       string                 `protobuf:"bytes,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
-	Key           string                 `protobuf:"bytes,3,opt,name=key,proto3" json:"key,omitempty"`
-	Url           string                 `protobuf:"bytes,4,opt,name=url,proto3" json:"url,omitempty"`
-	ModelName     string                 `protobuf:"bytes,5,opt,name=model_name,json=modelName,proto3" json:"model_name,omitempty"`
-	Provider      string                 `protobuf:"bytes,6,opt,name=provider,proto3" json:"provider,omitempty"`
-	AgentKind     string                 `protobuf:"bytes,7,opt,name=agent_kind,json=agentKind,proto3" json:"agent_kind,omitempty"`
-	VncEnabled    bool                   `protobuf:"varint,8,opt,name=vnc_enabled,json=vncEnabled,proto3" json:"vnc_enabled,omitempty"`
-	FtpEnabled    bool                   `protobuf:"varint,9,opt,name=ftp_enabled,json=ftpEnabled,proto3" json:"ftp_enabled,omitempty"`
+	AgentName     string                 `protobuf:"bytes,3,opt,name=agent_name,json=agentName,proto3" json:"agent_name,omitempty"`
+	Key           string                 `protobuf:"bytes,4,opt,name=key,proto3" json:"key,omitempty"`
+	Url           string                 `protobuf:"bytes,5,opt,name=url,proto3" json:"url,omitempty"`
+	ModelName     string                 `protobuf:"bytes,6,opt,name=model_name,json=modelName,proto3" json:"model_name,omitempty"`
+	Provider      string                 `protobuf:"bytes,7,opt,name=provider,proto3" json:"provider,omitempty"`
+	AgentKind     string                 `protobuf:"bytes,8,opt,name=agent_kind,json=agentKind,proto3" json:"agent_kind,omitempty"`
+	VncEnabled    bool                   `protobuf:"varint,9,opt,name=vnc_enabled,json=vncEnabled,proto3" json:"vnc_enabled,omitempty"`
+	FtpEnabled    bool                   `protobuf:"varint,10,opt,name=ftp_enabled,json=ftpEnabled,proto3" json:"ftp_enabled,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -76,6 +77,13 @@ func (x *StartServiceRequest) GetContainerId() string {
 func (x *StartServiceRequest) GetAgentId() string {
 	if x != nil {
 		return x.AgentId
+	}
+	return ""
+}
+
+func (x *StartServiceRequest) GetAgentName() string {
+	if x != nil {
+		return x.AgentName
 	}
 	return ""
 }
@@ -1025,20 +1033,23 @@ var File_labor_v1_container_proto protoreflect.FileDescriptor
 
 const file_labor_v1_container_proto_rawDesc = "" +
 	"\n" +
-	"\x18labor/v1/container.proto\x12\blabor.v1\"\x93\x02\n" +
+	"\x18labor/v1/container.proto\x12\blabor.v1\"\xb2\x02\n" +
 	"\x13StartServiceRequest\x12!\n" +
 	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
-	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x10\n" +
-	"\x03key\x18\x03 \x01(\tR\x03key\x12\x10\n" +
-	"\x03url\x18\x04 \x01(\tR\x03url\x12\x1d\n" +
+	"\bagent_id\x18\x02 \x01(\tR\aagentId\x12\x1d\n" +
 	"\n" +
-	"model_name\x18\x05 \x01(\tR\tmodelName\x12\x1a\n" +
-	"\bprovider\x18\x06 \x01(\tR\bprovider\x12\x1d\n" +
+	"agent_name\x18\x03 \x01(\tR\tagentName\x12\x10\n" +
+	"\x03key\x18\x04 \x01(\tR\x03key\x12\x10\n" +
+	"\x03url\x18\x05 \x01(\tR\x03url\x12\x1d\n" +
 	"\n" +
-	"agent_kind\x18\a \x01(\tR\tagentKind\x12\x1f\n" +
-	"\vvnc_enabled\x18\b \x01(\bR\n" +
+	"model_name\x18\x06 \x01(\tR\tmodelName\x12\x1a\n" +
+	"\bprovider\x18\a \x01(\tR\bprovider\x12\x1d\n" +
+	"\n" +
+	"agent_kind\x18\b \x01(\tR\tagentKind\x12\x1f\n" +
+	"\vvnc_enabled\x18\t \x01(\bR\n" +
 	"vncEnabled\x12\x1f\n" +
-	"\vftp_enabled\x18\t \x01(\bR\n" +
+	"\vftp_enabled\x18\n" +
+	" \x01(\bR\n" +
 	"ftpEnabled\"{\n" +
 	"\x14StartServiceResponse\x12.\n" +
 	"\x13visual_display_port\x18\x01 \x01(\x05R\x11visualDisplayPort\x12\x19\n" +

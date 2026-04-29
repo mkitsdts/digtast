@@ -29,13 +29,14 @@ service ContainerService {
 message StartServiceRequest {
   string container_id = 1;
   string agent_id = 2;
-  string key = 3;
-  string url = 4;
-  string model_name = 5;
-  string provider = 6;
-  string agent_kind = 7;
-  bool vnc_enabled = 8;
-  bool ftp_enabled = 9;
+  string agent_name = 3;
+  string key = 4;
+  string url = 5;
+  string model_name = 6;
+  string provider = 7;
+  string agent_kind = 8;
+  bool vnc_enabled = 9;
+  bool ftp_enabled = 10;
 }
 message StartServiceResponse {
   int32 visual_display_port = 1;
