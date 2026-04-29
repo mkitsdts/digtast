@@ -9,8 +9,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-
-	"github.com/google/uuid"
 )
 
 const (
@@ -25,14 +23,10 @@ const (
 func RunLocalREPL() {
 	scanner := bufio.NewScanner(os.Stdin)
 	currentAgentID := conf.Conf.State.LastUsedAgent
-	sessionID := conf.Conf.State.LastSession
 	ag, _ := center.AgentManager.GetAgent(currentAgentID)
-	currentAgentName := ag.Name
-
-	if sessionID == "" {
-		sessionID = uuid.New().String()
-		conf.Conf.State.LastSession = sessionID
-		conf.SaveConfig()
+	currentAgentName := ""
+	if ag != nil {
+		currentAgentName = ag.Name
 	}
 
 	fmt.Printf("%s=== Digital Labor Local Interactive Mode ===%s\n", colorCyan, colorReset)
@@ -49,17 +43,15 @@ func RunLocalREPL() {
 			conf.Conf.State.LastUsedAgent = currentAgentID
 			conf.SaveConfig()
 			ag = ags[0]
+			currentAgentName = ag.Name
 		}
 	}
 
-	if currentAgentID != "" {
-		fmt.Printf("%s[System] Selected Agent: %s, Session: %s%s\n", colorGreen, currentAgentID, sessionID, colorReset)
-		// Try to load history if it exists
-		if ag != nil {
-			sess, _ := ag.GetSession(sessionID)
-			if sess != nil && len(sess.GetMessages()) > 0 {
-				fmt.Printf("%s[System] Loaded %d messages from history.%s\n", colorGreen, len(sess.GetMessages()), colorReset)
-			}
+	if currentAgentID != "" && ag != nil {
+		fmt.Printf("%s[System] Selected Agent: %s (%s)%s\n", colorGreen, currentAgentName, currentAgentID, colorReset)
+		sess, _ := ag.GetSession()
+		if sess != nil && len(sess.GetMessages()) > 0 {
+			fmt.Printf("%s[System] Loaded %d messages from history.%s\n", colorGreen, len(sess.GetMessages()), colorReset)
 		}
 	}
 
@@ -92,8 +84,8 @@ func RunLocalREPL() {
 					fmt.Println("No agents available.")
 				} else {
 					fmt.Println("Available Agents:")
-					for _, ag := range ags {
-						fmt.Printf("- %s (ID: %s)\n", ag.ID, ag.ID)
+					for _, a := range ags {
+						fmt.Printf("- %s (ID: %s)\n", a.Name, a.ID)
 					}
 				}
 			case "/use":
@@ -102,17 +94,18 @@ func RunLocalREPL() {
 					continue
 				}
 				targetID := parts[1]
-				ag, err := center.AgentManager.GetAgent(targetID)
+				newAg, err := center.AgentManager.GetAgent(targetID)
 				if err != nil {
 					fmt.Printf("%sError: Agent '%s' not found.%s\n", colorRed, targetID, colorReset)
 				} else {
 					currentAgentID = targetID
+					ag = newAg
+					currentAgentName = ag.Name
 					conf.Conf.State.LastUsedAgent = currentAgentID
 					conf.SaveConfig()
-					fmt.Printf("%sSwitched to agent '%s'.%s\n", colorGreen, currentAgentID, colorReset)
+					fmt.Printf("%sSwitched to agent '%s'.%s\n", colorGreen, currentAgentName, colorReset)
 
-					// Check history for the new agent in current session
-					sess, _ := ag.GetSession(sessionID)
+					sess, _ := ag.GetSession()
 					if sess != nil && len(sess.GetMessages()) > 0 {
 						fmt.Printf("%s[System] Loaded %d messages from history.%s\n", colorGreen, len(sess.GetMessages()), colorReset)
 					}
@@ -143,14 +136,26 @@ func RunLocalREPL() {
 					ModelKind:   modelVersion,
 				}
 
-				ag, err := center.AgentManager.CreateAgent(name, cfg)
+				newAg, err := center.AgentManager.CreateAgent(name, cfg)
 				if err != nil {
 					fmt.Printf("%sError creating agent: %v%s\n", colorRed, err, colorReset)
 				} else {
-					currentAgentID = ag.ID
+					currentAgentID = newAg.ID
+					ag = newAg
+					currentAgentName = ag.Name
 					conf.Conf.State.LastUsedAgent = currentAgentID
 					conf.SaveConfig()
 					fmt.Printf("%sAgent created! ID: %s, Name: %s%s\n", colorGreen, ag.ID, name, colorReset)
+				}
+			case "/reset":
+				if ag == nil {
+					fmt.Printf("%s[Error] No agent selected.%s\n", colorRed, colorReset)
+					continue
+				}
+				if err := ag.ClearHistory(); err != nil {
+					fmt.Printf("%sError clearing history: %v%s\n", colorRed, err, colorReset)
+				} else {
+					fmt.Printf("%sAgent '%s' history cleared.%s\n", colorGreen, currentAgentName, colorReset)
 				}
 			case "/model":
 				if len(parts) < 2 {
@@ -201,33 +206,13 @@ func RunLocalREPL() {
 					conf.SaveConfig()
 					fmt.Printf("%sModel configuration '%s' saved!%s\n", colorGreen, configName, colorReset)
 				}
-			case "/session":
-				if len(parts) < 2 {
-					fmt.Printf("Current Session ID: %s\n", sessionID)
-					fmt.Println("To switch: /session <id>")
-					continue
-				}
-				sessionID = parts[1]
-				conf.Conf.State.LastSession = sessionID
-				conf.SaveConfig()
-				fmt.Printf("%sSwitched to session '%s'.%s\n", colorGreen, sessionID, colorReset)
-
-				// Check history
-				if currentAgentID != "" {
-					ag, _ := center.AgentManager.GetAgent(currentAgentID)
-					if ag != nil {
-						sess, _ := ag.GetSession(sessionID)
-						if sess != nil && len(sess.GetMessages()) > 0 {
-							fmt.Printf("%s[System] Loaded %d messages from history.%s\n", colorGreen, len(sess.GetMessages()), colorReset)
-						}
-					}
-				}
 			case "/help":
 				fmt.Println("Commands:")
 				fmt.Println("  /ls              - List all agents")
 				fmt.Println("  /new             - Create a new agent interactively")
 				fmt.Println("  /use <id>        - Switch to a different agent")
-				fmt.Println("  /session <id>    - Switch to a different session")
+				fmt.Println("  /reset           - Clear current agent's conversation history")
+				fmt.Println("  /model ls|add    - Manage model configurations")
 				fmt.Println("  /exit            - Exit the application")
 				fmt.Println("  /help            - Show this help message")
 			default:
@@ -236,18 +221,15 @@ func RunLocalREPL() {
 			continue
 		}
 
-		if currentAgentID == "" {
+		if ag == nil {
 			fmt.Printf("%s[Error] No agent selected. Use '/ls' and '/use <id>' first.%s\n", colorRed, colorReset)
 			continue
 		}
 
-		// Execute Agent
-		ag, _ := center.AgentManager.GetAgent(currentAgentID)
 		ctx := context.Background()
-
 		fmt.Printf("%sAssistant: %s", colorCyan, colorReset)
 
-		ch, err := ag.Run(ctx, input, true, sessionID)
+		ch, err := ag.Run(ctx, input, true)
 		if err != nil {
 			fmt.Printf("\n%sError: %v%s\n", colorRed, err, colorReset)
 			continue
@@ -256,6 +238,6 @@ func RunLocalREPL() {
 		for content := range ch {
 			fmt.Print(content)
 		}
-		fmt.Println() // New line after stream ends
+		fmt.Println()
 	}
 }
