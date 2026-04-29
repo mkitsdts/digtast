@@ -10,3 +10,7 @@ var (
 	ErrAgentIDRequired   = errors.New("agent ID is required")
 	ErrSessionIDRequired = errors.New("session ID is required")
 )
+
+var (
+	ErrAgentNotFound = errors.New("agent not found")
+)
