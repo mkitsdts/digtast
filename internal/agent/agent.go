@@ -3,10 +3,13 @@ package agent
 import (
 	"context"
 	mem "digital-labor/internal/memory"
+	"digital-labor/pkg/conf"
 	"digital-labor/pkg/ctxmanager"
+	"digital-labor/pkg/errs"
 	mmodel "digital-labor/pkg/model"
 	"digital-labor/pkg/registry"
 	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/cloudwego/eino/adk"
@@ -21,28 +24,37 @@ type DigitalAgent struct {
 	agent    *adk.ChatModelAgent        // 智能体
 	prompts  *PromptBuilder
 	runMu    sync.Mutex
-	runStops map[string]context.CancelFunc
+	runStops context.CancelFunc
 	memory   *mem.Store
 }
 
 func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 	if cfg.Name == "" {
-		cfg.Name = uuid.New().String()
+		return nil, errs.ErrAgentNameRequired
 	}
 
 	if cfg.Description == "" {
 		cfg.Description = defaultModelDescription
 	}
 
+	if cfg.ID == "" {
+		cfg.ID = uuid.New().String()
+	}
+
 	dga := &DigitalAgent{
-		runStops: make(map[string]context.CancelFunc),
-		prompts:  NewPromptBuilder(),
-		ID:       cfg.ID,
-		memory:   mem.NewStore(cfg.Name),
+		prompts: NewPromptBuilder(),
+		ID:      cfg.ID,
+		memory:  mem.NewStore(cfg.Name),
+	}
+
+	// Fetch model config from global config
+	mCfg, ok := conf.FindModelConfig(cfg.Model)
+	if !ok {
+		return nil, fmt.Errorf("model config not found for: %s", cfg.Model)
 	}
 
 	ctx := ctxmanager.GetOrCreate(cfg.Name)
-	cm, err := newChatModel(ctx, cfg.Provider, cfg.Key, cfg.URL, cfg.Model)
+	cm, err := newChatModel(ctx, mCfg.Provider, mCfg.Key, mCfg.URL, cfg.Model)
 	if err != nil {
 		return nil, err
 	}
@@ -88,28 +100,22 @@ func (dga *DigitalAgent) Run(ctx context.Context, content string, isStream bool,
 	})
 }
 
-func (dga *DigitalAgent) Cancel(sessionID string) error {
-	if sessionID == "" {
-		return errors.New("session_id is empty")
+func (dga *DigitalAgent) GetSession(sessionID string) (*mem.Session, error) {
+	if dga.memory == nil {
+		return nil, errors.New("memory store is not initialized")
 	}
-
-	return dga.stop(sessionID)
+	return dga.memory.GetOrCreate(sessionID)
 }
 
-func (dga *DigitalAgent) bindRun(sessionID string, cancel context.CancelFunc) {
-	dga.runMu.Lock()
-	defer dga.runMu.Unlock()
-
-	if previous, ok := dga.runStops[sessionID]; ok {
-		previous()
+func (dga *DigitalAgent) RemoveSession(sessionID string) error {
+	if dga.memory == nil {
+		return errors.New("memory store is not initialized")
 	}
-	dga.runStops[sessionID] = cancel
+	return dga.memory.Delete(sessionID)
 }
 
-func (dga *DigitalAgent) unbindRun(sessionID string) {
-	dga.runMu.Lock()
-	defer dga.runMu.Unlock()
-	delete(dga.runStops, sessionID)
+func (dga *DigitalAgent) Cancel() error {
+	return dga.stop()
 }
 
 func (dga *DigitalAgent) UpdateTools() error {

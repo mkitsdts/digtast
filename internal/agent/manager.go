@@ -5,7 +5,10 @@ import (
 	mmodel "digital-labor/pkg/model"
 	"digital-labor/pkg/workspace"
 	"errors"
+	"log/slog"
 	"sync"
+
+	"github.com/google/uuid"
 )
 
 type Manager struct {
@@ -19,18 +22,17 @@ func NewManager() *Manager {
 	}
 }
 
+// 智能体相关
 func (m *Manager) CreateAgent(name string, cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
-	if cfg.ID == "" {
-		return nil, errors.New("id is empty")
-	}
-	if cfg.Key == "" {
-		return nil, errors.New("key is empty")
-	}
 	if cfg.Name == "" {
 		return nil, errors.New("name is empty")
 	}
 	if cfg.Model == "" {
-		return nil, errors.New("model is empty")
+		return nil, errors.New("model name is empty")
+	}
+
+	if cfg.ID == "" {
+		cfg.ID = uuid.New().String()
 	}
 
 	ag, err := newDigitalAgent(cfg)
@@ -49,14 +51,14 @@ func (m *Manager) CreateAgent(name string, cfg *mmodel.DigitalAgentConfig) (*Dig
 	return ag, nil
 }
 
-func (m *Manager) GetAgent(name string) (*DigitalAgent, error) {
-	if name == "" {
+func (m *Manager) GetAgent(id string) (*DigitalAgent, error) {
+	if id == "" {
 		return nil, errs.ErrAgentIDRequired
 	}
 
 	m.mux.RLock()
 	defer m.mux.RUnlock()
-	agent, ok := m.agents[name]
+	agent, ok := m.agents[id]
 	if !ok {
 		return nil, errs.ErrAgentNotFound
 	}
@@ -93,6 +95,22 @@ func (m *Manager) RemoveAgent(id string) error {
 }
 
 func (m *Manager) LoadAgents() error {
-	// TODO: 加载 Agents
+	configs, err := workspace.LoadAllAgentConfigs()
+	if err != nil {
+		return err
+	}
+
+	m.mux.Lock()
+	defer m.mux.Unlock()
+
+	for name, cfg := range configs {
+		ag, err := newDigitalAgent(cfg)
+		if err != nil {
+			slog.Error("Failed to load agent", "name", name, "error", err)
+			continue
+		}
+		m.agents[name] = ag
+	}
+
 	return nil
 }

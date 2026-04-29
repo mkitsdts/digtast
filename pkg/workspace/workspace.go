@@ -1,7 +1,6 @@
 package workspace
 
 import (
-	"digital-labor/pkg/conf"
 	"fmt"
 	"log/slog"
 	"os"
@@ -46,12 +45,6 @@ func InitWorkspace() {
 	if err := os.MkdirAll(workspaceRoot, 0755); err != nil {
 		slog.Error("Failed to create workspace root", "path", workspaceRoot, "err", err)
 		return
-	}
-
-	// Load or create config.json
-	configPath := fmt.Sprintf("%s/config.json", path)
-	if err := conf.LoadConfig(configPath); err != nil {
-		slog.Error("Failed to load config", "path", configPath, "err", err)
 	}
 
 	if err := os.MkdirAll(path+"/prompt", 0755); err != nil {

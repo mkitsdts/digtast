@@ -45,8 +45,9 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 	runCtx, cancel := context.WithCancel(ctxmanager.GetOrCreate(t.TaskID))
 	runCtx = context.WithValue(runCtx, "task_id", t.TaskID)
 	runCtx = context.WithValue(runCtx, "session_id", sessionID)
-	dga.bindRun(sessionID, cancel)
+	dga.runStops = cancel
 
+	dga.runMu.Lock()
 	events := dga.agent.Run(runCtx, &adk.AgentInput{
 		Messages:        msgs,
 		EnableStreaming: req.IsStream,
@@ -54,8 +55,11 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 
 	ch := make(chan string, 30)
 	go func() {
+		defer func() {
+			dga.runStops = nil
+			dga.runMu.Unlock()
+		}()
 		defer close(ch)
-		defer dga.unbindRun(sessionID)
 		defer func() {
 			// Chunk rotation is intentionally deferred until the run finishes so
 			// one request/response pair is not split across two files.
@@ -145,16 +149,13 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 	return ch, nil
 }
 
-func (dga *DigitalAgent) stop(sessionId string) error {
-	dga.runMu.Lock()
-	cancel, ok := dga.runStops[sessionId]
-	dga.runMu.Unlock()
-	if !ok {
-		return errors.New("session is not running")
+func (dga *DigitalAgent) stop() error {
+	if dga.runStops != nil {
+		dga.runStops()
+		dga.runStops = nil
+		return nil
 	}
-
-	cancel()
-	return nil
+	return errors.New("task not exist")
 }
 
 func buildMessages(messages []*schema.Message) []*schema.Message {

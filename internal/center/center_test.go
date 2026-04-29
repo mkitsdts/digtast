@@ -2,12 +2,15 @@ package center
 
 import (
 	"digital-labor/internal/agent"
+	"digital-labor/pkg/conf"
+	"digital-labor/pkg/errs"
 	"digital-labor/pkg/model"
 	"sync"
 	"testing"
 )
 
-func TestCreateAgent_MissingKey(t *testing.T) {
+func TestCreateAgent_MissingConfig(t *testing.T) {
+	AgentManager = agent.NewManager()
 	_, err := AgentManager.CreateAgent("nil", nil)
 	if err == nil {
 		t.Fatal("expected error for nil config")
@@ -15,23 +18,22 @@ func TestCreateAgent_MissingKey(t *testing.T) {
 }
 
 func TestCreateAgent_EmptyFields(t *testing.T) {
-	// Create a fresh center for testing
-	// Empty key
-	_, err := AgentManager.CreateAgent("", &model.DigitalAgentConfig{Key: ""})
-	if err == nil || err.Error() != "key is empty" {
-		t.Fatalf("expected 'key is empty' error, got: %v", err)
+	AgentManager = agent.NewManager()
+	// Mock model config
+	conf.Conf.Models = map[string]conf.ModelConfig{
+		"valid-model": {Provider: "openai", Key: "test-key", ModelNames: []string{"gpt-4"}},
 	}
 
 	// Empty name
-	_, err = AgentManager.CreateAgent("", &model.DigitalAgentConfig{Key: "some-key", Name: ""})
-	if err == nil || err.Error() != "name is empty" {
+	_, err := AgentManager.CreateAgent("", &model.DigitalAgentConfig{Name: ""})
+	if err == nil || err != errs.ErrAgentNameRequired {
 		t.Fatalf("expected 'name is empty' error, got: %v", err)
 	}
 
-	// Empty model
-	_, err = AgentManager.CreateAgent("", &model.DigitalAgentConfig{Key: "some-key", Name: "test", Model: ""})
-	if err == nil || err.Error() != "model is empty" {
-		t.Fatalf("expected 'model is empty' error, got: %v", err)
+	// Empty model name
+	_, err = AgentManager.CreateAgent("", &model.DigitalAgentConfig{Name: "test", Model: ""})
+	if err == nil || err.Error() != "model name is empty" {
+		t.Fatalf("expected 'model name is empty' error, got: %v", err)
 	}
 }
 
