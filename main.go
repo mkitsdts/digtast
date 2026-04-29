@@ -4,10 +4,13 @@ import (
 	"digital-labor/internal/center"
 	"digital-labor/internal/cli"
 	"digital-labor/internal/server"
+	"digital-labor/pkg/conf"
 	"digital-labor/pkg/workspace"
 	_ "digital-labor/prompt"
 	_ "digital-labor/tools"
 	"flag"
+	"fmt"
+	"path/filepath"
 )
 
 func main() {
@@ -15,11 +18,19 @@ func main() {
 	port := flag.String("port", "10086", "gRPC server port")
 	flag.Parse()
 
+	// 1. Get workspace path and load config
+	wp := workspace.GetWorkspacePath()
+	configPath := filepath.Join(wp, "config.json")
+	if err := conf.LoadConfig(configPath); err != nil {
+		panic(fmt.Sprintf("Failed to load config from %s: %v", configPath, err))
+	}
+
+	Init()
 	if *localMode {
-		Init()
+		conf.Conf.Mode = "local"
 		cli.RunLocalREPL()
 	} else {
-		Init()
+		conf.Conf.Mode = "server"
 		server.Start(":" + *port)
 	}
 }
