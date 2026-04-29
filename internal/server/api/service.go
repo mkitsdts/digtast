@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	default_ftp_port int = 2121
+	default_ftp_port            int    = 2121
+	default_visual_display_kind string = "vnc"
 )
 
 // StartService 启动服务
@@ -19,7 +20,7 @@ func (s *ContainerServer) StartService(ctx context.Context, req *pb.StartService
 	slog.Info("StartService request received", "container_id", req.ContainerId, "agent_id", req.AgentId)
 
 	id := buildAgentKey(req.ContainerId, req.AgentId)
-	_, err := center.GetCenter().CreateAgent(&model.DigitalAgentConfig{
+	_, err := center.AgentManager.CreateAgent(req.AgentName, &model.DigitalAgentConfig{
 		ID:       id,
 		Key:      req.Key,
 		Name:     req.ModelName,
@@ -38,9 +39,7 @@ func (s *ContainerServer) StartService(ctx context.Context, req *pb.StartService
 		} else {
 			ftp_port = default_ftp_port
 		}
-		err := center.GetCenter().StartFTPServer(&center.FTPServerParams{
-			Port: ftp_port,
-		})
+		err := center.FtpServer.Start()
 		if err != nil {
 			slog.Error("Failed to start FTP server", "error", err)
 			return nil, err
@@ -49,11 +48,14 @@ func (s *ContainerServer) StartService(ctx context.Context, req *pb.StartService
 
 	port := -1
 	if req.VncEnabled {
-		port, err = center.GetCenter().StartVDisplay(&center.VDisplayParams{
-			Key: id,
+		resp, err := center.Vdisplay.GetOrStartVisualDisplay(model.GetDesktopDisplayRequest{
+			Key:  id,
+			Kind: default_visual_display_kind,
 		})
 		if err != nil {
 			slog.Error("Failed to start VNC server", "error", err)
+		} else {
+			port = resp.Port
 		}
 	}
 
@@ -71,15 +73,16 @@ func (s *ContainerServer) StopService(ctx context.Context, req *pb.StopServiceRe
 
 	var errs error
 	// Stop VNC if it was running
-	if err := center.GetCenter().StopVDisplay(&center.VDisplayParams{
-		Key: id,
+	if _, err := center.Vdisplay.ShutdownVisualDisplay(model.ShutdownDesktopDisplayRequest{
+		Key:  id,
+		Kind: default_visual_display_kind,
 	}); err != nil {
 		slog.Error("Failed to stop visual display")
 		errs = errors.New(err.Error())
 	}
 
 	// Stop FTP Server (global)
-	if err := center.GetCenter().StopFTPServer(); err != nil {
+	if err := center.FtpServer.Stop(); err != nil {
 		slog.Error("Failed to stop FTP server", "error", err)
 		errs = errors.New(errs.Error() + err.Error())
 	}
@@ -91,8 +94,7 @@ func (s *ContainerServer) StopService(ctx context.Context, req *pb.StopServiceRe
 
 // BackupService 备份服务
 func (s *ContainerServer) BackupService(ctx context.Context, req *pb.BackupServiceRequest) (*pb.BackupServiceResponse, error) {
-	
-	
+
 	return &pb.BackupServiceResponse{
 		BackupUrl: "http://backup-server/container-" + req.ContainerId + "/agent-" + req.AgentId + ".tar.gz",
 	}, nil

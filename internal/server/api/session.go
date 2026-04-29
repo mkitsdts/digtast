@@ -13,7 +13,7 @@ import (
 
 func (s *ContainerServer) GetOrCreateSession(ctx context.Context, req *pb.GetOrCreateSessionRequest) (*pb.GetOrCreateSessionResponse, error) {
 	id := buildAgentKey(req.ContainerId, req.AgentId)
-	ag, err := center.GetCenter().GetAgent(id)
+	ag, err := center.AgentManager.GetAgent(id)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (s *ContainerServer) SendMessageToSession(req *pb.SendMessageToSessionReque
 
 	ctx = context.WithValue(ctx, "session_id", req.SessionId)
 	id := buildAgentKey(req.ContainerId, req.AgentId)
-	digitalAgent, err := center.GetCenter().GetAgent(id)
+	digitalAgent, err := center.AgentManager.GetAgent(id)
 	if err != nil {
 		return err
 	}
@@ -84,7 +84,7 @@ func (s *ContainerServer) StopTask(ctx context.Context, req *pb.StopTaskRequest)
 		return nil, errors.New("container id and session id is necessary")
 	}
 
-	ag, err := center.GetCenter().GetAgent(key)
+	ag, err := center.AgentManager.GetAgent(key)
 	if err != nil {
 		return nil, errors.New("invaild container id or session id")
 	}
