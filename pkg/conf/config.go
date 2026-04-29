@@ -69,7 +69,6 @@ func FindModelConfig(modelName string) (ModelConfig, bool) {
 
 type LocalRunningStateConfig struct {
 	LastUsedAgent string `json:"last_used_agent"` // 上次使用的 AgentID
-	LastSession   string `json:"last_session"`    // 上次使用的 Session
 }
 
 var Conf Config

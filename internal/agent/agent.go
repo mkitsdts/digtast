@@ -22,8 +22,8 @@ import (
 type DigitalAgent struct {
 	ID       string
 	Name     string
-	cm       model.ToolCallingChatModel // 供临时对话使用
-	agent    *adk.ChatModelAgent        // 智能体
+	cm       model.ToolCallingChatModel
+	agent    *adk.ChatModelAgent
 	prompts  *PromptBuilder
 	runMu    sync.Mutex
 	runStops context.CancelFunc
@@ -43,7 +43,7 @@ func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 		cfg.ID = uuid.New().String()
 	}
 
-	store, err := mem.NewStore(cfg.Name)
+	store, err := mem.NewStore(cfg.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create memory store: %w", err)
 	}
@@ -55,14 +55,13 @@ func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 		memory:  store,
 	}
 
-	// Fetch model config from global config
 	mCfg, ok := conf.FindModelConfig(cfg.Model)
 	if !ok {
 		return nil, fmt.Errorf("model config not found for: %s", cfg.Model)
 	}
 	slog.Info("model config found", "model", cfg.Model, "modelKind", mCfg.ModelNames)
 
-	ctx := ctxmanager.GetOrCreate(cfg.Name)
+	ctx := ctxmanager.GetOrCreate(cfg.ID)
 	if cfg.ModelKind == "default" {
 		cfg.ModelKind = mCfg.ModelNames[0]
 	}
@@ -94,37 +93,34 @@ func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 	return dga, nil
 }
 
-func (dga *DigitalAgent) Run(ctx context.Context, content string, isStream bool, sessionID string) (chan string, error) {
+// Run starts a conversation turn. The agent uses its own ID as the session key.
+func (dga *DigitalAgent) Run(ctx context.Context, content string, isStream bool) (chan string, error) {
 	if content == "" {
 		return nil, errors.New("content is empty")
 	}
 
-	if sessionID == "" {
-		return nil, errors.New("session_id is empty")
-	}
-
-	// to control the context lifecycle
-	vctx := ctxmanager.GetOrCreate(sessionID)
+	vctx := ctxmanager.GetOrCreate(dga.ID)
 
 	return dga.run(vctx, mmodel.ChatRequest{
-		SessionID: sessionID,
-		Content:   content,
-		IsStream:  isStream,
+		Content:  content,
+		IsStream: isStream,
 	})
 }
 
-func (dga *DigitalAgent) GetSession(sessionID string) (*mem.Session, error) {
+// GetSession returns the agent's single session.
+func (dga *DigitalAgent) GetSession() (*mem.Session, error) {
 	if dga.memory == nil {
 		return nil, errors.New("memory store is not initialized")
 	}
-	return dga.memory.GetOrCreate(sessionID)
+	return dga.memory.GetOrCreate()
 }
 
-func (dga *DigitalAgent) RemoveSession(sessionID string) error {
+// ClearHistory deletes the agent's conversation history and starts fresh.
+func (dga *DigitalAgent) ClearHistory() error {
 	if dga.memory == nil {
 		return errors.New("memory store is not initialized")
 	}
-	return dga.memory.Delete(sessionID)
+	return dga.memory.Delete()
 }
 
 func (dga *DigitalAgent) Cancel() error {
@@ -136,7 +132,7 @@ func (dga *DigitalAgent) UpdateTools() error {
 		return nil
 	}
 
-	ctx := ctxmanager.GetOrCreate(dga.agent.Name(context.Background()))
+	ctx := ctxmanager.GetOrCreate(dga.ID)
 	ag, err := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
 		Name:  dga.agent.Name(context.Background()),
 		Model: dga.cm,

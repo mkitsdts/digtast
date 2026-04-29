@@ -15,8 +15,7 @@ func persist() {
 			continue
 		}
 
-		// Use .jsonl extension for incremental append
-		filename := fmt.Sprintf("tasks/%s/%s.jsonl", event.AgentID, event.SessionID)
+		filename := fmt.Sprintf("tasks/%s/tasks.jsonl", event.AgentID)
 		workspace.AppendFile(filename, data)
 	}
 }

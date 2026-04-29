@@ -3,7 +3,6 @@ package task
 import "time"
 
 type Config struct {
-	SessionID    string
 	ParentFlowID string
 	ParentTaskID string
 	AgentID      string

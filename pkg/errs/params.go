@@ -9,7 +9,6 @@ var (
 var (
 	ErrAgentIDRequired     = errors.New("agent ID is required")
 	ErrAgentNameRequired   = errors.New("agent name is required")
-	ErrSessionIDRequired   = errors.New("session ID is required")
 	ErrChatModelIDRequired = errors.New("chat model ID is required")
 )
 

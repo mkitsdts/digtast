@@ -32,7 +32,6 @@ func DefaultConfig() Config {
 		Models: map[string]ModelConfig{},
 		State: LocalRunningStateConfig{
 			LastUsedAgent: "",
-			LastSession:   "",
 		},
 	}
 }

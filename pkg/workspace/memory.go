@@ -53,17 +53,17 @@ type MemoryStore struct {
 }
 
 // MemoryIndex is persisted to memory.json.
+// Keyed by agentID — each agent owns exactly one session.
 type MemoryIndex struct {
-	Sessions map[string]map[string]*SessionRecord `json:"sessions"`
+	Sessions map[string]*SessionRecord `json:"sessions"`
 }
 
-// SessionRecord maps one logical session to the chunk files that contain it.
+// SessionRecord maps one agent to the chunk files that contain its conversation.
 type SessionRecord struct {
-	AgentID   string        `json:"agent_id"`
-	SessionID string        `json:"session_id"`
-	Chunks    []ChunkRecord `json:"chunks"`
-	Created   time.Time     `json:"created"`
-	Updated   time.Time     `json:"updated"`
+	AgentID string        `json:"agent_id"`
+	Chunks  []ChunkRecord `json:"chunks"`
+	Created time.Time     `json:"created"`
+	Updated time.Time     `json:"updated"`
 }
 
 // ChunkRecord describes one JSONL file for a session.
@@ -92,7 +92,7 @@ func NewMemoryStore(root string) (*MemoryStore, error) {
 	store := &MemoryStore{
 		root: root,
 		index: &MemoryIndex{
-			Sessions: make(map[string]map[string]*SessionRecord),
+			Sessions: make(map[string]*SessionRecord),
 		},
 		flushReq: make(chan struct{}, 1),
 		stop:     make(chan struct{}),
@@ -112,38 +112,26 @@ func DefaultMemoryStore() (*MemoryStore, error) {
 	return defaultMemoryStore, defaultMemoryErr
 }
 
-// NewSessionFile allocates a new chunk for a session without creating its JSONL file.
-func (s *MemoryStore) NewSessionFile(agentID, sessionID string) (string, error) {
+// NewSessionFile allocates a new chunk for an agent without creating its JSONL file.
+func (s *MemoryStore) NewSessionFile(agentID string) (string, error) {
 	if err := validateID(agentID, "agent_id"); err != nil {
-		return "", err
-	}
-	if err := validateID(sessionID, "session_id"); err != nil {
 		return "", err
 	}
 
 	now := time.Now().UTC()
 	chunkID := uuid.New().String()
-	// The index stores relative, slash-normalized paths so memory.json can be
-	// moved with the workspace and still be readable across platforms.
-	relPath := filepath.Join("sessions", agentID, fmt.Sprintf("%s_%s.jsonl", sessionID, chunkID))
+	relPath := filepath.Join("sessions", agentID, fmt.Sprintf("%s.jsonl", chunkID))
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	agentSessions := s.index.Sessions[agentID]
-	if agentSessions == nil {
-		agentSessions = make(map[string]*SessionRecord)
-		s.index.Sessions[agentID] = agentSessions
-	}
-
-	record := agentSessions[sessionID]
+	record := s.index.Sessions[agentID]
 	if record == nil {
 		record = &SessionRecord{
-			AgentID:   agentID,
-			SessionID: sessionID,
-			Created:   now,
+			AgentID: agentID,
+			Created: now,
 		}
-		agentSessions[sessionID] = record
+		s.index.Sessions[agentID] = record
 	}
 
 	record.Chunks = append(record.Chunks, ChunkRecord{
@@ -158,22 +146,22 @@ func (s *MemoryStore) NewSessionFile(agentID, sessionID string) (string, error) 
 }
 
 // EnsureSession returns the current chunk id, creating only the index entry when needed.
-func (s *MemoryStore) EnsureSession(agentID, sessionID string) (string, error) {
+func (s *MemoryStore) EnsureSession(agentID string) (string, error) {
 	s.mu.RLock()
-	record := s.sessionRecordLocked(agentID, sessionID)
+	record := s.index.Sessions[agentID]
 	if record != nil && len(record.Chunks) > 0 {
 		chunkID := record.Chunks[len(record.Chunks)-1].ID
 		s.mu.RUnlock()
 		return chunkID, nil
 	}
 	s.mu.RUnlock()
-	return s.NewSessionFile(agentID, sessionID)
+	return s.NewSessionFile(agentID)
 }
 
 // CurrentChunkSize returns the current chunk file size. Missing files are empty.
-func (s *MemoryStore) CurrentChunkSize(agentID, sessionID string) (int64, error) {
+func (s *MemoryStore) CurrentChunkSize(agentID string) (int64, error) {
 	s.mu.RLock()
-	record := s.sessionRecordLocked(agentID, sessionID)
+	record := s.index.Sessions[agentID]
 	if record == nil || len(record.Chunks) == 0 {
 		s.mu.RUnlock()
 		return 0, nil
@@ -193,16 +181,16 @@ func (s *MemoryStore) CurrentChunkSize(agentID, sessionID string) (int64, error)
 }
 
 // PersistMessage appends msg to the current chunk, creating the JSONL file on first write.
-func (s *MemoryStore) PersistMessage(agentID, sessionID string, msg *schema.Message) error {
+func (s *MemoryStore) PersistMessage(agentID string, msg *schema.Message) error {
 	if msg == nil {
 		return nil
 	}
-	if _, err := s.EnsureSession(agentID, sessionID); err != nil {
+	if _, err := s.EnsureSession(agentID); err != nil {
 		return err
 	}
 
 	s.mu.Lock()
-	record := s.sessionRecordLocked(agentID, sessionID)
+	record := s.index.Sessions[agentID]
 	if record == nil || len(record.Chunks) == 0 {
 		s.mu.Unlock()
 		return errors.New("session has no chunk")
@@ -212,8 +200,6 @@ func (s *MemoryStore) PersistMessage(agentID, sessionID string, msg *schema.Mess
 	path := s.chunkAbsPath(chunk)
 	s.mu.Unlock()
 
-	// NewSessionFile only updates the index. The physical chunk file is created
-	// lazily here, when the first message is actually persisted.
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
@@ -233,10 +219,7 @@ func (s *MemoryStore) PersistMessage(agentID, sessionID string, msg *schema.Mess
 
 	now := time.Now().UTC()
 	s.mu.Lock()
-	// Re-read the record after the file append. The session may have been
-	// rotated while the lock was released, so only update the chunk that this
-	// call actually wrote to.
-	if record := s.sessionRecordLocked(agentID, sessionID); record != nil && len(record.Chunks) > chunkIdx {
+	if record := s.index.Sessions[agentID]; record != nil && len(record.Chunks) > chunkIdx {
 		record.Chunks[chunkIdx].Updated = now
 		record.Updated = now
 	}
@@ -245,16 +228,14 @@ func (s *MemoryStore) PersistMessage(agentID, sessionID string, msg *schema.Mess
 	return nil
 }
 
-// LoadSession reads all chunk files for a session, skipping malformed message lines.
-func (s *MemoryStore) LoadSession(agentID, sessionID string) ([]*schema.Message, error) {
+// LoadSession reads all chunk files for an agent, skipping malformed message lines.
+func (s *MemoryStore) LoadSession(agentID string) ([]*schema.Message, error) {
 	s.mu.RLock()
-	record := s.sessionRecordLocked(agentID, sessionID)
+	record := s.index.Sessions[agentID]
 	if record == nil {
 		s.mu.RUnlock()
 		return nil, nil
 	}
-	// Copy the chunk list before reading files so callers do not hold the index
-	// lock during disk I/O.
 	chunks := append([]ChunkRecord(nil), record.Chunks...)
 	s.mu.RUnlock()
 
@@ -269,19 +250,16 @@ func (s *MemoryStore) LoadSession(agentID, sessionID string) ([]*schema.Message,
 	return messages, nil
 }
 
-// DeleteSession removes all chunk files and the index entry for a session.
-func (s *MemoryStore) DeleteSession(agentID, sessionID string) error {
+// DeleteSession removes all chunk files and the index entry for an agent.
+func (s *MemoryStore) DeleteSession(agentID string) error {
 	s.mu.Lock()
-	record := s.sessionRecordLocked(agentID, sessionID)
+	record := s.index.Sessions[agentID]
 	if record == nil {
 		s.mu.Unlock()
 		return nil
 	}
 	chunks := append([]ChunkRecord(nil), record.Chunks...)
-	delete(s.index.Sessions[agentID], sessionID)
-	if len(s.index.Sessions[agentID]) == 0 {
-		delete(s.index.Sessions, agentID)
-	}
+	delete(s.index.Sessions, agentID)
 	s.mu.Unlock()
 
 	for _, chunk := range chunks {
@@ -293,25 +271,22 @@ func (s *MemoryStore) DeleteSession(agentID, sessionID string) error {
 	return nil
 }
 
-// ListSessions returns session records for one agent.
+// ListSessions returns session records for one agent (at most one in the 1:1 model).
 func (s *MemoryStore) ListSessions(agentID string) []SessionRecord {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	agentSessions := s.index.Sessions[agentID]
-	records := make([]SessionRecord, 0, len(agentSessions))
-	for _, record := range agentSessions {
-		copyRecord := *record
-		copyRecord.Chunks = append([]ChunkRecord(nil), record.Chunks...)
-		records = append(records, copyRecord)
+	record := s.index.Sessions[agentID]
+	if record == nil {
+		return nil
 	}
-	return records
+	copyRecord := *record
+	copyRecord.Chunks = append([]ChunkRecord(nil), record.Chunks...)
+	return []SessionRecord{copyRecord}
 }
 
 // Flush writes pending index changes to memory.json.
 func (s *MemoryStore) Flush() error {
-	// Marshal while holding a read lock to get a consistent snapshot, then do
-	// the disk write under flushMu so concurrent flushes cannot interleave.
 	s.mu.RLock()
 	data, err := json.MarshalIndent(s.index, "", "  ")
 	s.mu.RUnlock()
@@ -329,8 +304,6 @@ func (s *MemoryStore) Flush() error {
 	if err := os.WriteFile(tmp, data, 0o644); err != nil {
 		return err
 	}
-	// Rename gives readers either the previous complete index or the new one,
-	// instead of a partially written memory.json.
 	return os.Rename(tmp, s.indexPath())
 }
 
@@ -349,7 +322,7 @@ func (s *MemoryStore) loadIndex() error {
 		return err
 	}
 	if s.index.Sessions == nil {
-		s.index.Sessions = make(map[string]map[string]*SessionRecord)
+		s.index.Sessions = make(map[string]*SessionRecord)
 	}
 	return nil
 }
@@ -373,8 +346,6 @@ func (s *MemoryStore) loadChunk(chunk ChunkRecord) ([]*schema.Message, error) {
 		}
 		var msg schema.Message
 		if err := json.Unmarshal([]byte(line), &msg); err != nil {
-			// Keep loading later messages even if one line is corrupt. JSONL
-			// persistence should degrade per-record, not per-session.
 			continue
 		}
 		messages = append(messages, &msg)
@@ -386,8 +357,6 @@ func (s *MemoryStore) flushLoop() {
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 
-	// Dirty tracking lets requestFlush stay non-blocking while still ensuring
-	// the next tick writes the latest index snapshot.
 	dirty := false
 	for {
 		select {
@@ -412,20 +381,10 @@ func (s *MemoryStore) flushLoop() {
 }
 
 func (s *MemoryStore) requestFlush() {
-	// Non-blocking send coalesces repeated updates when a flush is already
-	// pending.
 	select {
 	case s.flushReq <- struct{}{}:
 	default:
 	}
-}
-
-func (s *MemoryStore) sessionRecordLocked(agentID, sessionID string) *SessionRecord {
-	agentSessions := s.index.Sessions[agentID]
-	if agentSessions == nil {
-		return nil
-	}
-	return agentSessions[sessionID]
 }
 
 func (s *MemoryStore) chunkAbsPath(chunk ChunkRecord) string {
@@ -447,21 +406,21 @@ func validateID(id, name string) error {
 }
 
 // Backward-compatible package helpers use the default store.
-func NewSessionFile(agentID, sessionID string) (string, error) {
+func NewSessionFile(agentID string) (string, error) {
 	store, err := DefaultMemoryStore()
 	if err != nil {
 		return "", err
 	}
-	return store.NewSessionFile(agentID, sessionID)
+	return store.NewSessionFile(agentID)
 }
 
-func PersistMessage(agentID, sessionID string, msg *schema.Message) {
+func PersistMessage(agentID string, msg *schema.Message) {
 	store, err := DefaultMemoryStore()
 	if err != nil {
 		slog.Error("failed to open memory store", "error", err)
 		return
 	}
-	if err := store.PersistMessage(agentID, sessionID, msg); err != nil {
-		slog.Error("failed to persist message", "agent_id", agentID, "session_id", sessionID, "error", err)
+	if err := store.PersistMessage(agentID, msg); err != nil {
+		slog.Error("failed to persist message", "agent_id", agentID, "error", err)
 	}
 }

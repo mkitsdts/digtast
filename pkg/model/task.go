@@ -10,11 +10,11 @@ const (
 )
 
 type Step struct {
-	ID        string // step id
-	SessionID string
+	ID        string
 	TaskID    string
+	AgentID   string
 	Status    string
-	ParentID  string // tool_result -> tool_call
+	ParentID  string
 	Input     any
 	Output    any
 	Error     string

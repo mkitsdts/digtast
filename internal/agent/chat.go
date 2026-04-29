@@ -17,14 +17,11 @@ import (
 )
 
 func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan string, error) {
-	sessionID := req.SessionID
-
-	session, err := dga.memory.GetOrCreate(sessionID)
+	session, err := dga.memory.GetOrCreate()
 	if err != nil {
 		return nil, err
 	}
 
-	// Persist the user's turn through internal memory.
 	if err := session.Append(&schema.Message{
 		Role:    schema.User,
 		Content: req.Content,
@@ -34,9 +31,8 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 
 	msgs := buildMessages(session.GetMessages())
 
-	t, err := task.CreateTask(task.Config{
-		SessionID: sessionID,
-		AgentID:   dga.ID,
+	t, err := task.CreateTask(dga.ID, task.Config{
+		AgentID: dga.ID,
 	})
 	if err != nil {
 		return nil, err
@@ -44,7 +40,7 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 
 	runCtx, cancel := context.WithCancel(ctxmanager.GetOrCreate(t.TaskID))
 	runCtx = context.WithValue(runCtx, "task_id", t.TaskID)
-	runCtx = context.WithValue(runCtx, "session_id", sessionID)
+	runCtx = context.WithValue(runCtx, "agent_id", dga.ID)
 	dga.runStops = cancel
 
 	dga.runMu.Lock()
@@ -61,10 +57,8 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 		}()
 		defer close(ch)
 		defer func() {
-			// Chunk rotation is intentionally deferred until the run finishes so
-			// one request/response pair is not split across two files.
 			if err := session.CompleteTurn(); err != nil {
-				slog.Error("failed to complete memory turn", "session_id", sessionID, "err", err)
+				slog.Error("failed to complete memory turn", "agent_id", dga.ID, "err", err)
 			}
 		}()
 
@@ -77,7 +71,7 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 
 		for {
 			if runCtx.Err() != nil {
-				slog.Warn("agent execution cancelled or timeout", "session_id", sessionID, "err", runCtx.Err())
+				slog.Warn("agent execution cancelled or timeout", "agent_id", dga.ID, "err", runCtx.Err())
 				return
 			}
 
@@ -89,7 +83,6 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 
 			event, ok := events.Next()
 
-			// loop end
 			if !ok {
 				if runResult != "" {
 					session.Append(&schema.Message{
@@ -105,7 +98,7 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 			}
 
 			if event.Err != nil {
-				slog.Error("execute agent failed", "session_id", sessionID, "err", event.Err)
+				slog.Error("execute agent failed", "agent_id", dga.ID, "err", event.Err)
 				return
 			}
 
@@ -159,7 +152,6 @@ func (dga *DigitalAgent) stop() error {
 }
 
 func buildMessages(messages []*schema.Message) []*schema.Message {
-	// Gather all registered prompts from workspace
 	promptCreators := workspace.GetPromptCreators()
 	var systemPrompts []string
 
@@ -180,7 +172,6 @@ func buildMessages(messages []*schema.Message) []*schema.Message {
 
 	fullSystemPrompt := strings.Join(systemPrompts, "\n\n")
 
-	// If the first message is already a system message, don't inject again.
 	if len(messages) > 0 && messages[0].Role == schema.System {
 		return messages
 	}
@@ -190,6 +181,5 @@ func buildMessages(messages []*schema.Message) []*schema.Message {
 		Content: fullSystemPrompt,
 	}
 
-	// Prepend system message
 	return append([]*schema.Message{sysMsg}, messages...)
 }

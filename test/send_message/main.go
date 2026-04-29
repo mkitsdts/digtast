@@ -32,7 +32,6 @@ func main() {
 	addr := flag.String("addr", cfg.Addr, "gRPC server address")
 	containerID := flag.String("container", cfg.ContainerID, "container_id")
 	agentID := flag.String("agent", cfg.AgentID, "agent_id")
-	sessionID := flag.String("session", cfg.SessionID, "session_id")
 	message := flag.String("message", cfg.Message, "message to send")
 	timeoutText := flag.String("timeout", cfg.Timeout, "request timeout, e.g. 2m or 30s")
 
@@ -71,21 +70,16 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if *sessionID == "" {
-		log.Fatal("--session cannot be empty until stream responses expose the generated session_id")
-	}
-
 	reply, err := sendMessage(ctx, client, messageConfig{
 		containerID: *containerID,
 		agentID:     *agentID,
-		sessionID:   *sessionID,
 		message:     *message,
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println("SendMessageToSession response:")
+	fmt.Println("SendMessage response:")
 	fmt.Println(reply)
 }
 
@@ -93,7 +87,6 @@ type appConfig struct {
 	Addr        string `json:"addr"`
 	ContainerID string `json:"container_id"`
 	AgentID     string `json:"agent_id"`
-	SessionID   string `json:"session_id"`
 	Message     string `json:"message"`
 	Timeout     string `json:"timeout"`
 	Provider    string `json:"provider"`
@@ -114,7 +107,6 @@ type serviceConfig struct {
 type messageConfig struct {
 	containerID string
 	agentID     string
-	sessionID   string
 	message     string
 }
 
@@ -123,7 +115,6 @@ func defaultConfig() appConfig {
 		Addr:        "127.0.0.1:10086",
 		ContainerID: "local-container",
 		AgentID:     "local-agent",
-		SessionID:   "test-session",
 		Message:     "你好",
 		Timeout:     "2m",
 	}
@@ -205,14 +196,13 @@ func registerAgent(ctx context.Context, client pb.ContainerServiceClient, cfg se
 }
 
 func sendMessage(ctx context.Context, client pb.ContainerServiceClient, cfg messageConfig) (string, error) {
-	respStream, err := client.SendMessageToSession(ctx, &pb.SendMessageToSessionRequest{
-		AgentId:   agentId,
-		SessionId: cfg.sessionID,
-		Message:   cfg.message,
-		IsStream:  false,
+	respStream, err := client.SendMessage(ctx, &pb.SendMessageRequest{
+		AgentId:  agentId,
+		Message:  cfg.message,
+		IsStream: false,
 	})
 	if err != nil {
-		return "", fmt.Errorf("SendMessageToSession failed: %w", err)
+		return "", fmt.Errorf("SendMessage failed: %w", err)
 	}
 
 	var reply strings.Builder
@@ -222,7 +212,7 @@ func sendMessage(ctx context.Context, client pb.ContainerServiceClient, cfg mess
 			return reply.String(), nil
 		}
 		if err != nil {
-			return "", fmt.Errorf("receive SendMessageToSession response: %w", err)
+			return "", fmt.Errorf("receive SendMessage response: %w", err)
 		}
 
 		reply.WriteString(resp.GetDeltaContent())

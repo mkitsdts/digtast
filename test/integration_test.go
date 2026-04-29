@@ -26,15 +26,13 @@ func TestMemory_CreateGetAppendListDelete(t *testing.T) {
 	// As a workaround, we test with the real NewStore() and unique IDs,
 	// but this pollutes the workspace directory. A better fix is to
 	// export a SetDir method or accept dir as NewStore parameter.
-	s, err := mem.NewStore()
+	s, err := mem.NewStore("")
 	if err != nil {
 		t.Skipf("NewStore failed: %v", err)
 	}
 
-	id := "integration-test-" + time.Now().Format("20060102150405.000000")
-
 	// Create
-	sess, err := s.GetOrCreate(id)
+	sess, err := s.GetOrCreate()
 	if err != nil {
 		t.Fatalf("GetOrCreate failed: %v", err)
 	}
@@ -53,18 +51,17 @@ func TestMemory_CreateGetAppendListDelete(t *testing.T) {
 		t.Fatalf("expected 1 message, got %d", len(msgs))
 	}
 
-	// Reload from disk — should load the session with header + message
-	sess2, err := s.GetOrCreate(id)
+	// Reload from disk — should return cached instance
+	sess2, err := s.GetOrCreate()
 	if err != nil {
 		t.Fatalf("GetOrCreate on reload failed: %v", err)
 	}
-	// Should return cached instance
 	if sess2 != sess {
 		t.Fatal("expected cached instance on second GetOrCreate")
 	}
 
 	// Delete
-	if err := s.Delete(id); err != nil {
+	if err := s.Delete(); err != nil {
 		t.Fatalf("Delete failed: %v", err)
 	}
 }
