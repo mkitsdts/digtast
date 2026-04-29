@@ -18,7 +18,7 @@ func (s *ContainerServer) CreateChatModel(ctx context.Context, req *pb.CreateCha
 		Key:        req.Key,
 	}
 
-	if err := conf.SaveConfig(""); err != nil {
+	if err := conf.SaveConfig(); err != nil {
 		return &pb.CreateChatModelResponse{
 			Success: false,
 			Message: err.Error(),
@@ -36,7 +36,7 @@ func (s *ContainerServer) RemoveChatModel(ctx context.Context, req *pb.RemoveCha
 		delete(conf.Conf.Models, req.ChatModelId)
 	}
 
-	if err := conf.SaveConfig(""); err != nil {
+	if err := conf.SaveConfig(); err != nil {
 		return &pb.RemoveChatModelResponse{
 			Success: false,
 			Message: err.Error(),

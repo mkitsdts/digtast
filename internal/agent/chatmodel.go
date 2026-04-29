@@ -2,8 +2,10 @@ package agent
 
 import (
 	"context"
+	"digital-labor/pkg/conf"
 	"errors"
 	"log/slog"
+	"slices"
 	"strings"
 
 	"github.com/cloudwego/eino-ext/components/model/ark"
@@ -37,6 +39,15 @@ func newChatModel(ctx context.Context, provider, key, url, name string) (model.T
 	}
 	if name == "" {
 		slog.Warn("name is empty, using default")
+	}
+
+	var models conf.ModelConfig
+	var ok bool
+	if models, ok = conf.Conf.Models[provider]; !ok {
+		return nil, errors.New("no model config for provider " + provider)
+	}
+	if !slices.Contains(models.ModelNames, name) {
+		return nil, errors.New("model " + name + " not found for provider " + provider)
 	}
 
 	switch provider {

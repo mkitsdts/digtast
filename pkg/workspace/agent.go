@@ -26,7 +26,7 @@ func SaveAgentConfig(cfg *model.DigitalAgentConfig) error {
 		configs = make(map[string]*model.DigitalAgentConfig)
 	}
 
-	configs[cfg.Name] = cfg
+	configs[cfg.ID] = cfg
 
 	data, err := json.MarshalIndent(configs, "", "  ")
 	if err != nil {

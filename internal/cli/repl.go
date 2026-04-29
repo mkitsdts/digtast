@@ -6,10 +6,8 @@ import (
 	"digital-labor/internal/center"
 	"digital-labor/pkg/conf"
 	"digital-labor/pkg/model"
-	"digital-labor/pkg/workspace"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/google/uuid"
@@ -28,13 +26,13 @@ func RunLocalREPL() {
 	scanner := bufio.NewScanner(os.Stdin)
 	currentAgentID := conf.Conf.State.LastUsedAgent
 	sessionID := conf.Conf.State.LastSession
-
-	configPath := filepath.Join(workspace.GetWorkspacePath(), "config.json")
+	ag, _ := center.AgentManager.GetAgent(currentAgentID)
+	currentAgentName := ag.Name
 
 	if sessionID == "" {
 		sessionID = uuid.New().String()
 		conf.Conf.State.LastSession = sessionID
-		conf.SaveConfig(configPath)
+		conf.SaveConfig()
 	}
 
 	fmt.Printf("%s=== Digital Labor Local Interactive Mode ===%s\n", colorCyan, colorReset)
@@ -49,7 +47,7 @@ func RunLocalREPL() {
 		} else {
 			currentAgentID = ags[0].ID
 			conf.Conf.State.LastUsedAgent = currentAgentID
-			conf.SaveConfig(configPath)
+			conf.SaveConfig()
 			ag = ags[0]
 		}
 	}
@@ -68,7 +66,7 @@ func RunLocalREPL() {
 	for {
 		prompt := ">>> "
 		if currentAgentID != "" {
-			prompt = fmt.Sprintf("%s[%s]%s >>> ", colorBlue, currentAgentID, colorReset)
+			prompt = fmt.Sprintf("%s[%s]%s >>> ", colorBlue, currentAgentName, colorReset)
 		}
 		fmt.Print(prompt)
 
@@ -110,7 +108,7 @@ func RunLocalREPL() {
 				} else {
 					currentAgentID = targetID
 					conf.Conf.State.LastUsedAgent = currentAgentID
-					conf.SaveConfig(configPath)
+					conf.SaveConfig()
 					fmt.Printf("%sSwitched to agent '%s'.%s\n", colorGreen, currentAgentID, colorReset)
 
 					// Check history for the new agent in current session
@@ -122,7 +120,7 @@ func RunLocalREPL() {
 			case "/new":
 				fmt.Println("Creating new Agent (Interactive):")
 
-				fmt.Print("Enter Name (e.g., my-agent): ")
+				fmt.Print("Enter Agent Name (e.g., my-agent): ")
 				scanner.Scan()
 				name := strings.TrimSpace(scanner.Text())
 
@@ -130,7 +128,11 @@ func RunLocalREPL() {
 				scanner.Scan()
 				modelName := strings.TrimSpace(scanner.Text())
 
-				fmt.Print("Enter Description: ")
+				fmt.Print("Enter Model Version (from config.json, e.g., doubao-seed-2-0-lite-260215): ")
+				scanner.Scan()
+				modelVersion := strings.TrimSpace(scanner.Text())
+
+				fmt.Print("Enter Description(Optional): ")
 				scanner.Scan()
 				description := strings.TrimSpace(scanner.Text())
 
@@ -138,6 +140,7 @@ func RunLocalREPL() {
 					Name:        name,
 					Model:       modelName,
 					Description: description,
+					ModelKind:   modelVersion,
 				}
 
 				ag, err := center.AgentManager.CreateAgent(name, cfg)
@@ -146,7 +149,7 @@ func RunLocalREPL() {
 				} else {
 					currentAgentID = ag.ID
 					conf.Conf.State.LastUsedAgent = currentAgentID
-					conf.SaveConfig(configPath)
+					conf.SaveConfig()
 					fmt.Printf("%sAgent created! ID: %s, Name: %s%s\n", colorGreen, ag.ID, name, colorReset)
 				}
 			case "/model":
@@ -195,7 +198,7 @@ func RunLocalREPL() {
 						ModelNames: modelNames,
 						URL:        baseURL,
 					}
-					conf.SaveConfig(configPath)
+					conf.SaveConfig()
 					fmt.Printf("%sModel configuration '%s' saved!%s\n", colorGreen, configName, colorReset)
 				}
 			case "/session":
@@ -206,7 +209,7 @@ func RunLocalREPL() {
 				}
 				sessionID = parts[1]
 				conf.Conf.State.LastSession = sessionID
-				conf.SaveConfig(configPath)
+				conf.SaveConfig()
 				fmt.Printf("%sSwitched to session '%s'.%s\n", colorGreen, sessionID, colorReset)
 
 				// Check history

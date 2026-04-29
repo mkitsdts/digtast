@@ -103,13 +103,13 @@ func (m *Manager) LoadAgents() error {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 
-	for name, cfg := range configs {
+	for _, cfg := range configs {
 		ag, err := newDigitalAgent(cfg)
 		if err != nil {
-			slog.Error("Failed to load agent", "name", name, "error", err)
+			slog.Error("Failed to load agent", "id", cfg.ID, "name", cfg.Name, "error", err)
 			continue
 		}
-		m.agents[name] = ag
+		m.agents[cfg.ID] = ag
 	}
 
 	return nil

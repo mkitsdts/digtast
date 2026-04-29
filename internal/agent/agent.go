@@ -10,6 +10,7 @@ import (
 	"digital-labor/pkg/registry"
 	"errors"
 	"fmt"
+	"log/slog"
 	"sync"
 
 	"github.com/cloudwego/eino/adk"
@@ -20,6 +21,7 @@ import (
 
 type DigitalAgent struct {
 	ID       string
+	Name     string
 	cm       model.ToolCallingChatModel // 供临时对话使用
 	agent    *adk.ChatModelAgent        // 智能体
 	prompts  *PromptBuilder
@@ -44,6 +46,7 @@ func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 	dga := &DigitalAgent{
 		prompts: NewPromptBuilder(),
 		ID:      cfg.ID,
+		Name:    cfg.Name,
 		memory:  mem.NewStore(cfg.Name),
 	}
 
@@ -52,9 +55,14 @@ func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 	if !ok {
 		return nil, fmt.Errorf("model config not found for: %s", cfg.Model)
 	}
+	slog.Info("model config found", "model", cfg.Model, "modelKind", mCfg.ModelNames)
 
 	ctx := ctxmanager.GetOrCreate(cfg.Name)
-	cm, err := newChatModel(ctx, mCfg.Provider, mCfg.Key, mCfg.URL, cfg.Model)
+	if cfg.ModelKind == "default" {
+		cfg.ModelKind = mCfg.ModelNames[0]
+	}
+
+	cm, err := newChatModel(ctx, mCfg.Provider, mCfg.Key, mCfg.URL, cfg.ModelKind)
 	if err != nil {
 		return nil, err
 	}
