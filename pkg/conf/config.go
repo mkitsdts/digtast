@@ -27,8 +27,9 @@ type MemoryConfig struct {
 }
 
 type FTPConfig struct {
-	Port    int  `json:"port"`
-	Enabled bool `json:"enabled"`
+	Port    int    `json:"port"`
+	RootDir string `json:"root_dir"`
+	Enabled bool   `json:"enabled"`
 }
 
 type VNCConfig struct {
