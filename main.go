@@ -2,6 +2,7 @@ package main
 
 import (
 	"digital-labor/internal/center"
+	"digital-labor/internal/cli"
 	"digital-labor/internal/server"
 	"digital-labor/pkg/workspace"
 	_ "digital-labor/prompt"
@@ -14,15 +15,16 @@ func main() {
 	port := flag.String("port", "10086", "gRPC server port")
 	flag.Parse()
 
-	Init()
-
 	if *localMode {
-		center.GetCenter().RunLocalREPL()
+		Init()
+		cli.RunLocalREPL()
 	} else {
+		Init()
 		server.Start(":" + *port)
 	}
 }
 
 func Init() {
 	workspace.InitWorkspace()
+	center.Init()
 }

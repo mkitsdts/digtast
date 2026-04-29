@@ -1,8 +1,10 @@
-package center
+package cli
 
 import (
 	"bufio"
 	"context"
+	"digital-labor/internal/center"
+	"digital-labor/pkg/conf"
 	"digital-labor/pkg/model"
 	"fmt"
 	"os"
@@ -20,7 +22,7 @@ const (
 	colorCyan   = "\033[36m"
 )
 
-func (c *Center) RunLocalREPL() {
+func RunLocalREPL() {
 	scanner := bufio.NewScanner(os.Stdin)
 	currentAgentID := ""
 	sessionID := uuid.New().String()
@@ -29,17 +31,17 @@ func (c *Center) RunLocalREPL() {
 	fmt.Println("Type '/ls' to list agents, '/use <id>' to switch, '/exit' to quit.")
 
 	// Auto-select first agent if available
-	c.mu.RLock()
-	for id := range c.agents {
-		currentAgentID = id
-		break
+	if conf.Conf.State.LastUsedAgent != "" {
+		currentAgentID = conf.Conf.State.LastUsedAgent
 	}
-	c.mu.RUnlock()
-
-	if currentAgentID == "" {
-		fmt.Printf("%s[System] No agents found. Please create one via API or config first.%s\n", colorYellow, colorReset)
-	} else {
-		fmt.Printf("%s[System] Active Agent: %s%s\n", colorGreen, currentAgentID, colorReset)
+	_, err := center.AgentManager.GetAgent(currentAgentID)
+	if err != nil {
+		ags := center.AgentManager.GetAgents()
+		if len(ags) == 0 {
+			fmt.Printf("%s[System] No agents found. Please create one via API or config first.%s\n", colorYellow, colorReset)
+		} else {
+			currentAgentID = ags[0].ID
+		}
 	}
 
 	for {
@@ -66,16 +68,15 @@ func (c *Center) RunLocalREPL() {
 				fmt.Println("Goodbye!")
 				return
 			case "/ls":
-				c.mu.RLock()
-				if len(c.agents) == 0 {
+				ags := center.AgentManager.GetAgents()
+				if len(ags) == 0 {
 					fmt.Println("No agents available.")
 				} else {
 					fmt.Println("Available Agents:")
-					for id, ag := range c.agents {
-						fmt.Printf("- %s (ID: %s)\n", id, ag.ID)
+					for _, ag := range ags {
+						fmt.Printf("- %s (ID: %s)\n", ag.ID, ag.ID)
 					}
 				}
-				c.mu.RUnlock()
 			case "/new":
 				fmt.Println("Creating new Agent (Interactive):")
 				fmt.Print("Enter ID (e.g., my-agent): ")
@@ -105,7 +106,7 @@ func (c *Center) RunLocalREPL() {
 					Model:    modelName,
 					URL:      baseURL,
 				}
-				ag, err := c.CreateAgent(cfg)
+				ag, err := center.AgentManager.CreateAgent(name, cfg)
 				if err != nil {
 					fmt.Printf("%sError creating agent: %v%s\n", colorRed, err, colorReset)
 				} else {
@@ -131,7 +132,7 @@ func (c *Center) RunLocalREPL() {
 		}
 
 		// Execute Agent
-		ag, _ := c.GetAgent(currentAgentID)
+		ag, _ := center.AgentManager.GetAgent(currentAgentID)
 		ctx := context.Background()
 
 		fmt.Printf("%sAssistant: %s", colorCyan, colorReset)
