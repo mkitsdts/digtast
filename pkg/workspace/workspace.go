@@ -47,7 +47,6 @@ func InitWorkspace() {
 		slog.Error("Failed to create workspace root", "path", workspaceRoot, "err", err)
 		return
 	}
-	conf.Conf.RootDir = workspaceRoot
 
 	// Load or create config.json
 	configPath := fmt.Sprintf("%s/config.json", path)

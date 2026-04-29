@@ -12,14 +12,18 @@ const (
 )
 
 type Config struct {
-	MemoryDir    string       `json:"memory_dir"`
-	SkillDir     string       `json:"skill_dir"`
-	RootDir      string       `json:"root_dir"`
-	WorkSpaceDir string       `json:"workspace_dir"`
-	Memory       MemoryConfig `json:"memory"`
-	FTP          FTPConfig    `json:"ftp"`
-	VNC          VNCConfig    `json:"vnc"`
-	Model        ModelConfig  `json:"model"`
+	WorkSpaceDir string                  `json:"workspace_dir"`
+	Memory       MemoryConfig            `json:"memory"`
+	FTP          FTPConfig               `json:"ftp"`
+	VNC          VNCConfig               `json:"vnc"`
+	Models       map[string]ModelConfig  `json:"model"`
+	Agents       map[string]AgentConfig  `json:"agents"`
+	State        LocalRunningStateConfig `json:"state"`
+}
+
+type AgentConfig struct {
+	Name      string `json:"name"`
+	ModelName string `json:"model_name"`
 }
 
 type MemoryConfig struct {
@@ -39,9 +43,15 @@ type VNCConfig struct {
 }
 
 type ModelConfig struct {
-	DefaultProvider string `json:"default_provider"`
-	DefaultModel    string `json:"default_model"`
-	DefaultURL      string `json:"default_url"`
+	ModelName string `json:"model_name"`
+	Provider  string `json:"provider"`
+	URL       string `json:"url"`
+	Key       string `json:"key"`
+}
+
+type LocalRunningStateConfig struct {
+	LastUsedAgent string `json:"last_used_agent"` // 上次使用的 AgentID
+	LastSession   string `json:"last_session"`    // 上次使用的 Session
 }
 
 var Conf Config

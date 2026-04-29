@@ -14,9 +14,7 @@ func DefaultConfig() Config {
 			MaxUser:   10,
 			Enabled:   false,
 		},
-		Model: ModelConfig{
-			DefaultProvider: "openai",
-			DefaultModel:    "gpt-4o",
-		},
+		Models: map[string]ModelConfig{},
+		Agents: map[string]AgentConfig{},
 	}
 }
