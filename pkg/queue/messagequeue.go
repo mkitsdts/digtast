@@ -13,13 +13,22 @@ func NewMessageQueue() *MessageQueue {
 }
 
 func (mq *MessageQueue) Push(key string, message *schema.Message) {
+	if _, ok := mq.q[key]; !ok {
+		return
+	}
 	mq.q[key].Push(message)
 }
 
 func (mq *MessageQueue) Pop(key string) (*schema.Message, bool) {
+	if _, ok := mq.q[key]; !ok {
+		return nil, false
+	}
 	return mq.q[key].Pop()
 }
 
 func (mq *MessageQueue) Front(key string) (*schema.Message, bool) {
+	if _, ok := mq.q[key]; !ok {
+		return nil, false
+	}
 	return mq.q[key].Front()
 }
