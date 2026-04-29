@@ -12,7 +12,7 @@ type Time struct {
 
 var prompt = fmt.Sprintf("current time is %s", time.Now().Format(time.RFC3339))
 
-const prompt_name = "user"
+const prompt_name = "time"
 
 func (s *Time) CreatePromptImpl() error {
 	workspacePath := workspace.GetWorkspacePath()
