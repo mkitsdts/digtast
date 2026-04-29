@@ -2,6 +2,7 @@ package conf
 
 func DefaultConfig() Config {
 	return Config{
+		Mode: "local",
 		Memory: MemoryConfig{
 			MaxMessagesSize: 10 * 1024 * 1024, // 10MB
 		},
@@ -15,6 +16,9 @@ func DefaultConfig() Config {
 			Enabled:   false,
 		},
 		Models: map[string]ModelConfig{},
-		Agents: map[string]AgentConfig{},
+		State: LocalRunningStateConfig{
+			LastUsedAgent: "",
+			LastSession:   "",
+		},
 	}
 }

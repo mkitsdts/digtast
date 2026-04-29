@@ -13,11 +13,11 @@ const (
 
 type Config struct {
 	WorkSpaceDir string                  `json:"workspace_dir"`
+	Mode         string                  `json:"-"` // 本地运行还是云端运行
 	Memory       MemoryConfig            `json:"memory"`
 	FTP          FTPConfig               `json:"ftp"`
 	VNC          VNCConfig               `json:"vnc"`
 	Models       map[string]ModelConfig  `json:"model"`
-	Agents       map[string]AgentConfig  `json:"agents"`
 	State        LocalRunningStateConfig `json:"state"`
 }
 
@@ -43,10 +43,22 @@ type VNCConfig struct {
 }
 
 type ModelConfig struct {
-	ModelName string `json:"model_name"`
-	Provider  string `json:"provider"`
-	URL       string `json:"url"`
-	Key       string `json:"key"`
+	ModelNames []string `json:"model_names"` // 具体的模型名称列表，如 ["gpt-3.5-turbo", "gpt-4"]
+	Provider   string   `json:"provider"`
+	URL        string   `json:"url"`
+	Key        string   `json:"key"`
+}
+
+// FindModelConfig searches all configured models for the given model name.
+func FindModelConfig(modelName string) (ModelConfig, bool) {
+	for _, mCfg := range Conf.Models {
+		for _, name := range mCfg.ModelNames {
+			if name == modelName {
+				return mCfg, true
+			}
+		}
+	}
+	return ModelConfig{}, false
 }
 
 type LocalRunningStateConfig struct {
@@ -74,7 +86,9 @@ func LoadConfig(configPath string) error {
 	return nil
 }
 
-func SaveConfig(configPath string) error {
+func SaveConfig(name string) error {
+	configPath := filepath.Join(Conf.WorkSpaceDir, name, "config.json")
+
 	dir := filepath.Dir(configPath)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
