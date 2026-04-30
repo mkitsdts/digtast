@@ -12,14 +12,11 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"strings"
 	"sync"
 
 	"github.com/cloudwego/eino/adk"
-	"github.com/cloudwego/eino/adk/middlewares/summarization"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/compose"
-	"github.com/cloudwego/eino/schema"
 	"github.com/google/uuid"
 )
 
@@ -78,36 +75,8 @@ func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 	}
 	dga.cm = cm
 
-	// Create summarization middleware for automatic context compression
-	tokenLimit := conf.Conf.Memory.TokenLimit
-	if tokenLimit <= 0 {
-		tokenLimit = 32000
-	}
-	summw, err := summarization.New(ctx, &summarization.Config{
-		Model: cm,
-		Trigger: &summarization.TriggerCondition{
-			ContextTokens: tokenLimit,
-		},
-		Finalize: func(_ context.Context, _ []adk.Message, summary adk.Message) ([]adk.Message, error) {
-			// Extract summary text and save to memory.md
-			summaryText := extractSummaryText(summary)
-			if summaryText != "" {
-				state.ExtractAndSave(dga.state, summaryText)
-			}
-			// Return nil to use default behavior: replace with [systemMsgs..., summary]
-			return nil, nil
-		},
-		PreserveUserMessages: &summarization.PreserveUserMessages{Enabled: true},
-	})
-	if err != nil {
-		slog.Warn("failed to create summarization middleware, context compression disabled", "error", err)
-	}
-
 	var handlers []adk.ChatModelAgentMiddleware
 	handlers = append(handlers, registry.GetBackendMiddleware())
-	if summw != nil {
-		handlers = append(handlers, summw)
-	}
 
 	dga.agent, err = adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
 		Name:  cfg.Name,
@@ -164,6 +133,16 @@ func (dga *DigitalAgent) Cancel() error {
 	return dga.stop()
 }
 
+// Compress triggers manual memory compression for the agent's session.
+func (dga *DigitalAgent) Compress() error {
+	session, err := dga.memory.GetOrCreate()
+	if err != nil {
+		return err
+	}
+	ctx := ctxmanager.GetOrCreate(dga.ID)
+	return state.Compress(ctx, dga.cm, session, dga.state)
+}
+
 func (dga *DigitalAgent) UpdateTools() error {
 	if dga.agent == nil {
 		return nil
@@ -171,30 +150,8 @@ func (dga *DigitalAgent) UpdateTools() error {
 
 	ctx := ctxmanager.GetOrCreate(dga.ID)
 
-	tokenLimit := conf.Conf.Memory.TokenLimit
-	if tokenLimit <= 0 {
-		tokenLimit = 32000
-	}
-	summw, _ := summarization.New(ctx, &summarization.Config{
-		Model: dga.cm,
-		Trigger: &summarization.TriggerCondition{
-			ContextTokens: tokenLimit,
-		},
-		Finalize: func(_ context.Context, _ []adk.Message, summary adk.Message) ([]adk.Message, error) {
-			summaryText := extractSummaryText(summary)
-			if summaryText != "" {
-				state.ExtractAndSave(dga.state, summaryText)
-			}
-			return nil, nil
-		},
-		PreserveUserMessages: &summarization.PreserveUserMessages{Enabled: true},
-	})
-
 	var handlers []adk.ChatModelAgentMiddleware
 	handlers = append(handlers, registry.GetBackendMiddleware())
-	if summw != nil {
-		handlers = append(handlers, summw)
-	}
 
 	ag, err := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
 		Name:  dga.agent.Name(context.Background()),
@@ -221,22 +178,3 @@ func (dga *DigitalAgent) UpdateTools() error {
 	return nil
 }
 
-// extractSummaryText extracts the text content from a summarization middleware summary message.
-func extractSummaryText(msg adk.Message) string {
-	if msg == nil {
-		return ""
-	}
-	if msg.Content != "" {
-		return msg.Content
-	}
-	var sb strings.Builder
-	for _, part := range msg.UserInputMultiContent {
-		if part.Type == schema.ChatMessagePartTypeText && part.Text != "" {
-			if sb.Len() > 0 {
-				sb.WriteString("\n")
-			}
-			sb.WriteString(part.Text)
-		}
-	}
-	return sb.String()
-}

@@ -2,6 +2,8 @@ package agent
 
 import (
 	"context"
+	"digital-labor/internal/state"
+	"digital-labor/pkg/conf"
 	"digital-labor/pkg/ctxmanager"
 	mmodel "digital-labor/pkg/model"
 	"digital-labor/pkg/task"
@@ -87,6 +89,19 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 						Role:    schema.Assistant,
 						Content: runResult,
 					})
+				}
+
+				// Trigger memory compression if session exceeds token limit
+				tokenLimit := conf.Conf.Memory.TokenLimit
+				if tokenLimit <= 0 {
+					tokenLimit = 32000
+				}
+				if session.Size() > tokenLimit {
+					go func() {
+						if err := state.Compress(runCtx, dga.cm, session, dga.state); err != nil {
+							slog.Error("memory compression failed", "agent_id", dga.ID, "err", err)
+						}
+					}()
 				}
 
 				if !req.IsStream && runResult != "" {
