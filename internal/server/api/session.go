@@ -95,11 +95,17 @@ func (s *ContainerServer) StopTask(ctx context.Context, req *pb.StopTaskRequest)
 	return &pb.StopTaskResponse{Success: true}, nil
 }
 
-// CompressAgentHistory returns the status of automatic context compression.
-// Compression is handled automatically by the summarization middleware during conversations.
+// CompressAgentHistory triggers manual memory compression for the agent.
 func (s *ContainerServer) CompressAgentHistory(ctx context.Context, req *pb.CompressAgentHistoryRequest) (*pb.CompressAgentHistoryResponse, error) {
-	_, err := center.AgentManager.GetAgent(req.AgentId)
+	ag, err := center.AgentManager.GetAgent(req.AgentId)
 	if err != nil {
+		return &pb.CompressAgentHistoryResponse{
+			Success: false,
+			Message: err.Error(),
+		}, nil
+	}
+
+	if err := ag.Compress(); err != nil {
 		return &pb.CompressAgentHistoryResponse{
 			Success: false,
 			Message: err.Error(),
@@ -108,6 +114,6 @@ func (s *ContainerServer) CompressAgentHistory(ctx context.Context, req *pb.Comp
 
 	return &pb.CompressAgentHistoryResponse{
 		Success: true,
-		Message: "Context compression is handled automatically during conversations.",
+		Message: "Memory compression completed.",
 	}, nil
 }
