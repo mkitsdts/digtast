@@ -1,39 +1,38 @@
 package agent
 
 import (
+	"digital-labor/internal/state"
 	"testing"
 
 	"github.com/cloudwego/eino/schema"
 )
 
-func TestExtractSummaryText_Content(t *testing.T) {
-	msg := &schema.Message{
-		Role:    schema.User,
-		Content: "this is a summary",
+func TestFilterUserAssistant(t *testing.T) {
+	msgs := []*schema.Message{
+		{Role: schema.User, Content: "hello"},
+		{Role: schema.Assistant, Content: "hi"},
+		{Role: schema.Tool, Content: "tool result", ToolName: "search"},
+		{Role: schema.User, Content: "thanks"},
 	}
-	result := extractSummaryText(msg)
-	if result != "this is a summary" {
-		t.Fatalf("expected 'this is a summary', got '%s'", result)
+
+	filtered := state.FilterUserAssistant(msgs)
+	if len(filtered) != 3 {
+		t.Fatalf("expected 3 messages, got %d", len(filtered))
+	}
+	if filtered[0].Content != "hello" || filtered[1].Content != "hi" || filtered[2].Content != "thanks" {
+		t.Fatalf("unexpected filtered messages: %v", filtered)
 	}
 }
 
-func TestExtractSummaryText_MultiContent(t *testing.T) {
-	msg := &schema.Message{
-		Role: schema.User,
-		UserInputMultiContent: []schema.MessageInputPart{
-			{Type: schema.ChatMessagePartTypeText, Text: "part one"},
-			{Type: schema.ChatMessagePartTypeText, Text: "part two"},
-		},
+func TestShardMessages(t *testing.T) {
+	msgs := []*schema.Message{
+		{Role: schema.User, Content: "hello world"},       // ~3 tokens
+		{Role: schema.Assistant, Content: "hi there"},     // ~2 tokens
+		{Role: schema.User, Content: "how are you doing"}, // ~4 tokens
 	}
-	result := extractSummaryText(msg)
-	if result != "part one\npart two" {
-		t.Fatalf("expected 'part one\\npart two', got '%s'", result)
-	}
-}
 
-func TestExtractSummaryText_Nil(t *testing.T) {
-	result := extractSummaryText(nil)
-	if result != "" {
-		t.Fatalf("expected empty, got '%s'", result)
+	shards := state.ShardMessages(msgs, 5)
+	if len(shards) < 2 {
+		t.Fatalf("expected at least 2 shards, got %d", len(shards))
 	}
 }
