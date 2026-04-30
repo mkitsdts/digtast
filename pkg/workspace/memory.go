@@ -424,3 +424,34 @@ func PersistMessage(agentID string, msg *schema.Message) {
 		slog.Error("failed to persist message", "agent_id", agentID, "error", err)
 	}
 }
+
+// AgentMemoryPath returns the path to an agent's memory.md file.
+func AgentMemoryPath(agentID string) string {
+	return filepath.Join(GetWorkspacePath(), "memory", agentID, "memory.md")
+}
+
+// LoadAgentMemory reads the agent's memory.md content. Returns empty string if not found.
+func LoadAgentMemory(agentID string) string {
+	data, err := os.ReadFile(AgentMemoryPath(agentID))
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(data))
+}
+
+// SaveAgentMemory appends content to the agent's memory.md file.
+func SaveAgentMemory(agentID, content string) error {
+	path := AgentMemoryPath(agentID)
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return fmt.Errorf("create memory dir: %w", err)
+	}
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("open memory file: %w", err)
+	}
+	defer f.Close()
+	if _, err := f.WriteString(content); err != nil {
+		return fmt.Errorf("write memory: %w", err)
+	}
+	return nil
+}

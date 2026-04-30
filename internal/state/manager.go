@@ -5,8 +5,6 @@ import (
 	"digital-labor/pkg/workspace"
 	"fmt"
 	"log/slog"
-	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 )
@@ -17,15 +15,12 @@ type StateManager struct {
 	mu           sync.RWMutex
 	cachedPrompt string
 	promptHash   [32]byte
-	memoryPath   string
 }
 
 // NewStateManager creates a StateManager for the given agent.
 func NewStateManager(agentID string) *StateManager {
-	memDir := filepath.Join(workspace.GetWorkspacePath(), "memory", agentID)
 	return &StateManager{
-		agentID:    agentID,
-		memoryPath: filepath.Join(memDir, "memory.md"),
+		agentID: agentID,
 	}
 }
 
@@ -50,7 +45,7 @@ func (sm *StateManager) Build() string {
 	}
 
 	// Append per-agent memory
-	if memory := sm.loadMemory(); memory != "" {
+	if memory := workspace.LoadAgentMemory(sm.agentID); memory != "" {
 		parts = append(parts, "### memory.md\n"+memory)
 	}
 
@@ -74,38 +69,16 @@ func (sm *StateManager) Invalidate() {
 	sm.mu.Unlock()
 }
 
-// SaveMemory appends content to the agent's memory.md file.
+// SaveMemory appends content to the agent's memory.md via the workspace layer.
 func (sm *StateManager) SaveMemory(content string) error {
-	dir := filepath.Dir(sm.memoryPath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return fmt.Errorf("create memory dir: %w", err)
+	if err := workspace.SaveAgentMemory(sm.agentID, content); err != nil {
+		return err
 	}
-
-	f, err := os.OpenFile(sm.memoryPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		return fmt.Errorf("open memory file: %w", err)
-	}
-	defer f.Close()
-
-	if _, err := f.WriteString(content); err != nil {
-		return fmt.Errorf("write memory: %w", err)
-	}
-
 	sm.Invalidate()
 	return nil
 }
 
-// LoadMemory reads the agent's memory.md content. Returns empty string if not found.
+// LoadMemory reads the agent's memory.md content.
 func (sm *StateManager) LoadMemory() string {
-	sm.mu.RLock()
-	defer sm.mu.RUnlock()
-	return sm.loadMemory()
-}
-
-func (sm *StateManager) loadMemory() string {
-	data, err := os.ReadFile(sm.memoryPath)
-	if err != nil {
-		return ""
-	}
-	return strings.TrimSpace(string(data))
+	return workspace.LoadAgentMemory(sm.agentID)
 }
