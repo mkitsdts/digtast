@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "digital-labor/gateway"
 	"digital-labor/internal/center"
 	"digital-labor/internal/cli"
 	"digital-labor/internal/server"

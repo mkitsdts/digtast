@@ -1,34 +1,26 @@
 package gateway
 
-type ChannelGateway struct {
-	channels map[string]func(kind string) MessageChannel
-	alives   []MessageChannel
-}
+import (
+	"log/slog"
+)
 
 var register = make(map[string]func(kind string) MessageChannel)
-var channelGateway = &ChannelGateway{
-	channels: register,
-}
 
-func (cg *ChannelGateway) NewChannel(kind string) MessageChannel {
-	return cg.channels[kind](kind)
-}
-
-func (cg *ChannelGateway) GatewayRunningState() bool {
-	// TODO
-	for _, mc := range cg.alives {
-		if mc.IsActive() {
-			return true
-		}
+func NewChannel(kind string) MessageChannel {
+	if register == nil {
+		slog.Error("register is nil")
+		return nil
 	}
-	return false
-}
-
-func NewChannelGeteway() *ChannelGateway {
-	return channelGateway
+	if f, ok := register[kind]; ok {
+		slog.Info("found channel", "kind", kind)
+		return f(kind)
+	}
+	slog.Warn("channel not found", "kind", kind)
+	return nil
 }
 
 // 提供通道实现注册
 func RegisterChannel(kind string, f func(kind string) MessageChannel) {
 	register[kind] = f
+	slog.Info("register channel", "kind", kind)
 }

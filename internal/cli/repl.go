@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"digital-labor/internal/center"
+	"digital-labor/internal/gateway"
 	"digital-labor/pkg/conf"
 	"digital-labor/pkg/model"
 	"fmt"
@@ -157,6 +158,21 @@ func RunLocalREPL() {
 				} else {
 					fmt.Printf("%sAgent '%s' history cleared.%s\n", colorGreen, currentAgentName, colorReset)
 				}
+			case "/channel":
+				if len(parts) < 2 {
+					fmt.Println("Usage: /channel <subcommand>")
+					fmt.Println("Subcommands: ")
+					continue
+				}
+				subCmd := parts[1]
+				fmt.Printf("Creating channel: %s\n", subCmd)
+				c := gateway.NewChannel(subCmd)
+				if c == nil {
+					fmt.Printf("%s[Error] Failed to create channel: qq%s\n", colorRed, colorReset)
+					continue
+				}
+				c.Register()
+				go c.Serve(context.Background())
 			case "/model":
 				if len(parts) < 2 {
 					fmt.Println("Usage: /model <subcommand>")

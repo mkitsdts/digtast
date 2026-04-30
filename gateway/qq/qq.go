@@ -5,14 +5,12 @@ import (
 	"digital-labor/internal/gateway"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"time"
 
 	"github.com/tencent-connect/botgo"
-	"github.com/tencent-connect/botgo/event"
-	"github.com/tencent-connect/botgo/interaction/webhook"
 	"github.com/tencent-connect/botgo/openapi"
 	"github.com/tencent-connect/botgo/token"
+	"github.com/tencent-connect/botgo/websocket"
 )
 
 type QQChannel struct {
@@ -21,14 +19,17 @@ type QQChannel struct {
 	Port      int
 	Bots      map[string]string // 存储机器人与AgentID的映射关系
 	api       openapi.OpenAPI
+	conn      *websocket.WebSocket
 }
 
 func init() {
 	gateway.RegisterChannel("qq", NewQQChannel)
 }
 
+var qq *QQChannel = &QQChannel{}
+
 func NewQQChannel(kind string) gateway.MessageChannel {
-	return &QQChannel{}
+	return qq
 }
 
 func (c *QQChannel) Send(content string) error {
@@ -76,19 +77,6 @@ func (c *QQChannel) Serve(ctx context.Context) error {
 	}
 	// 初始化 openapi，正式环境
 	c.api = botgo.NewOpenAPI(c.AppID, tokenSource).WithTimeout(5 * time.Second)
-	// 注册事件处理函数
-	_ = event.RegisterHandlers(
-		// 注册c2c消息处理函数
-		c.C2CMessageEventHandler(),
-	)
-	http.HandleFunc("qq", func(writer http.ResponseWriter, request *http.Request) {
-		webhook.HTTPHandler(writer, request, credentials)
-	})
-
-	// 启动http服务监听端口
-	if err := http.ListenAndServe(fmt.Sprintf("%s:%d", "localhost", c.Port), nil); err != nil {
-		slog.Error("setup server fatal", "error", err)
-	}
 	return nil
 }
 
