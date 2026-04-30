@@ -5,12 +5,9 @@ import (
 	"digital-labor/pkg/ctxmanager"
 	mmodel "digital-labor/pkg/model"
 	"digital-labor/pkg/task"
-	"digital-labor/pkg/workspace"
 	"errors"
-	"fmt"
 	"io"
 	"log/slog"
-	"strings"
 
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/schema"
@@ -29,7 +26,8 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 		return nil, err
 	}
 
-	msgs := buildMessages(session.GetMessages())
+	sysMsg := &schema.Message{Role: schema.System, Content: dga.state.Build()}
+	msgs := append([]*schema.Message{sysMsg}, session.GetMessages()...)
 
 	t, err := task.CreateTask(dga.ID, task.Config{
 		AgentID: dga.ID,
@@ -151,35 +149,3 @@ func (dga *DigitalAgent) stop() error {
 	return errors.New("task not exist")
 }
 
-func buildMessages(messages []*schema.Message) []*schema.Message {
-	promptCreators := workspace.GetPromptCreators()
-	var systemPrompts []string
-
-	for _, creator := range promptCreators {
-		content, err := creator.GetPromptImpl()
-		if err != nil {
-			slog.Error("failed to get prompt content", "name", creator.GetPromptName(), "error", err)
-			continue
-		}
-		if content != "" {
-			systemPrompts = append(systemPrompts, fmt.Sprintf("### %s\n%s", creator.GetPromptName(), content))
-		}
-	}
-
-	if len(systemPrompts) == 0 {
-		return messages
-	}
-
-	fullSystemPrompt := strings.Join(systemPrompts, "\n\n")
-
-	if len(messages) > 0 && messages[0].Role == schema.System {
-		return messages
-	}
-
-	sysMsg := &schema.Message{
-		Role:    schema.System,
-		Content: fullSystemPrompt,
-	}
-
-	return append([]*schema.Message{sysMsg}, messages...)
-}

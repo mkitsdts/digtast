@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	mem "digital-labor/internal/memory"
+	"digital-labor/internal/state"
 	"digital-labor/pkg/conf"
 	"digital-labor/pkg/ctxmanager"
 	"digital-labor/pkg/errs"
@@ -11,20 +12,25 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 	"sync"
 
 	"github.com/cloudwego/eino/adk"
+	"github.com/cloudwego/eino/adk/middlewares/summarization"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/compose"
+	"github.com/cloudwego/eino/schema"
 	"github.com/google/uuid"
 )
+
+const defaultModelDescription = "一位云端数字助理。核心目标是成为用户高效、可靠且易于沟通的智能伙伴。具备卓越的理解能力、严谨的逻辑思维和强大的信息整合能力，旨在帮助用户解决问题、获取知识、激发创意并提升效率。"
 
 type DigitalAgent struct {
 	ID       string
 	Name     string
 	cm       model.ToolCallingChatModel
 	agent    *adk.ChatModelAgent
-	prompts  *PromptBuilder
+	state    *state.StateManager
 	runMu    sync.Mutex
 	runStops context.CancelFunc
 	memory   *mem.Store
@@ -49,10 +55,10 @@ func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 	}
 
 	dga := &DigitalAgent{
-		prompts: NewPromptBuilder(),
-		ID:      cfg.ID,
-		Name:    cfg.Name,
-		memory:  store,
+		state: state.NewStateManager(cfg.ID),
+		ID:    cfg.ID,
+		Name:  cfg.Name,
+		memory: store,
 	}
 
 	mCfg, ok := conf.FindModelConfig(cfg.Model)
@@ -72,6 +78,37 @@ func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 	}
 	dga.cm = cm
 
+	// Create summarization middleware for automatic context compression
+	tokenLimit := conf.Conf.Memory.TokenLimit
+	if tokenLimit <= 0 {
+		tokenLimit = 32000
+	}
+	summw, err := summarization.New(ctx, &summarization.Config{
+		Model: cm,
+		Trigger: &summarization.TriggerCondition{
+			ContextTokens: tokenLimit,
+		},
+		Finalize: func(_ context.Context, _ []adk.Message, summary adk.Message) ([]adk.Message, error) {
+			// Extract summary text and save to memory.md
+			summaryText := extractSummaryText(summary)
+			if summaryText != "" {
+				state.ExtractAndSave(dga.state, summaryText)
+			}
+			// Return nil to use default behavior: replace with [systemMsgs..., summary]
+			return nil, nil
+		},
+		PreserveUserMessages: &summarization.PreserveUserMessages{Enabled: true},
+	})
+	if err != nil {
+		slog.Warn("failed to create summarization middleware, context compression disabled", "error", err)
+	}
+
+	var handlers []adk.ChatModelAgentMiddleware
+	handlers = append(handlers, registry.GetBackendMiddleware())
+	if summw != nil {
+		handlers = append(handlers, summw)
+	}
+
 	dga.agent, err = adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
 		Name:  cfg.Name,
 		Model: cm,
@@ -84,7 +121,7 @@ func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 			},
 		},
 		Description: cfg.Description,
-		Handlers:    []adk.ChatModelAgentMiddleware{registry.GetBackendMiddleware()},
+		Handlers:    handlers,
 	})
 
 	if err != nil {
@@ -133,6 +170,32 @@ func (dga *DigitalAgent) UpdateTools() error {
 	}
 
 	ctx := ctxmanager.GetOrCreate(dga.ID)
+
+	tokenLimit := conf.Conf.Memory.TokenLimit
+	if tokenLimit <= 0 {
+		tokenLimit = 32000
+	}
+	summw, _ := summarization.New(ctx, &summarization.Config{
+		Model: dga.cm,
+		Trigger: &summarization.TriggerCondition{
+			ContextTokens: tokenLimit,
+		},
+		Finalize: func(_ context.Context, _ []adk.Message, summary adk.Message) ([]adk.Message, error) {
+			summaryText := extractSummaryText(summary)
+			if summaryText != "" {
+				state.ExtractAndSave(dga.state, summaryText)
+			}
+			return nil, nil
+		},
+		PreserveUserMessages: &summarization.PreserveUserMessages{Enabled: true},
+	})
+
+	var handlers []adk.ChatModelAgentMiddleware
+	handlers = append(handlers, registry.GetBackendMiddleware())
+	if summw != nil {
+		handlers = append(handlers, summw)
+	}
+
 	ag, err := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
 		Name:  dga.agent.Name(context.Background()),
 		Model: dga.cm,
@@ -145,7 +208,7 @@ func (dga *DigitalAgent) UpdateTools() error {
 			},
 		},
 		Description: dga.agent.Description(ctx),
-		Handlers:    []adk.ChatModelAgentMiddleware{registry.GetBackendMiddleware()},
+		Handlers:    handlers,
 	})
 	if err != nil {
 		return err
@@ -156,4 +219,24 @@ func (dga *DigitalAgent) UpdateTools() error {
 	dga.runMu.Unlock()
 
 	return nil
+}
+
+// extractSummaryText extracts the text content from a summarization middleware summary message.
+func extractSummaryText(msg adk.Message) string {
+	if msg == nil {
+		return ""
+	}
+	if msg.Content != "" {
+		return msg.Content
+	}
+	var sb strings.Builder
+	for _, part := range msg.UserInputMultiContent {
+		if part.Type == schema.ChatMessagePartTypeText && part.Text != "" {
+			if sb.Len() > 0 {
+				sb.WriteString("\n")
+			}
+			sb.WriteString(part.Text)
+		}
+	}
+	return sb.String()
 }

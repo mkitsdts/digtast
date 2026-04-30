@@ -29,6 +29,7 @@ type AgentConfig struct {
 
 type MemoryConfig struct {
 	MaxMessagesSize int64 `json:"max_messages_size"`
+	TokenLimit      int   `json:"token_limit"` // 触发对话压缩的 token 阈值
 }
 
 type FTPConfig struct {

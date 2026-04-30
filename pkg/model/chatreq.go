@@ -3,7 +3,6 @@ package model
 type ChatRequest struct {
 	Content  string
 	IsStream bool
-	Prompt   PromptContext
 }
 
 type CreateChatModelRequest struct {

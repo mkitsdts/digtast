@@ -19,6 +19,7 @@ func DefaultConfig() Config {
 		Mode:         "local",
 		Memory: MemoryConfig{
 			MaxMessagesSize: 10 * 1024 * 1024, // 10MB
+			TokenLimit:      32000,
 		},
 		FTP: FTPConfig{
 			Port:    2121,
