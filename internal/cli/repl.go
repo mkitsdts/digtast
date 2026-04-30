@@ -6,6 +6,7 @@ import (
 	"digital-labor/internal/center"
 	"digital-labor/internal/gateway"
 	"digital-labor/pkg/conf"
+	"digital-labor/pkg/ctxmanager"
 	"digital-labor/pkg/model"
 	"fmt"
 	"os"
@@ -159,6 +160,7 @@ func RunLocalREPL() {
 					fmt.Printf("%sAgent '%s' history cleared.%s\n", colorGreen, currentAgentName, colorReset)
 				}
 			case "/channel":
+				// TODO：通道持久化
 				if len(parts) < 2 {
 					fmt.Println("Usage: /channel <subcommand>")
 					fmt.Println("Subcommands: ")
@@ -172,7 +174,8 @@ func RunLocalREPL() {
 					continue
 				}
 				c.Register()
-				go c.Serve(context.Background())
+				ctx := ctxmanager.GetOrCreate(subCmd)
+				go c.Serve(ctx)
 			case "/model":
 				if len(parts) < 2 {
 					fmt.Println("Usage: /model <subcommand>")
