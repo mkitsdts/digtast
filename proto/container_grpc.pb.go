@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             (unknown)
-// source: container.proto
+// source: labor/v1/container.proto
 
 package proto
 
@@ -20,8 +20,6 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	ContainerService_BackupService_FullMethodName        = "/labor.v1.ContainerService/BackupService"
-	ContainerService_StartFTPServer_FullMethodName       = "/labor.v1.ContainerService/StartFTPServer"
-	ContainerService_StopFTPServer_FullMethodName        = "/labor.v1.ContainerService/StopFTPServer"
 	ContainerService_StartVirtualDesktop_FullMethodName  = "/labor.v1.ContainerService/StartVirtualDesktop"
 	ContainerService_StopVirtualDesktop_FullMethodName   = "/labor.v1.ContainerService/StopVirtualDesktop"
 	ContainerService_CreateChatModel_FullMethodName      = "/labor.v1.ContainerService/CreateChatModel"
@@ -44,9 +42,6 @@ const (
 type ContainerServiceClient interface {
 	// --- 容器 ---
 	BackupService(ctx context.Context, in *BackupServiceRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[BackupServiceResponse], error)
-	// --- FTP ---
-	StartFTPServer(ctx context.Context, in *StartFTPServerRequest, opts ...grpc.CallOption) (*StartFTPServerResponse, error)
-	StopFTPServer(ctx context.Context, in *StopFTPServerRequest, opts ...grpc.CallOption) (*StopFTPServerResponse, error)
 	// --- 虚拟桌面 ---
 	StartVirtualDesktop(ctx context.Context, in *StartVirtualDesktopRequest, opts ...grpc.CallOption) (*StartVirtualDesktopResponse, error)
 	StopVirtualDesktop(ctx context.Context, in *StopVirtualDesktopRequest, opts ...grpc.CallOption) (*StopVirtualDesktopResponse, error)
@@ -92,26 +87,6 @@ func (c *containerServiceClient) BackupService(ctx context.Context, in *BackupSe
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ContainerService_BackupServiceClient = grpc.ServerStreamingClient[BackupServiceResponse]
-
-func (c *containerServiceClient) StartFTPServer(ctx context.Context, in *StartFTPServerRequest, opts ...grpc.CallOption) (*StartFTPServerResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(StartFTPServerResponse)
-	err := c.cc.Invoke(ctx, ContainerService_StartFTPServer_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *containerServiceClient) StopFTPServer(ctx context.Context, in *StopFTPServerRequest, opts ...grpc.CallOption) (*StopFTPServerResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(StopFTPServerResponse)
-	err := c.cc.Invoke(ctx, ContainerService_StopFTPServer_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
 
 func (c *containerServiceClient) StartVirtualDesktop(ctx context.Context, in *StartVirtualDesktopRequest, opts ...grpc.CallOption) (*StartVirtualDesktopResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
@@ -241,9 +216,6 @@ func (c *containerServiceClient) StopTask(ctx context.Context, in *StopTaskReque
 type ContainerServiceServer interface {
 	// --- 容器 ---
 	BackupService(*BackupServiceRequest, grpc.ServerStreamingServer[BackupServiceResponse]) error
-	// --- FTP ---
-	StartFTPServer(context.Context, *StartFTPServerRequest) (*StartFTPServerResponse, error)
-	StopFTPServer(context.Context, *StopFTPServerRequest) (*StopFTPServerResponse, error)
 	// --- 虚拟桌面 ---
 	StartVirtualDesktop(context.Context, *StartVirtualDesktopRequest) (*StartVirtualDesktopResponse, error)
 	StopVirtualDesktop(context.Context, *StopVirtualDesktopRequest) (*StopVirtualDesktopResponse, error)
@@ -273,12 +245,6 @@ type UnimplementedContainerServiceServer struct{}
 
 func (UnimplementedContainerServiceServer) BackupService(*BackupServiceRequest, grpc.ServerStreamingServer[BackupServiceResponse]) error {
 	return status.Error(codes.Unimplemented, "method BackupService not implemented")
-}
-func (UnimplementedContainerServiceServer) StartFTPServer(context.Context, *StartFTPServerRequest) (*StartFTPServerResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method StartFTPServer not implemented")
-}
-func (UnimplementedContainerServiceServer) StopFTPServer(context.Context, *StopFTPServerRequest) (*StopFTPServerResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method StopFTPServer not implemented")
 }
 func (UnimplementedContainerServiceServer) StartVirtualDesktop(context.Context, *StartVirtualDesktopRequest) (*StartVirtualDesktopResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method StartVirtualDesktop not implemented")
@@ -344,42 +310,6 @@ func _ContainerService_BackupService_Handler(srv interface{}, stream grpc.Server
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ContainerService_BackupServiceServer = grpc.ServerStreamingServer[BackupServiceResponse]
-
-func _ContainerService_StartFTPServer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StartFTPServerRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ContainerServiceServer).StartFTPServer(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ContainerService_StartFTPServer_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).StartFTPServer(ctx, req.(*StartFTPServerRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ContainerService_StopFTPServer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StopFTPServerRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ContainerServiceServer).StopFTPServer(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ContainerService_StopFTPServer_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).StopFTPServer(ctx, req.(*StopFTPServerRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
 
 func _ContainerService_StartVirtualDesktop_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(StartVirtualDesktopRequest)
@@ -580,14 +510,6 @@ var ContainerService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ContainerServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "StartFTPServer",
-			Handler:    _ContainerService_StartFTPServer_Handler,
-		},
-		{
-			MethodName: "StopFTPServer",
-			Handler:    _ContainerService_StopFTPServer_Handler,
-		},
-		{
 			MethodName: "StartVirtualDesktop",
 			Handler:    _ContainerService_StartVirtualDesktop_Handler,
 		},
@@ -640,5 +562,5 @@ var ContainerService_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "container.proto",
+	Metadata: "labor/v1/container.proto",
 }
