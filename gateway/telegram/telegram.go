@@ -4,7 +4,7 @@ import (
 	"context"
 	"digital-labor/internal/center"
 	"digital-labor/internal/gateway"
-	"digital-labor/pkg/conf"
+	"digital-labor/pkg/workspace"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -38,11 +38,8 @@ func (tg *TelegramChannel) Init(params map[string]any) error {
 	if agentID, ok := params["agent_id"]; ok {
 		tg.AgentID = agentID.(string)
 	} else {
-		if conf.Conf.State.LastUsedAgent == "" {
-			return errors.New("please create agent at first")
-		} else {
-			tg.AgentID = conf.Conf.State.LastUsedAgent
-		}
+		tg.AgentID = workspace.DefaultAgentID()
+
 	}
 	return nil
 }
