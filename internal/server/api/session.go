@@ -95,10 +95,19 @@ func (s *ContainerServer) StopTask(ctx context.Context, req *pb.StopTaskRequest)
 	return &pb.StopTaskResponse{Success: true}, nil
 }
 
-// CompressAgentHistory is a placeholder for future history compression.
+// CompressAgentHistory returns the status of automatic context compression.
+// Compression is handled automatically by the summarization middleware during conversations.
 func (s *ContainerServer) CompressAgentHistory(ctx context.Context, req *pb.CompressAgentHistoryRequest) (*pb.CompressAgentHistoryResponse, error) {
+	_, err := center.AgentManager.GetAgent(req.AgentId)
+	if err != nil {
+		return &pb.CompressAgentHistoryResponse{
+			Success: false,
+			Message: err.Error(),
+		}, nil
+	}
+
 	return &pb.CompressAgentHistoryResponse{
-		Success: false,
-		Message: "History compression is not yet implemented.",
+		Success: true,
+		Message: "Context compression is handled automatically during conversations.",
 	}, nil
 }
