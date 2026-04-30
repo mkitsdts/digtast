@@ -3,6 +3,7 @@ package qq
 import (
 	"context"
 	"digital-labor/internal/gateway"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -30,6 +31,25 @@ var qq *QQChannel = &QQChannel{}
 
 func NewQQChannel(kind string) gateway.MessageChannel {
 	return qq
+}
+
+func (c *QQChannel) Init(params map[string]any) error {
+	if appID, ok := params["appid"]; !ok {
+		c.AppID = appID.(string)
+	} else {
+		return errors.New("invaild app id which register channel qq")
+	}
+	if secret, ok := params["appsecret"]; ok {
+		c.AppSecret = secret.(string)
+	} else {
+		return errors.New("invaild app secret which register channel qq")
+	}
+	if port, ok := params["port"]; ok {
+		c.Port = int(port.(float64))
+	} else {
+		return errors.New("invaild port which register channel qq")
+	}
+	return nil
 }
 
 func (c *QQChannel) Send(content string) error {

@@ -9,4 +9,5 @@ type MessageChannel interface {
 	Register() error                 // 注册通道
 	Serve(ctx context.Context) error // 监听获取用户发送的消息
 	GetConfig() map[string]any       // 获取通道配置
+	Init(params map[string]any) error
 }

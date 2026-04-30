@@ -1,6 +1,8 @@
 package gateway
 
 import (
+	"digital-labor/pkg/conf"
+	"digital-labor/pkg/ctxmanager"
 	"log/slog"
 )
 
@@ -23,4 +25,19 @@ func NewChannel(kind string) MessageChannel {
 func RegisterChannel(kind string, f func(kind string) MessageChannel) {
 	register[kind] = f
 	slog.Info("register channel", "kind", kind)
+}
+
+func LoadChannels() {
+	if conf.Conf.Channels == nil {
+		return
+	}
+	for kind, params := range conf.Conf.Channels {
+		if _, ok := register[kind]; !ok {
+			continue
+		}
+		c := register[kind](kind)
+		ctx := ctxmanager.GetOrCreate(kind)
+		c.Init(params)
+		c.Serve(ctx)
+	}
 }

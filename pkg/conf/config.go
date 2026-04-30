@@ -12,13 +12,14 @@ const (
 )
 
 type Config struct {
-	WorkSpaceDir string                  `json:"workspace_dir"`
-	Mode         string                  `json:"-"` // 本地运行还是云端运行
-	Memory       MemoryConfig            `json:"memory"`
-	FTP          FTPConfig               `json:"ftp"`
-	VNC          VNCConfig               `json:"vnc"`
-	Models       map[string]ModelConfig  `json:"model"`
-	State        LocalRunningStateConfig `json:"state"`
+	WorkSpaceDir string                    `json:"workspace_dir"`
+	Mode         string                    `json:"-"` // 本地运行还是云端运行
+	Memory       MemoryConfig              `json:"memory"`
+	FTP          FTPConfig                 `json:"ftp"`
+	VNC          VNCConfig                 `json:"vnc"`
+	Models       map[string]ModelConfig    `json:"model"`
+	State        LocalRunningStateConfig   `json:"state"`
+	Channels     map[string]map[string]any `json:"channels"`
 }
 
 type AgentConfig struct {

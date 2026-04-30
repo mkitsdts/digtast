@@ -4,6 +4,8 @@ import (
 	"context"
 	"digital-labor/internal/center"
 	"digital-labor/internal/gateway"
+	"digital-labor/pkg/conf"
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -12,8 +14,9 @@ import (
 )
 
 type TelegramChannel struct {
-	Token string `json:"token"`
-	Bot   *bot.Bot
+	Token   string `json:"token"`
+	Bot     *bot.Bot
+	AgentID string `json:agent_id"`
 }
 
 func init() {
@@ -26,13 +29,32 @@ func NewTelegramChannel(kind string) gateway.MessageChannel {
 	return tg
 }
 
+func (tg *TelegramChannel) Init(params map[string]any) error {
+	if token, ok := params["token"]; ok {
+		tg.Token = token.(string)
+	} else {
+		return errors.New("invaild token which register channel telegram")
+	}
+	if agentID, ok := params["agent_id"]; ok {
+		tg.AgentID = agentID.(string)
+	} else {
+		if conf.Conf.State.LastUsedAgent == "" {
+			return errors.New("please create agent at first")
+		} else {
+			tg.AgentID = conf.Conf.State.LastUsedAgent
+		}
+	}
+	return nil
+}
+
 func (tg *TelegramChannel) Send(content string) error {
 	return nil
 }
 
 func (tg *TelegramChannel) GetConfig() map[string]any {
 	return map[string]any{
-		"Token": tg.Token,
+		"Token":   tg.Token,
+		"AgentID": tg.AgentID,
 	}
 }
 
@@ -41,6 +63,10 @@ func (c *TelegramChannel) Register() error {
 	fmt.Println("请输入Telegram机器人的Token:")
 	fmt.Print("Token: ")
 	_, err := fmt.Scan(&c.Token)
+	fmt.Println("请输入Telegram机器人的AgentID:")
+	fmt.Print("AgentID: ")
+	_, err = fmt.Scan(&c.AgentID)
+
 	if err != nil {
 		return err
 	}
@@ -55,7 +81,7 @@ func (tg *TelegramChannel) Serve(ctx context.Context) error {
 			if update.Message != nil && update.Message.Text != "" {
 				userText := update.Message.Text
 				// TODO: 暂时没有处理好这里，徐娅获取对应的智能体
-				agent, err := center.AgentManager.GetAgent("test")
+				agent, err := center.AgentManager.GetAgent(tg.AgentID)
 				if err != nil {
 					slog.Error("get agent error", "error", err)
 					return
