@@ -27,6 +27,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"runtime/debug"
 	"sort"
 	"strings"
@@ -424,7 +425,8 @@ func (s *Local) ExecuteStreaming(ctx context.Context, input *filesystem.ExecuteR
 
 // initStreamingCmd creates command with stdout and stderr pipes.
 func (s *Local) initStreamingCmd(ctx context.Context, command string) (*exec.Cmd, io.ReadCloser, io.ReadCloser, error) {
-	cmd := exec.CommandContext(ctx, "/bin/sh", "-c", command)
+	name, args := s.getShellArgs(command)
+	cmd := exec.CommandContext(ctx, name, args...)
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -438,6 +440,14 @@ func (s *Local) initStreamingCmd(ctx context.Context, command string) (*exec.Cmd
 	}
 
 	return cmd, stdout, stderr, nil
+}
+
+// getShellArgs returns the platform-appropriate shell and arguments for command execution.
+func (s *Local) getShellArgs(command string) (string, []string) {
+	if runtime.GOOS == "windows" {
+		return "powershell", []string{"-NoProfile", "-Command", command}
+	}
+	return "/bin/sh", []string{"-c", command}
 }
 
 // runCmdInBackground executes command in background without waiting for completion.
