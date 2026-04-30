@@ -4,7 +4,8 @@ import (
 	"context"
 	"sync"
 
-	localbk "github.com/cloudwego/eino-ext/adk/backend/local"
+	localbk "digital-labor/pkg/lbackend"
+
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/adk/middlewares/filesystem"
 )

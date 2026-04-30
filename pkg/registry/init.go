@@ -4,7 +4,7 @@ import (
 	"context"
 	"digital-labor/pkg/workspace"
 
-	localbk "github.com/cloudwego/eino-ext/adk/backend/local"
+	localbk "digital-labor/pkg/lbackend"
 
 	"fmt"
 )
