@@ -10,10 +10,6 @@ service ContainerService {
   // --- 容器 ---
   rpc BackupService(BackupServiceRequest) returns (stream BackupServiceResponse);
 
-  // --- FTP ---
-  rpc StartFTPServer(StartFTPServerRequest) returns (StartFTPServerResponse);
-  rpc StopFTPServer(StopFTPServerRequest) returns (StopFTPServerResponse);
-
   // --- 虚拟桌面 ---
   rpc StartVirtualDesktop(StartVirtualDesktopRequest) returns (StartVirtualDesktopResponse);
   rpc StopVirtualDesktop(StopVirtualDesktopRequest) returns (StopVirtualDesktopResponse);
@@ -43,23 +39,6 @@ message BackupServiceRequest {}
 message BackupServiceResponse {
   bytes data = 1;
   int32 chunk_number = 2;
-}
-
-// --- FTP ---
-message StartFTPServerRequest {
-  string agent_name = 1;
-}
-message StartFTPServerResponse {
-  bool success = 1;
-  int32 ftp_port = 2;
-  string message = 3;
-}
-message StopFTPServerRequest {
-  string agent_name = 1;
-}
-message StopFTPServerResponse {
-  bool success = 1;
-  string message = 3;
 }
 
 // --- 虚拟桌面 ---
