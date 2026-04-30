@@ -39,7 +39,6 @@ func (tg *TelegramChannel) Init(params map[string]any) error {
 		tg.AgentID = agentID.(string)
 	} else {
 		tg.AgentID = workspace.DefaultAgentID()
-
 	}
 	return nil
 }
