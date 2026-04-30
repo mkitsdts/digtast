@@ -29,7 +29,9 @@ type AgentConfig struct {
 
 type MemoryConfig struct {
 	MaxMessagesSize int64 `json:"max_messages_size"`
-	TokenLimit      int   `json:"token_limit"` // 触发对话压缩的 token 阈值
+	TokenLimit      int   `json:"token_limit"`       // 触发对话压缩的 token 阈值
+	ChunkTokenLimit int   `json:"chunk_token_limit"`  // 提取分片的 token 上限
+	CleanInterval   int   `json:"clean_interval"`     // memory.md 清理间隔（轮次）
 }
 
 type FTPConfig struct {

@@ -111,6 +111,69 @@ func (s *Session) CompleteTurn() error {
 	return err
 }
 
+// ResetWithMessages replaces all messages in the session with the given ones,
+// clearing old JSONL data and persisting the new messages to a fresh chunk.
+func (s *Session) ResetWithMessages(msgs []*schema.Message) error {
+	s.mu.Lock()
+	s.messages = msgs
+	store := s.store
+	agentID := s.AgentID
+	s.mu.Unlock()
+
+	if store == nil || store.persist == nil {
+		return nil
+	}
+
+	// Delete old chunks and start fresh
+	if err := store.persist.DeleteSession(agentID); err != nil {
+		return err
+	}
+	if _, err := store.persist.EnsureSession(agentID); err != nil {
+		return err
+	}
+
+	// Persist the new messages
+	for _, msg := range msgs {
+		if msg != nil {
+			if err := store.persist.PersistMessage(agentID, msg); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// Size returns the estimated token count of all messages (characters / 4).
+func (s *Session) Size() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	total := 0
+	for _, msg := range s.messages {
+		if msg == nil {
+			continue
+		}
+		total += len(msg.Content)
+		for _, part := range msg.MultiContent {
+			total += len(part.Text)
+		}
+	}
+	return total / 4
+}
+
+// DeleteChunks removes all JSONL chunk files for this session (used after compression).
+func (s *Session) DeleteChunks() error {
+	s.mu.Lock()
+	store := s.store
+	agentID := s.AgentID
+	s.mu.Unlock()
+
+	if store == nil || store.persist == nil {
+		return nil
+	}
+	return store.persist.DeleteSessionChunks(agentID)
+}
+
 // Title derives a display title from the first user message.
 func (s *Session) Title() string {
 	s.mu.Lock()

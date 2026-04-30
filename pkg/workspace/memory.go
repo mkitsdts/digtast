@@ -271,6 +271,29 @@ func (s *MemoryStore) DeleteSession(agentID string) error {
 	return nil
 }
 
+// DeleteSessionChunks removes all chunk files for an agent but keeps the index entry.
+// Used after compression to clear original history while preserving the session record.
+func (s *MemoryStore) DeleteSessionChunks(agentID string) error {
+	s.mu.Lock()
+	record := s.index.Sessions[agentID]
+	if record == nil {
+		s.mu.Unlock()
+		return nil
+	}
+	chunks := append([]ChunkRecord(nil), record.Chunks...)
+	record.Chunks = nil
+	record.Updated = time.Now().UTC()
+	s.mu.Unlock()
+
+	for _, chunk := range chunks {
+		if err := os.Remove(s.chunkAbsPath(chunk)); err != nil && !os.IsNotExist(err) {
+			return err
+		}
+	}
+	s.requestFlush()
+	return nil
+}
+
 // ListSessions returns session records for one agent (at most one in the 1:1 model).
 func (s *MemoryStore) ListSessions(agentID string) []SessionRecord {
 	s.mu.RLock()
@@ -454,4 +477,13 @@ func SaveAgentMemory(agentID, content string) error {
 		return fmt.Errorf("write memory: %w", err)
 	}
 	return nil
+}
+
+// ReplaceAgentMemory overwrites the agent's memory.md with new content.
+func ReplaceAgentMemory(agentID, content string) error {
+	path := AgentMemoryPath(agentID)
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return fmt.Errorf("create memory dir: %w", err)
+	}
+	return os.WriteFile(path, []byte(content), 0644)
 }

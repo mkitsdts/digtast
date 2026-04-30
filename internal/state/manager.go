@@ -78,6 +78,15 @@ func (sm *StateManager) SaveMemory(content string) error {
 	return nil
 }
 
+// ReplaceMemory replaces the entire memory.md content.
+func (sm *StateManager) ReplaceMemory(content string) error {
+	if err := workspace.ReplaceAgentMemory(sm.agentID, content); err != nil {
+		return err
+	}
+	sm.Invalidate()
+	return nil
+}
+
 // LoadMemory reads the agent's memory.md content.
 func (sm *StateManager) LoadMemory() string {
 	return workspace.LoadAgentMemory(sm.agentID)
