@@ -3,14 +3,13 @@ package qq
 import (
 	"context"
 	"digital-labor/internal/gateway"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
-	"time"
+	"sync"
 
-	"github.com/tencent-connect/botgo"
 	"github.com/tencent-connect/botgo/openapi"
-	"github.com/tencent-connect/botgo/token"
 	"github.com/tencent-connect/botgo/websocket"
 )
 
@@ -21,6 +20,11 @@ type QQChannel struct {
 	Bots      map[string]string // 存储机器人与AgentID的映射关系
 	api       openapi.OpenAPI
 	conn      *websocket.WebSocket
+
+	mu        sync.Mutex
+	sessionID string
+	lastSeq   int
+	handlers  map[string]func(json.RawMessage) error
 }
 
 func init() {
@@ -78,25 +82,16 @@ func (c *QQChannel) Register() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("请确保9000端口已开放")
-	c.Port = 9000
 	return nil
 }
 
 func (c *QQChannel) Serve(ctx context.Context) error {
-	//创建oauth2标准token source
-	credentials := &token.QQBotCredentials{
-		AppID:     c.AppID,
-		AppSecret: c.AppSecret,
-	}
-	tokenSource := token.NewQQBotTokenSource(credentials)
-	//启动自动刷新access token协程
-	if err := token.StartRefreshAccessToken(ctx, tokenSource); err != nil {
-		slog.Error("start refresh access token fatal", "error", err)
+	url, err := c.getWebSocketUrl()
+	if err != nil {
+		slog.Error("get web socket url fatal", "error", err)
 		return err
 	}
-	// 初始化 openapi，正式环境
-	c.api = botgo.NewOpenAPI(c.AppID, tokenSource).WithTimeout(5 * time.Second)
+	c.Handler(ctx, url)
 	return nil
 }
 
