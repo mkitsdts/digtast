@@ -16,7 +16,7 @@ import (
 type TelegramChannel struct {
 	Token   string `json:"token"`
 	Bot     *bot.Bot
-	AgentID string `json:agent_id"`
+	AgentID string `json:"agent_id"`
 }
 
 func init() {
