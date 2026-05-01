@@ -3,6 +3,7 @@ package qq
 import (
 	"context"
 	"digital-labor/internal/gateway"
+	"digital-labor/pkg/conf"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,14 +18,16 @@ type QQChannel struct {
 	AppID     string
 	AppSecret string
 	Port      int
-	Bots      map[string]string // 存储机器人与AgentID的映射关系
+	AgentID   string // 存储机器人与AgentID的映射关系
 	api       openapi.OpenAPI
 	conn      *websocket.WebSocket
 
-	mu        sync.Mutex
-	sessionID string
-	lastSeq   int
-	handlers  map[string]func(json.RawMessage) error
+	mu           sync.Mutex
+	sessionID    string
+	lastSeq      int
+	refreshToken string
+	refreshMux   sync.Mutex
+	handlers     map[string]func(json.RawMessage) error
 }
 
 func init() {
@@ -53,6 +56,11 @@ func (c *QQChannel) Init(params map[string]any) error {
 	} else {
 		return errors.New("invaild port which register channel qq")
 	}
+	if agentID, ok := params["agentid"]; ok {
+		c.AgentID = agentID.(string)
+	} else {
+		c.AgentID = conf.Conf.State.LastUsedAgent
+	}
 	return nil
 }
 
@@ -65,7 +73,7 @@ func (c *QQChannel) GetConfig() map[string]any {
 		"appid":     c.AppID,
 		"appsecret": c.AppSecret,
 		"port":      c.Port,
-		"bots":      c.Bots,
+		"agentid":   c.AgentID,
 	}
 }
 
@@ -86,6 +94,7 @@ func (c *QQChannel) Register() error {
 }
 
 func (c *QQChannel) Serve(ctx context.Context) error {
+	go c.refreshTokenLoop(ctx)
 	url, err := c.getWebSocketUrl()
 	if err != nil {
 		slog.Error("get web socket url fatal", "error", err)

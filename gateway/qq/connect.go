@@ -1,6 +1,7 @@
 package qq
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
@@ -66,11 +67,12 @@ type identifyData struct {
 }
 
 type wsConn struct {
-	mu        sync.Mutex
-	conn      *websocket.Conn
-	seq       int
-	sessionID string
-	lastAck   time.Time
+	mu            sync.Mutex
+	conn          *websocket.Conn
+	seq           int
+	sessionID     string
+	lastAck       time.Time
+	refresh_token string
 }
 
 func (w *wsConn) send(msg baseMessage) error {
@@ -213,12 +215,6 @@ func (c *QQChannel) sendIdentify(wc *wsConn) error {
 		D: identifyData{
 			Token:   fmt.Sprintf("QQBot %s", c.token()),
 			Intents: intentGuilds | intentPublicGuildMessage | intentGuildMembers | intentDirectMessage | intentGroupAndC2C | intentInteraction,
-			Shard:   [2]int{0, 1},
-			Props: map[string]any{
-				"$os":      "linux",
-				"$browser": "digital-labor",
-				"$device":  "digital-labor",
-			},
 		},
 	}
 	return wc.send(msg)
@@ -378,7 +374,13 @@ func (c *QQChannel) RegisterHandler(eventType string, handler func(json.RawMessa
 
 // token 生成 QQ Bot API 格式的 access token。
 func (c *QQChannel) token() string {
-	return fmt.Sprintf("%s.%s", c.AppID, c.AppSecret)
+	for c.refreshToken == "" {
+		c.refreshMux.Unlock()
+		time.Sleep(10 * time.Millisecond)
+	}
+	c.refreshMux.Lock()
+	defer c.refreshMux.Unlock()
+	return fmt.Sprintf("%s.%s", c.refreshToken)
 }
 
 // generateNonce 生成随机 nonce 字符串。
@@ -417,6 +419,52 @@ func (c *QQChannel) getWebSocketUrl() (string, error) {
 		return "", fmt.Errorf("gateway returned empty url")
 	}
 	return result.URL, nil
+}
+
+func (c *QQChannel) refreshTokenLoop(ctx context.Context) error {
+	url := "https://bots.qq.com/app/getAppAccessToken"
+
+	params := map[string]string{
+		"appId":        c.AppID,
+		"clientSecret": c.AppSecret,
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(marshalJSON(params)))
+	if err != nil {
+		return err
+	}
+
+	for {
+		c.refreshMux.Lock()
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+
+		req.Header.Set("Authorization", fmt.Sprintf("QQBot %s", c.token()))
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("gateway returned status %d", resp.StatusCode)
+		}
+
+		var result struct {
+			RefreshToken string `json:"refresh_token"`
+			ExpireIn     int    `json:"expire_in"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return fmt.Errorf("decode gateway response: %w", err)
+		}
+		c.refreshToken = result.RefreshToken
+		c.refreshMux.Unlock()
+		time.Sleep(time.Duration(result.ExpireIn/5*4) * time.Millisecond)
+	}
 }
 
 // marshalJSON 将任意值序列化再反序列化为 json.RawMessage，用于结构体转换。
