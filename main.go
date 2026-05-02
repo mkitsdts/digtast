@@ -20,7 +20,7 @@ func main() {
 	port := flag.String("port", "10086", "gRPC server port")
 	flag.Parse()
 
-	// 1. Get workspace path and load config
+	// Get workspace path and load config
 	wp := workspace.GetWorkspacePath()
 	configPath := filepath.Join(wp, "config.json")
 	if err := conf.LoadConfig(); err != nil {

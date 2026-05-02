@@ -100,7 +100,7 @@ func (c *QQChannel) Serve(ctx context.Context) error {
 
 	c.RegisterHandler("C2C_MESSAGE_CREATE", c.C2CMessageEventHandler())
 
-	slog.Info("get web socket url success", "url", url)
+	slog.Debug("get web socket url success", "url", url)
 	c.Handler(ctx, url)
 	return nil
 }

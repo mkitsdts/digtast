@@ -27,7 +27,7 @@ func (c *QQChannel) C2CMessageEventHandler() func(msg json.RawMessage) error {
 		if err := json.Unmarshal(msg, &data); err != nil {
 			return err
 		}
-		slog.Info("message received", "content", data.Content)
+		slog.Debug("message received", "content", data.Content)
 		ag, err := center.AgentManager.GetAgent(c.AgentID)
 		if err != nil {
 			return err
