@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"digital-labor/pkg/conf"
 	"digital-labor/pkg/errs"
 	mmodel "digital-labor/pkg/model"
 	"digital-labor/pkg/workspace"
@@ -61,6 +62,24 @@ func (m *Manager) GetAgent(id string) (*DigitalAgent, error) {
 	agent, ok := m.agents[id]
 	if !ok {
 		return nil, errs.ErrAgentNotFound
+	}
+	return agent, nil
+}
+
+// GetDefaultAgent returns the default agent, or an error if no default agent is found
+func (m *Manager) GetDefaultAgent() (*DigitalAgent, error) {
+	if m.agents == nil {
+		return nil, errors.New("no agents")
+	}
+
+	m.mux.RLock()
+	defer m.mux.RUnlock()
+	agent, ok := m.agents[conf.Conf.State.LastUsedAgent]
+	if !ok {
+		for _, agent := range m.agents {
+			return agent, nil
+		}
+		return nil, errors.New("create an agent first")
 	}
 	return agent, nil
 }

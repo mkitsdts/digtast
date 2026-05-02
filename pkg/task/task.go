@@ -16,15 +16,18 @@ type TaskEvent struct {
 }
 
 type TaskManager struct {
-	mux       sync.RWMutex
-	Tasks     map[string]map[string]*model.Task `json:"tasks"`
-	eventChan chan TaskEvent
+	mux             sync.RWMutex
+	Tasks           map[string]map[string]*model.Task `json:"tasks"`
+	eventChan       chan TaskEvent
+	listenerMu      sync.RWMutex
+	streamListeners map[string][]chan TaskEvent
 }
 
 var globalTaskManager = &TaskManager{
-	mux:       sync.RWMutex{},
-	Tasks:     map[string]map[string]*model.Task{},
-	eventChan: make(chan TaskEvent, 1000),
+	mux:             sync.RWMutex{},
+	Tasks:           map[string]map[string]*model.Task{},
+	eventChan:       make(chan TaskEvent, 1000),
+	streamListeners: map[string][]chan TaskEvent{},
 }
 
 func CreateTask(agentID string, cfg Config) (*model.Task, error) {
@@ -51,6 +54,8 @@ func CreateTask(agentID string, cfg Config) (*model.Task, error) {
 		AgentID:      agentID,
 		Status:       model.TaskStatusPending,
 		NotifyPolicy: cfg.NotifyPolicy,
+		Title:        cfg.Title,
+		Description:  cfg.Description,
 		CreatedAt:    now,
 		Error:        cfg.Error,
 	}
@@ -77,6 +82,13 @@ func UpdateStatus(agentID, taskid string, status string) {
 	if agentTasks, ok := globalTaskManager.Tasks[agentID]; ok {
 		if tk, ok := agentTasks[taskid]; ok {
 			tk.Status = status
+			now := time.Now().UTC().Unix()
+			if status == model.TaskStatusRunning && tk.StartedAt == 0 {
+				tk.StartedAt = now
+			}
+			if status == model.TaskStatusCompleted || status == model.TaskStatusFailed {
+				tk.EndedAt = now
+			}
 			t = tk
 		}
 	}
@@ -89,6 +101,45 @@ func UpdateStatus(agentID, taskid string, status string) {
 			Data:    *t,
 		}
 	}
+}
+
+func UpdateTask(agentID, taskid string, cfg UpdateConfig) *model.Task {
+	globalTaskManager.mux.Lock()
+	var t *model.Task
+	if agentTasks, ok := globalTaskManager.Tasks[agentID]; ok {
+		if tk, ok := agentTasks[taskid]; ok {
+			if cfg.Status != "" {
+				tk.Status = cfg.Status
+				now := time.Now().UTC().Unix()
+				if cfg.Status == model.TaskStatusRunning && tk.StartedAt == 0 {
+					tk.StartedAt = now
+				}
+				if cfg.Status == model.TaskStatusCompleted || cfg.Status == model.TaskStatusFailed {
+					tk.EndedAt = now
+				}
+			}
+			if cfg.Title != "" {
+				tk.Title = cfg.Title
+			}
+			if cfg.Description != "" {
+				tk.Description = cfg.Description
+			}
+			if cfg.Error != "" {
+				tk.Error = cfg.Error
+			}
+			t = tk
+		}
+	}
+	globalTaskManager.mux.Unlock()
+
+	if t != nil {
+		globalTaskManager.eventChan <- TaskEvent{
+			Type:    "task",
+			AgentID: agentID,
+			Data:    *t,
+		}
+	}
+	return t
 }
 
 func CreateStep(taskid, agentID string, cfg StepConfig) *model.Step {
@@ -167,4 +218,41 @@ func GetTask(agentID, taskid string) *model.Task {
 		return task
 	}
 	return nil
+}
+
+func ListTasks(agentID string) []*model.Task {
+	globalTaskManager.mux.RLock()
+	defer globalTaskManager.mux.RUnlock()
+	agentTasks, ok := globalTaskManager.Tasks[agentID]
+	if !ok {
+		return nil
+	}
+	result := make([]*model.Task, 0, len(agentTasks))
+	for _, t := range agentTasks {
+		result = append(result, t)
+	}
+	return result
+}
+
+func SubscribeEvents(agentID string) <-chan TaskEvent {
+	ch := make(chan TaskEvent, 200)
+	globalTaskManager.listenerMu.Lock()
+	globalTaskManager.streamListeners[agentID] = append(
+		globalTaskManager.streamListeners[agentID], ch,
+	)
+	globalTaskManager.listenerMu.Unlock()
+	return ch
+}
+
+func UnsubscribeEvents(agentID string, ch <-chan TaskEvent) {
+	globalTaskManager.listenerMu.Lock()
+	listeners := globalTaskManager.streamListeners[agentID]
+	for i, c := range listeners {
+		if c == ch {
+			globalTaskManager.streamListeners[agentID] = append(listeners[:i], listeners[i+1:]...)
+			close(c)
+			break
+		}
+	}
+	globalTaskManager.listenerMu.Unlock()
 }

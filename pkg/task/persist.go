@@ -17,6 +17,15 @@ func persist() {
 
 		filename := fmt.Sprintf("tasks/%s/tasks.jsonl", event.AgentID)
 		workspace.AppendFile(filename, data)
+
+		globalTaskManager.listenerMu.RLock()
+		for _, ch := range globalTaskManager.streamListeners[event.AgentID] {
+			select {
+			case ch <- event:
+			default:
+			}
+		}
+		globalTaskManager.listenerMu.RUnlock()
 	}
 }
 

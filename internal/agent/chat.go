@@ -37,9 +37,11 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 	if err != nil {
 		return nil, err
 	}
+	flowID := t.TaskID
+	task.UpdateStatus(dga.ID, flowID, mmodel.TaskStatusRunning)
 
-	runCtx, cancel := context.WithCancel(ctxmanager.GetOrCreate(t.TaskID))
-	runCtx = context.WithValue(runCtx, "task_id", t.TaskID)
+	runCtx, cancel := context.WithCancel(ctxmanager.GetOrCreate(flowID))
+	runCtx = context.WithValue(runCtx, "task_id", flowID)
 	runCtx = context.WithValue(runCtx, "agent_id", dga.ID)
 	dga.runStops = cancel
 
@@ -64,14 +66,17 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 
 		if events == nil {
 			slog.Error("events stream is nil")
+			task.UpdateStatus(dga.ID, flowID, mmodel.TaskStatusFailed)
 			return
 		}
 
 		runResult := ""
+		var runErr error
 
 		for {
 			if runCtx.Err() != nil {
 				slog.Warn("agent execution cancelled or timeout", "agent_id", dga.ID, "err", runCtx.Err())
+				task.UpdateStatus(dga.ID, flowID, mmodel.TaskStatusFailed)
 				return
 			}
 
@@ -89,6 +94,15 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 						Role:    schema.Assistant,
 						Content: runResult,
 					})
+				}
+
+				if runErr != nil {
+					task.UpdateTask(dga.ID, flowID, task.UpdateConfig{
+						Status: mmodel.TaskStatusFailed,
+						Error:  runErr.Error(),
+					})
+				} else {
+					task.UpdateStatus(dga.ID, flowID, mmodel.TaskStatusCompleted)
 				}
 
 				// Trigger memory compression if session exceeds token limit
@@ -112,6 +126,7 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 
 			if event.Err != nil {
 				slog.Error("execute agent failed", "agent_id", dga.ID, "err", event.Err)
+				runErr = event.Err
 				return
 			}
 
@@ -163,4 +178,3 @@ func (dga *DigitalAgent) stop() error {
 	}
 	return errors.New("task not exist")
 }
-

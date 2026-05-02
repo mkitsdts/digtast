@@ -7,7 +7,16 @@ type Config struct {
 	ParentTaskID string
 	AgentID      string
 	NotifyPolicy string
+	Title        string
+	Description  string
 	Error        string
+}
+
+type UpdateConfig struct {
+	Status      string
+	Title       string
+	Description string
+	Error       string
 }
 
 type StepConfig struct {

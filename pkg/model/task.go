@@ -29,6 +29,8 @@ type Task struct {
 	AgentID      string
 	Status       string
 	NotifyPolicy string
+	Title        string
+	Description  string
 	CreatedAt    int64
 	StartedAt    int64
 	EndedAt      int64
