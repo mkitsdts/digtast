@@ -27,11 +27,6 @@ func DefaultConfig() Config {
 			Port:    2121,
 			Enabled: false,
 		},
-		VNC: VNCConfig{
-			BeginPort: 6901,
-			MaxUser:   10,
-			Enabled:   false,
-		},
 		Models: map[string]ModelConfig{},
 		State: LocalRunningStateConfig{
 			LastUsedAgent: "",

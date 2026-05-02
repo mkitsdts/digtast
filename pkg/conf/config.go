@@ -16,7 +16,6 @@ type Config struct {
 	Mode         string                    `json:"-"` // 本地运行还是云端运行
 	Memory       MemoryConfig              `json:"memory"`
 	FTP          FTPConfig                 `json:"ftp"`
-	VNC          VNCConfig                 `json:"vnc"`
 	Models       map[string]ModelConfig    `json:"model"`
 	State        LocalRunningStateConfig   `json:"state"`
 	Channels     map[string]map[string]any `json:"channels"`
@@ -30,20 +29,14 @@ type AgentConfig struct {
 type MemoryConfig struct {
 	MaxMessagesSize int64 `json:"max_messages_size"`
 	TokenLimit      int   `json:"token_limit"`       // 触发对话压缩的 token 阈值
-	ChunkTokenLimit int   `json:"chunk_token_limit"`  // 提取分片的 token 上限
-	CleanInterval   int   `json:"clean_interval"`     // memory.md 清理间隔（轮次）
+	ChunkTokenLimit int   `json:"chunk_token_limit"` // 提取分片的 token 上限
+	CleanInterval   int   `json:"clean_interval"`    // memory.md 清理间隔（轮次）
 }
 
 type FTPConfig struct {
 	Port    int    `json:"port"`
 	RootDir string `json:"root_dir"`
 	Enabled bool   `json:"enabled"`
-}
-
-type VNCConfig struct {
-	BeginPort int  `json:"begin_port"`
-	MaxUser   int  `json:"max_user"`
-	Enabled   bool `json:"enabled"`
 }
 
 type ModelConfig struct {
