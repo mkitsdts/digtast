@@ -9,9 +9,6 @@ import (
 	"fmt"
 	"log/slog"
 	"sync"
-
-	"github.com/tencent-connect/botgo/openapi"
-	"github.com/tencent-connect/botgo/websocket"
 )
 
 type QQChannel struct {
@@ -19,8 +16,6 @@ type QQChannel struct {
 	AppSecret string
 	Port      int
 	AgentID   string // 存储机器人与AgentID的映射关系
-	api       openapi.OpenAPI
-	conn      *websocket.WebSocket
 
 	mu           sync.Mutex
 	sessionID    string

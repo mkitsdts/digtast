@@ -1,18 +1,19 @@
 package qq
 
 import (
+	"bytes"
 	"context"
 	"digital-labor/internal/center"
 	"encoding/json"
-	"log"
-	"time"
-
-	"github.com/tencent-connect/botgo/dto"
+	"fmt"
+	"net/http"
 )
 
 type C2CMessage struct {
-	ID          string `json:"id"`
-	Author      any    `json:"author"`
+	ID     string `json:"id"`
+	Author struct {
+		UserOpenID string `json:"user_openid"`
+	} `json:"author"`
 	Content     string `json:"content"`
 	TimeStamp   int64  `json:"timestamp"`
 	Attachments []any  `json:"attachments"` // 富消息文本
@@ -35,28 +36,33 @@ func (c *QQChannel) C2CMessageEventHandler() func(msg json.RawMessage) error {
 			return err
 		}
 		result := <-sm
-		c.SendMessage(content, data.ID, generateMessage(result, data.ID))
-		return nil
+		return c.SendMessage(result, data.Author.UserOpenID, data.ID)
 	}
 }
 
-func (c *QQChannel) SendMessage(content, user_id string, toCreate dto.APIMessage) error {
+func (c *QQChannel) SendMessage(content, user_id, event_id string) error {
 	// /v2/users/{openid}/messages 需要调用 HTTP POST 接口发送消息，珠宝要回家了，由于需要git远程同步，先暂时提交一下
-	if _, err := c.api.PostC2CMessage(context.Background(), user_id, toCreate); err != nil {
-		log.Println(err)
+	url := fmt.Sprintf("https://api.sgroup.qq.com/v2/users/%s/messages", user_id)
+	payload := map[string]string{
+		"content":  content,
+		"msg_type": "0",
+		"event_id": event_id,
+	}
+
+	body := bytes.NewBuffer(marshalJSON(payload))
+	req, err := http.NewRequest("POST", url, body)
+	if err != nil {
 		return err
 	}
-	return nil
-}
-
-func generateMessage(content string, id string) *dto.MessageToCreate {
-	return &dto.MessageToCreate{
-		Timestamp: time.Now().UnixMilli(),
-		Content:   content,
-		MessageReference: &dto.MessageReference{
-			MessageID:             id,
-			IgnoreGetMessageError: true,
-		},
-		MsgID: id,
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
 	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+	return nil
 }
