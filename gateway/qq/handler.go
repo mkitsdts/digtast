@@ -6,6 +6,7 @@ import (
 	"digital-labor/internal/center"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 )
 
@@ -15,7 +16,7 @@ type C2CMessage struct {
 		UserOpenID string `json:"user_openid"`
 	} `json:"author"`
 	Content     string `json:"content"`
-	TimeStamp   int64  `json:"timestamp"`
+	TimeStamp   string `json:"timestamp"`
 	Attachments []any  `json:"attachments"` // 富消息文本
 }
 
@@ -26,6 +27,7 @@ func (c *QQChannel) C2CMessageEventHandler() func(msg json.RawMessage) error {
 		if err := json.Unmarshal(msg, &data); err != nil {
 			return err
 		}
+		slog.Info("message received", "content", data.Content)
 		ag, err := center.AgentManager.GetAgent(c.AgentID)
 		if err != nil {
 			return err
@@ -40,13 +42,14 @@ func (c *QQChannel) C2CMessageEventHandler() func(msg json.RawMessage) error {
 	}
 }
 
-func (c *QQChannel) SendMessage(content, user_id, event_id string) error {
+func (c *QQChannel) SendMessage(content, user_id, msg_id string) error {
 	// /v2/users/{openid}/messages 需要调用 HTTP POST 接口发送消息，珠宝要回家了，由于需要git远程同步，先暂时提交一下
 	url := fmt.Sprintf("https://api.sgroup.qq.com/v2/users/%s/messages", user_id)
-	payload := map[string]string{
+	payload := map[string]any{
 		"content":  content,
-		"msg_type": "0",
-		"event_id": event_id,
+		"msg_type": 0,
+		"event_id": "C2C_MSG_RECEIVE",
+		"msg_id":   msg_id,
 	}
 
 	body := bytes.NewBuffer(marshalJSON(payload))
@@ -55,6 +58,7 @@ func (c *QQChannel) SendMessage(content, user_id, event_id string) error {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", c.token())
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -62,6 +66,7 @@ func (c *QQChannel) SendMessage(content, user_id, event_id string) error {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
+		slog.Error("send message fatal", "status", resp.StatusCode, "user_id", user_id, "msg_id", msg_id, "token", c.token())
 		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 	return nil

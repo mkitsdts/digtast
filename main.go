@@ -4,6 +4,7 @@ import (
 	_ "digital-labor/gateway"
 	"digital-labor/internal/center"
 	"digital-labor/internal/cli"
+	"digital-labor/internal/gateway"
 	"digital-labor/internal/server"
 	"digital-labor/pkg/conf"
 	"digital-labor/pkg/workspace"
@@ -39,4 +40,5 @@ func main() {
 func Init() {
 	workspace.InitWorkspace()
 	center.Init()
+	gateway.LoadChannels()
 }

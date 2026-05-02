@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -149,6 +150,7 @@ func (c *QQChannel) connectAndServe(ctx context.Context, gatewayURL string, tryR
 		slog.Error("failed to receive hello", "error", err)
 		return false
 	}
+	slog.Info("hello received", "interval", interval)
 
 	// 尝试恢复会话或重新鉴权
 	if tryResume && c.sessionID != "" && c.lastSeq > 0 {
@@ -213,8 +215,9 @@ func (c *QQChannel) sendIdentify(wc *wsConn) error {
 	msg := baseMessage{
 		Op: opIdentify,
 		D: identifyData{
-			Token:   fmt.Sprintf("QQBot %s", c.token()),
-			Intents: intentGuilds | intentPublicGuildMessage | intentGuildMembers | intentDirectMessage | intentGroupAndC2C | intentInteraction,
+			Token:   c.token(),
+			Intents: intentGroupAndC2C,
+			Shard:   [2]int{0, 1},
 		},
 	}
 	return wc.send(msg)
@@ -286,11 +289,13 @@ func (c *QQChannel) messageLoop(ctx context.Context, wc *wsConn) bool {
 			slog.Warn("failed to parse message", "error", err)
 			continue
 		}
+		slog.Info("message received", "op", msg.Op, "id", msg.ID)
 
 		wc.updateSeq(msg.S)
 
 		switch msg.Op {
 		case opDispatch:
+			slog.Info("dispatch message", "message", msg)
 			c.handleDispatch(wc, msg)
 
 		case opReconnect:
@@ -375,12 +380,11 @@ func (c *QQChannel) RegisterHandler(eventType string, handler func(json.RawMessa
 // token 生成 QQ Bot API 格式的 access token。
 func (c *QQChannel) token() string {
 	for c.refreshToken == "" {
-		c.refreshMux.Unlock()
 		time.Sleep(10 * time.Millisecond)
 	}
 	c.refreshMux.Lock()
 	defer c.refreshMux.Unlock()
-	return fmt.Sprintf("%s.%s", c.refreshToken)
+	return fmt.Sprintf("QQBot %s", c.refreshToken)
 }
 
 // generateNonce 生成随机 nonce 字符串。
@@ -397,9 +401,11 @@ func (c *QQChannel) getWebSocketUrl() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	req.Header.Set("Authorization", fmt.Sprintf("QQBot %s", c.token()))
+	req.Header.Set("Authorization", c.token())
 
-	resp, err := http.DefaultClient.Do(req)
+	fmt.Println("getWebSocketUrl: sending request")
+	resp, err := http.DefaultClient.Do(req) // 如果卡在这里，就是网络/DNS问题
+	fmt.Println("getWebSocketUrl: request completed")
 	if err != nil {
 		return "", err
 	}
@@ -424,46 +430,53 @@ func (c *QQChannel) getWebSocketUrl() (string, error) {
 func (c *QQChannel) refreshTokenLoop(ctx context.Context) error {
 	url := "https://bots.qq.com/app/getAppAccessToken"
 
+	fmt.Println("app id ", c.AppID, " app secret ", c.AppSecret)
 	params := map[string]string{
 		"appId":        c.AppID,
 		"clientSecret": c.AppSecret,
 	}
 
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(marshalJSON(params)))
-	if err != nil {
-		return err
-	}
-
 	for {
-		c.refreshMux.Lock()
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
 		}
 
-		req.Header.Set("Authorization", fmt.Sprintf("QQBot %s", c.token()))
+		req, err := http.NewRequest("POST", url, bytes.NewBuffer(marshalJSON(params)))
+		if err != nil {
+			return err
+		}
+
+		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			return err
 		}
-		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
 			return fmt.Errorf("gateway returned status %d", resp.StatusCode)
 		}
 
 		var result struct {
-			RefreshToken string `json:"refresh_token"`
-			ExpireIn     int    `json:"expire_in"`
+			AccessToken string `json:"access_token"`
+			ExpiresIn   string `json:"expires_in"`
 		}
 		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			resp.Body.Close()
 			return fmt.Errorf("decode gateway response: %w", err)
 		}
-		c.refreshToken = result.RefreshToken
+		resp.Body.Close()
+		slog.Info("get qq access token", "token", result.AccessToken, "expires_in", result.ExpiresIn)
+		c.refreshMux.Lock()
+		c.refreshToken = result.AccessToken
 		c.refreshMux.Unlock()
-		time.Sleep(time.Duration(result.ExpireIn/5*4) * time.Millisecond)
+		duration, err := strconv.ParseInt(result.ExpiresIn, 10, 64)
+		if err != nil {
+			return fmt.Errorf("parse expires_in: %w", err)
+		}
+		time.Sleep(time.Duration(duration/5*4) * time.Second)
 	}
 }
 

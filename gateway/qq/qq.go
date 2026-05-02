@@ -36,7 +36,7 @@ func NewQQChannel(kind string) gateway.MessageChannel {
 }
 
 func (c *QQChannel) Init(params map[string]any) error {
-	if appID, ok := params["appid"]; !ok {
+	if appID, ok := params["appid"]; ok {
 		c.AppID = appID.(string)
 	} else {
 		return errors.New("invaild app id which register channel qq")
@@ -89,12 +89,18 @@ func (c *QQChannel) Register() error {
 }
 
 func (c *QQChannel) Serve(ctx context.Context) error {
+	fmt.Println("serve qq channel")
 	go c.refreshTokenLoop(ctx)
+	fmt.Println("before getWebSocketUrl")
 	url, err := c.getWebSocketUrl()
 	if err != nil {
 		slog.Error("get web socket url fatal", "error", err)
 		return err
 	}
+
+	c.RegisterHandler("C2C_MESSAGE_CREATE", c.C2CMessageEventHandler())
+
+	slog.Info("get web socket url success", "url", url)
 	c.Handler(ctx, url)
 	return nil
 }

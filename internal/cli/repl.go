@@ -176,9 +176,10 @@ func RunLocalREPL() {
 				c.Register()
 				ctx := ctxmanager.GetOrCreate(subCmd)
 				go c.Serve(ctx)
-				if conf.Conf.Channels != nil {
-					conf.Conf.Channels[subCmd] = c.GetConfig()
+				if conf.Conf.Channels == nil {
+					conf.Conf.Channels = make(map[string]map[string]any)
 				}
+				conf.Conf.Channels[subCmd] = c.GetConfig()
 				conf.SaveConfig()
 			case "/model":
 				if len(parts) < 2 {
