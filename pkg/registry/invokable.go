@@ -10,6 +10,7 @@ import (
 	"github.com/cloudwego/eino/compose"
 )
 
+// Tool Call middleware that tracks tool execution steps
 func Invokable(next compose.InvokableToolEndpoint) compose.InvokableToolEndpoint {
 	return func(ctx context.Context, input *compose.ToolInput) (*compose.ToolOutput, error) {
 		taskId, _ := ctx.Value("task_id").(string)
