@@ -8,7 +8,7 @@
 
 数字助理在内部主要划分为五个核心部分：
 
-1. **网关 (Gateway)**：解决与主节点的通信传输，并负责管理视觉显示（如启动 VNC 、FTP 远程桌面传输）。
+1. **网关 (Gateway)**：解决与主节点的通信传输，并负责管理视觉显示（如启动 VNC 、FTP）。
 2. **会话 (Session)**：负责维护用户的对话上下文，保障多轮对话的连贯性。
 3. **记忆 (Memory)**：负责整理并持久化对话内容，为智能体提供长期记忆支持。
 4. **执行 (Execution)**：核心的行动层，包含工具管理器 (Tool)、MCP 管理器和技能管理器 (Skill)。
@@ -43,24 +43,41 @@ time=... level=INFO msg="server listening at" address=[::]:10086
 
 服务通过 gRPC 提供交互能力，所有的接口定义可以在 `proto/container.proto` 中查看。以下是核心接口的简要说明：
 
-### 📦 1. 容器/服务级操作 (Container)
+### 📦 1. 容器/服务级操作
 负责应用实例和智能体的生命周期管理：
-- `StartService`：启动服务。需要传入 `container_id`, `agent_id`，并注册模型的 `provider`, `key` 等，同时可以选择是否启用 VNC 远程桌面。
-- `StopService`：暂停服务，例如关闭相关的远程桌面连接。
+- `StartService`：启动服务。需要传入 `container_id`, `agent_id`。
+- `StopService`：暂停服务。
 - `RestartService`：重启服务，重新建立连接等。
 - `RemoveService`：移除服务，将会销毁内部创建的智能体和对应的运行资源。
 - `BackupService`：备份当前容器状态与记忆。
 
-### 💬 2. 对话与会话管理 (Dialogue & Session)
+### 💬 2. 对话与会话管理
 负责维护用户与智能体的交流与上下文：
 - `SendMessageToSession`：**核心接口**。在指定的会话中发起对话。支持**流式 (Stream)** 返回打字机效果。
   - 参数包含：`session_id` (为空则自动创建并绑定)、`agent_id` 以及用户输入的 `message`。
 - `CompressSession`：压缩历史会话上下文，降低 Token 消耗。
 - `RemoveSession`：删除并清空指定会话的上下文记忆。
 
-### 📝 3. 任务管理 (Task) 
+### 📝 3. 任务管理
 复杂的对话过程会被抽象为任务进行调度：
 - `StopTask`：暂停正在执行中的长任务。
+
+###    4. API 管理
+负责模型管理
+- `CreateModel`: 核心接口，创建模型配置
+- `RemoveChatModel`:删除模型
+
+###    5. 智能体管理
+负责智能体管理
+- `CreateAgent`:核心接口，创建智能体。不同智能体可以启用不同的 Skill 和工具
+- `RemoveAgent`:删除智能体
+
+###    6. Skill 和 Tool 管理
+负责 Skill 和 Tool 的启用与禁用。目前在考虑是否需要自定义安装 Skill。初步思考，用户应该通过对话创建 Skill。实在有需要，通过远程文件手动管理 Skill,不提供接口
+- `GetAllSkills`:获取全部 Skill
+- `GetAllTools`:获取全部 Tool
+- `DisableSkill`:禁用某个 Skill
+- `DisableTool`:禁用某个 Tool
 
 ## 🔌 终端指南
 
@@ -74,19 +91,19 @@ time=... level=INFO msg="server listening at" address=[::]:10086
 
 ### 🧠 记忆与上下文管理
 - [ X ] **完善持久化存储**：修复 `internal/memory` 中的消息合并逻辑，支持工具调用（Tool Calls）和结果的结构化存储。
-- [ ] **实现记忆压缩**：开发 `CompressSession` 逻辑，支持通过 LLM 总结摘要或固定窗口裁剪方式压缩历史上下文。
-- [ ] **长期记忆检索**：计划引入向量数据库或简单的关键词索引，支持跨会话的知识检索。
+- [ X ] **实现记忆压缩**：开发 `CompressSession` 逻辑，支持通过 LLM 总结摘要或固定窗口裁剪方式压缩历史上下文。
+- [ X ] **长期记忆检索**
 
 ### 📋 任务管理系统
-- [ ] **任务中心**：建立独立的任务追踪模块，支持对异步执行的 Agent 任务进行编号和状态管理。
-- [ ] **状态查询接口**：实现 `GetTaskStatus`，允许用户实时查看 Agent 的行动轨迹（如：正在调用某工具、正在思考）。
-- [ ] **任务控制增强**：完善 `StopTask` 并增加 `Pause/ResumeTask` 功能。
+- [ X ] **任务中心**：建立独立的任务追踪模块，支持对异步执行的 Agent 任务进行编号和状态管理。
+- [ X ] **状态查询接口**：实现 `GetTaskStatus`，允许用户实时查看 Agent 的行动轨迹（如：正在调用某工具、正在思考）。
+- [ X ] **任务控制增强**：完善 `StopTask` 并增加 `Pause/ResumeTask` 功能。
 
 ### 🔌 技能与扩展性
-- [ ] **动态工具加载**：实现 `CreateTool` 接口，支持通过配置文件或远程地址动态为 Agent 挂载新工具。
-- [ ] **技能包 (Skill) 支持**：定义 Skill 规范，允许将一组 Prompt + Tools 封装为特定技能（如：翻译专家、代码审计员）。
+- [ X ] **动态工具加载**：实现 `CreateTool` 接口，支持通过配置文件或远程地址动态为 Agent 挂载新工具。
+- [ X ] **技能包 (Skill) 支持**：定义 Skill 规范，允许将一组 Prompt + Tools 封装为特定技能（如：翻译专家、代码审计员）。
 - [ ] **MCP 协议对接**：实现 Model Context Protocol (MCP)，支持挂载标准化的外部上下文服务器。
 
-### 🖥️ 视觉与交互优化
-- [ ] **VNC 状态管理**：完善远程桌面的启动与自动端口回收机制。
-- [ ] **流式元数据优化**：确保 `SendMessageToSession` 的流式返回中包含完整的 SessionID 和状态位。
+###    通道内容交互
+- [ X ] **QQ**
+- [ X ] **Telegram**
