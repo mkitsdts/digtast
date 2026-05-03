@@ -130,6 +130,11 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 				runErr = event.Err
 			}
 
+			if event.Output == nil {
+				slog.Error("event output is nil", "agent_id", dga.ID, "event", event)
+				continue
+			}
+
 			mv := event.Output.MessageOutput
 			if mv == nil {
 				continue
