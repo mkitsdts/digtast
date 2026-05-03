@@ -30,7 +30,11 @@ func (c *QQChannel) C2CMessageEventHandler() func(msg json.RawMessage) error {
 		slog.Debug("message received", "content", data.Content)
 		ag, err := center.AgentManager.GetAgent(c.AgentID)
 		if err != nil {
-			return err
+			ag, err = center.AgentManager.GetDefaultAgent()
+			if err != nil {
+				slog.Error("failed to get agent", "error", err)
+				return err
+			}
 		}
 		content := data.Content
 		sm, err := ag.Run(context.Background(), content, false)

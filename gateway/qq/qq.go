@@ -89,9 +89,7 @@ func (c *QQChannel) Register() error {
 }
 
 func (c *QQChannel) Serve(ctx context.Context) error {
-	fmt.Println("serve qq channel")
 	go c.refreshTokenLoop(ctx)
-	fmt.Println("before getWebSocketUrl")
 	url, err := c.getWebSocketUrl()
 	if err != nil {
 		slog.Error("get web socket url fatal", "error", err)

@@ -79,8 +79,11 @@ func (tg *TelegramChannel) Serve(ctx context.Context) error {
 				// TODO: 暂时没有处理好这里，徐娅获取对应的智能体
 				agent, err := center.AgentManager.GetAgent(tg.AgentID)
 				if err != nil {
-					slog.Error("get agent error", "error", err)
-					return
+					agent, err = center.AgentManager.GetDefaultAgent()
+					if err != nil {
+						slog.Error("failed to get agent", "error", err)
+						return
+					}
 				}
 				sm, err := agent.Run(ctx, userText, false)
 				if err != nil {

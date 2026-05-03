@@ -114,7 +114,7 @@ func (c *QQChannel) Handler(ctx context.Context, gatewayURL string) {
 			if backoff > 60 {
 				backoff = 60
 			}
-			slog.Info("reconnecting to qq gateway", "attempt", attempt+1, "backoff_sec", backoff)
+			slog.Debug("reconnecting to qq gateway", "attempt", attempt+1, "backoff_sec", backoff)
 			select {
 			case <-ctx.Done():
 				return
@@ -150,7 +150,7 @@ func (c *QQChannel) connectAndServe(ctx context.Context, gatewayURL string, tryR
 		slog.Error("failed to receive hello", "error", err)
 		return false
 	}
-	slog.Info("hello received", "interval", interval)
+	slog.Debug("hello received", "interval", interval)
 
 	// 尝试恢复会话或重新鉴权
 	if tryResume && c.sessionID != "" && c.lastSeq > 0 {
@@ -289,17 +289,17 @@ func (c *QQChannel) messageLoop(ctx context.Context, wc *wsConn) bool {
 			slog.Warn("failed to parse message", "error", err)
 			continue
 		}
-		slog.Info("message received", "op", msg.Op, "id", msg.ID)
+		slog.Debug("message received", "op", msg.Op, "id", msg.ID)
 
 		wc.updateSeq(msg.S)
 
 		switch msg.Op {
 		case opDispatch:
-			slog.Info("dispatch message", "message", msg)
+			slog.Debug("dispatch message", "message", msg)
 			c.handleDispatch(wc, msg)
 
 		case opReconnect:
-			slog.Info("server requested reconnect")
+			slog.Debug("server requested reconnect")
 			return true
 
 		case opInvalidSession:
@@ -335,10 +335,10 @@ func (c *QQChannel) handleDispatch(wc *wsConn, msg baseMessage) {
 		wc.sessionID = ready.SessionID
 		wc.mu.Unlock()
 		c.sessionID = ready.SessionID
-		slog.Info("qq gateway ready", "session_id", ready.SessionID)
+		slog.Debug("qq gateway ready", "session_id", ready.SessionID)
 
 	case "RESUMED":
-		slog.Info("qq gateway session resumed")
+		slog.Debug("qq gateway session resumed")
 
 	default:
 		c.dispatchEvent(msg)
@@ -363,7 +363,7 @@ func (c *QQChannel) dispatchEvent(msg baseMessage) {
 	}
 
 	if err := handler(data); err != nil {
-		slog.Error("event handler error", "event", msg.T, "error", err)
+		slog.Debug("event handler error", "event", msg.T, "error", err)
 	}
 }
 
@@ -403,9 +403,7 @@ func (c *QQChannel) getWebSocketUrl() (string, error) {
 	}
 	req.Header.Set("Authorization", c.token())
 
-	fmt.Println("getWebSocketUrl: sending request")
 	resp, err := http.DefaultClient.Do(req) // 如果卡在这里，就是网络/DNS问题
-	fmt.Println("getWebSocketUrl: request completed")
 	if err != nil {
 		return "", err
 	}
@@ -468,7 +466,7 @@ func (c *QQChannel) refreshTokenLoop(ctx context.Context) error {
 			return fmt.Errorf("decode gateway response: %w", err)
 		}
 		resp.Body.Close()
-		slog.Info("get qq access token", "token", result.AccessToken, "expires_in", result.ExpiresIn)
+		slog.Debug("get qq access token", "token", result.AccessToken, "expires_in", result.ExpiresIn)
 		c.refreshMux.Lock()
 		c.refreshToken = result.AccessToken
 		c.refreshMux.Unlock()
