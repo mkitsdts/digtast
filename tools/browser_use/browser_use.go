@@ -13,7 +13,7 @@ func NewBrowserTool() *browseruse.Tool {
 
 	var err error
 	browserTool, err := browseruse.NewBrowserUseTool(ctx, &browseruse.Config{
-		Headless: false, // set headless false that container will run a true browser and user can see the browser at the same time
+		Headless: true, // set headless false that container will run a true browser and user can see the browser at the same time
 	})
 	if err != nil {
 		slog.Error("create browseruse tool failed", "err", err)
