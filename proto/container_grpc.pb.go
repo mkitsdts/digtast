@@ -20,8 +20,6 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	ContainerService_BackupService_FullMethodName        = "/labor.v1.ContainerService/BackupService"
-	ContainerService_StartVirtualDesktop_FullMethodName  = "/labor.v1.ContainerService/StartVirtualDesktop"
-	ContainerService_StopVirtualDesktop_FullMethodName   = "/labor.v1.ContainerService/StopVirtualDesktop"
 	ContainerService_CreateChatModel_FullMethodName      = "/labor.v1.ContainerService/CreateChatModel"
 	ContainerService_RemoveChatModel_FullMethodName      = "/labor.v1.ContainerService/RemoveChatModel"
 	ContainerService_CreateAgent_FullMethodName          = "/labor.v1.ContainerService/CreateAgent"
@@ -42,9 +40,6 @@ const (
 type ContainerServiceClient interface {
 	// --- 容器 ---
 	BackupService(ctx context.Context, in *BackupServiceRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[BackupServiceResponse], error)
-	// --- 虚拟桌面 ---
-	StartVirtualDesktop(ctx context.Context, in *StartVirtualDesktopRequest, opts ...grpc.CallOption) (*StartVirtualDesktopResponse, error)
-	StopVirtualDesktop(ctx context.Context, in *StopVirtualDesktopRequest, opts ...grpc.CallOption) (*StopVirtualDesktopResponse, error)
 	// --- 模型 ---
 	CreateChatModel(ctx context.Context, in *CreateChatModelRequest, opts ...grpc.CallOption) (*CreateChatModelResponse, error)
 	RemoveChatModel(ctx context.Context, in *RemoveChatModelRequest, opts ...grpc.CallOption) (*RemoveChatModelResponse, error)
@@ -87,26 +82,6 @@ func (c *containerServiceClient) BackupService(ctx context.Context, in *BackupSe
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ContainerService_BackupServiceClient = grpc.ServerStreamingClient[BackupServiceResponse]
-
-func (c *containerServiceClient) StartVirtualDesktop(ctx context.Context, in *StartVirtualDesktopRequest, opts ...grpc.CallOption) (*StartVirtualDesktopResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(StartVirtualDesktopResponse)
-	err := c.cc.Invoke(ctx, ContainerService_StartVirtualDesktop_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *containerServiceClient) StopVirtualDesktop(ctx context.Context, in *StopVirtualDesktopRequest, opts ...grpc.CallOption) (*StopVirtualDesktopResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(StopVirtualDesktopResponse)
-	err := c.cc.Invoke(ctx, ContainerService_StopVirtualDesktop_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
 
 func (c *containerServiceClient) CreateChatModel(ctx context.Context, in *CreateChatModelRequest, opts ...grpc.CallOption) (*CreateChatModelResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
@@ -216,9 +191,6 @@ func (c *containerServiceClient) StopTask(ctx context.Context, in *StopTaskReque
 type ContainerServiceServer interface {
 	// --- 容器 ---
 	BackupService(*BackupServiceRequest, grpc.ServerStreamingServer[BackupServiceResponse]) error
-	// --- 虚拟桌面 ---
-	StartVirtualDesktop(context.Context, *StartVirtualDesktopRequest) (*StartVirtualDesktopResponse, error)
-	StopVirtualDesktop(context.Context, *StopVirtualDesktopRequest) (*StopVirtualDesktopResponse, error)
 	// --- 模型 ---
 	CreateChatModel(context.Context, *CreateChatModelRequest) (*CreateChatModelResponse, error)
 	RemoveChatModel(context.Context, *RemoveChatModelRequest) (*RemoveChatModelResponse, error)
@@ -245,12 +217,6 @@ type UnimplementedContainerServiceServer struct{}
 
 func (UnimplementedContainerServiceServer) BackupService(*BackupServiceRequest, grpc.ServerStreamingServer[BackupServiceResponse]) error {
 	return status.Error(codes.Unimplemented, "method BackupService not implemented")
-}
-func (UnimplementedContainerServiceServer) StartVirtualDesktop(context.Context, *StartVirtualDesktopRequest) (*StartVirtualDesktopResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method StartVirtualDesktop not implemented")
-}
-func (UnimplementedContainerServiceServer) StopVirtualDesktop(context.Context, *StopVirtualDesktopRequest) (*StopVirtualDesktopResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method StopVirtualDesktop not implemented")
 }
 func (UnimplementedContainerServiceServer) CreateChatModel(context.Context, *CreateChatModelRequest) (*CreateChatModelResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateChatModel not implemented")
@@ -310,42 +276,6 @@ func _ContainerService_BackupService_Handler(srv interface{}, stream grpc.Server
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ContainerService_BackupServiceServer = grpc.ServerStreamingServer[BackupServiceResponse]
-
-func _ContainerService_StartVirtualDesktop_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StartVirtualDesktopRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ContainerServiceServer).StartVirtualDesktop(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ContainerService_StartVirtualDesktop_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).StartVirtualDesktop(ctx, req.(*StartVirtualDesktopRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ContainerService_StopVirtualDesktop_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StopVirtualDesktopRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ContainerServiceServer).StopVirtualDesktop(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ContainerService_StopVirtualDesktop_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).StopVirtualDesktop(ctx, req.(*StopVirtualDesktopRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
 
 func _ContainerService_CreateChatModel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateChatModelRequest)
@@ -509,14 +439,6 @@ var ContainerService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "labor.v1.ContainerService",
 	HandlerType: (*ContainerServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "StartVirtualDesktop",
-			Handler:    _ContainerService_StartVirtualDesktop_Handler,
-		},
-		{
-			MethodName: "StopVirtualDesktop",
-			Handler:    _ContainerService_StopVirtualDesktop_Handler,
-		},
 		{
 			MethodName: "CreateChatModel",
 			Handler:    _ContainerService_CreateChatModel_Handler,
