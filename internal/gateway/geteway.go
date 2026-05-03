@@ -48,6 +48,6 @@ func LoadChannels() {
 			slog.Error("init channel", "kind", kind, "error", err)
 			continue
 		}
-		c.Serve(ctx)
+		go c.Serve(ctx)
 	}
 }
