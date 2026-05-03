@@ -32,6 +32,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/cloudwego/eino/adk/filesystem"
@@ -100,9 +101,15 @@ func (s *Local) LsInfo(ctx context.Context, req *filesystem.LsInfoRequest) ([]fi
 
 	var files []filesystem.FileInfo
 	for _, entry := range entries {
-		files = append(files, filesystem.FileInfo{
-			Path: entry.Name(),
-		})
+		fi := filesystem.FileInfo{
+			Path:  entry.Name(),
+			IsDir: entry.IsDir(),
+		}
+		if info, err := entry.Info(); err == nil {
+			fi.Size = info.Size()
+			fi.ModifiedAt = info.ModTime().UTC().Format(time.RFC3339)
+		}
+		files = append(files, fi)
 	}
 
 	return files, nil
@@ -172,7 +179,7 @@ func (s *Local) Read(ctx context.Context, req *filesystem.ReadRequest) (*filesys
 	}
 
 	return &filesystem.FileContent{
-		Content: strings.TrimSuffix(result.String(), "\n"),
+		Content: result.String(),
 	}, nil
 }
 
@@ -317,9 +324,17 @@ func (s *Local) GlobInfo(ctx context.Context, req *filesystem.GlobInfoRequest) (
 
 	var files []filesystem.FileInfo
 	for _, match := range matches {
-		files = append(files, filesystem.FileInfo{
-			Path: match,
-		})
+		fullPath := filepath.Join(path, filepath.FromSlash(match))
+		fi := filesystem.FileInfo{
+			Path:  match,
+			IsDir: false,
+		}
+		if info, err := os.Stat(fullPath); err == nil {
+			fi.IsDir = info.IsDir()
+			fi.Size = info.Size()
+			fi.ModifiedAt = info.ModTime().UTC().Format(time.RFC3339)
+		}
+		files = append(files, fi)
 	}
 
 	return files, nil
@@ -427,6 +442,7 @@ func (s *Local) ExecuteStreaming(ctx context.Context, input *filesystem.ExecuteR
 func (s *Local) initStreamingCmd(ctx context.Context, command string) (*exec.Cmd, io.ReadCloser, io.ReadCloser, error) {
 	name, args := s.getShellArgs(command)
 	cmd := exec.CommandContext(ctx, name, args...)
+	cmd.Dir = s.workPath
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -502,7 +518,6 @@ func (s *Local) streamCmdOutput(ctx context.Context, cmd *exec.Cmd, stdout, stde
 	defer func() {
 		if pe := recover(); pe != nil {
 			w.Send(nil, newPanicErr(pe, debug.Stack()))
-			return
 		}
 		w.Close()
 	}()
