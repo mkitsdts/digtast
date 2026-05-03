@@ -37,9 +37,22 @@ func GetCurrentWorkspacePath() string {
 func InitWorkspace() {
 	path := GetWorkspacePath()
 	if err := os.MkdirAll(path, 0755); err != nil {
-		slog.Error("Failed to create workspace", "path", path, "err", err)
+		fmt.Println("Failed to create workspace", "path", path, "err", err)
 		return
 	}
+
+	logPath := fmt.Sprintf("%s/app.log", path)
+	if err := os.MkdirAll(path, 0755); err != nil {
+		slog.Error("Failed to create log directory", "path", logPath, "err", err)
+		return
+	}
+	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		slog.Error("Failed to open log file", "path", logPath, "err", err)
+		return
+	}
+	slog.SetDefault(slog.New(slog.NewJSONHandler(logFile, nil)))
+	// slog.SetLogLoggerLevel(slog.LevelDebug)
 
 	workspaceRoot := fmt.Sprintf("%s/workspace", path)
 	if err := os.MkdirAll(workspaceRoot, 0755); err != nil {
@@ -55,6 +68,12 @@ func InitWorkspace() {
 	taskPath := fmt.Sprintf("%s/tasks", path)
 	if err := os.MkdirAll(taskPath, 0755); err != nil {
 		slog.Error("Failed to create task directory", "path", taskPath, "err", err)
+		return
+	}
+
+	skillPath := fmt.Sprintf("%s/skills", path)
+	if err := os.MkdirAll(skillPath, 0755); err != nil {
+		slog.Error("Failed to create skill directory", "path", skillPath, "err", err)
 		return
 	}
 
