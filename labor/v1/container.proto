@@ -1,0 +1,124 @@
+syntax = "proto3";
+
+package labor.v1;
+
+option go_package = "digital-labor/proto";
+
+// 数字助理容器服务
+// 一个 Agent 绑定一个 Session，agent_id 即 session_id
+service ContainerService {
+  // --- 容器 ---
+  rpc BackupService(BackupServiceRequest) returns (stream BackupServiceResponse);
+
+  // --- 模型 ---
+  rpc CreateChatModel(CreateChatModelRequest) returns (CreateChatModelResponse);
+  rpc RemoveChatModel(RemoveChatModelRequest) returns (RemoveChatModelResponse);
+
+  // --- 智能体 ---
+  rpc CreateAgent(CreateAgentRequest) returns (CreateAgentResponse);
+  rpc RemoveAgent(RemoveAgentRequest) returns (RemoveAgentResponse);
+
+  // --- 会话 (agent 维度) ---
+  rpc GetAgentSession(GetAgentSessionRequest) returns (GetAgentSessionResponse);
+  rpc ClearAgentHistory(ClearAgentHistoryRequest) returns (ClearAgentHistoryResponse);
+  rpc CompressAgentHistory(CompressAgentHistoryRequest) returns (CompressAgentHistoryResponse);
+
+  // --- 对话 ---
+  rpc SendMessage(SendMessageRequest) returns (stream SendMessageResponse);
+
+  // --- 任务 ---
+  rpc StopTask(StopTaskRequest) returns (StopTaskResponse);
+}
+
+// --- 消息定义 ---
+message BackupServiceRequest {}
+message BackupServiceResponse {
+  bytes data = 1;
+  int32 chunk_number = 2;
+}
+
+// --- 模型 ---
+message CreateChatModelRequest {
+  string model_name = 1;
+  string key = 2;
+  string base_url = 3;
+  string provider = 4;
+}
+message CreateChatModelResponse {
+  bool success = 1;
+  string chat_model_id = 2;
+  string message = 3;
+}
+message RemoveChatModelRequest {
+  string chat_model_id = 1;
+}
+message RemoveChatModelResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// --- 智能体 ---
+message CreateAgentRequest {
+  string agent_name = 1;
+  string chat_model_id = 2;
+}
+message CreateAgentResponse {
+  string agent_id = 1;
+  bool success = 2;
+  string message = 3;
+}
+message RemoveAgentRequest {
+  string agent_id = 1;
+}
+message RemoveAgentResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// --- 会话 ---
+message GetAgentSessionRequest {
+  string agent_id = 1;
+}
+message Message {
+  string role = 1;
+  string content = 2;
+  string timestamp = 3;
+  string kind = 4;
+}
+message GetAgentSessionResponse {
+  string agent_id = 1;
+  repeated Message messages = 2;
+}
+message ClearAgentHistoryRequest {
+  string agent_id = 1;
+}
+message ClearAgentHistoryResponse {
+  bool success = 1;
+  string message = 2;
+}
+message CompressAgentHistoryRequest {
+  string agent_id = 1;
+}
+message CompressAgentHistoryResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// --- 对话 ---
+message SendMessageRequest {
+  string agent_id = 1;
+  string message = 2;
+  bool is_stream = 3;
+}
+message SendMessageResponse {
+  string delta_content = 1;
+  bool is_final = 2;
+}
+
+// --- 任务 ---
+message StopTaskRequest {
+  string agent_id = 1;
+}
+message StopTaskResponse {
+  bool success = 1;
+}
