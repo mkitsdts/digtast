@@ -11,7 +11,7 @@ import (
 func (s *replState) cmdChannel(args []string) {
 	if len(args) < 1 {
 		errorMsg("Usage: /channel <kind>")
-		fmt.Println("Available: qq, telegram, feishu")
+		fmt.Println("Available: qq, telegram")
 		return
 	}
 	kind := args[0]

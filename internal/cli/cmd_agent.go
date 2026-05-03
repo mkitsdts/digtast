@@ -46,7 +46,7 @@ func (s *replState) cmdNew() {
 		return
 	}
 
-	modelName := s.promptString("Model Name (from config.json, e.g., deepseek)")
+	modelName := s.promptString("Model Name (supported: doubao, deepseek)")
 	if modelName == "" {
 		errorMsg("Model name is required.")
 		return
