@@ -2,8 +2,8 @@ package state
 
 import (
 	"context"
-	"digital-labor/pkg/conf"
 	mem "digital-labor/internal/memory"
+	"digital-labor/pkg/conf"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -153,39 +153,27 @@ func ExtractChunk(ctx context.Context, m model.BaseChatModel, chunk []*schema.Me
 	return result, nil
 }
 
-// Compress executes the full memory compression pipeline:
-// 1. Filter user/assistant messages
-// 2. Delete original JSONL
-// 3. Shard filtered messages
-// 4. LLM extract each shard
-// 5. Write extracted results as new session (short-term memory)
-// 6. Promote repeated mentions to memory.md (long-term memory)
-// 7. Periodically clean memory.md
+// Compress executes the full memory compression pipeline
 func Compress(ctx context.Context, m model.BaseChatModel, session *mem.Session, sm *StateManager) error {
 	msgs := session.GetMessages()
 	if len(msgs) == 0 {
 		return nil
 	}
 
-	// Step 1: Filter
+	// Remove tool/system messages
 	filtered := FilterUserAssistant(msgs)
 	if len(filtered) == 0 {
 		return nil
 	}
 
-	// Step 2: Delete original JSONL
-	if err := session.DeleteChunks(); err != nil {
-		slog.Error("failed to delete original chunks", "err", err)
-	}
-
-	// Step 3: Shard
+	// Slice messages into shards
 	chunkLimit := conf.Conf.Memory.ChunkTokenLimit
 	if chunkLimit <= 0 {
 		chunkLimit = 4000
 	}
 	shards := ShardMessages(filtered, chunkLimit)
 
-	// Step 4: LLM extract each shard
+	//LLM extract each shard
 	var extracted []*schema.Message
 	for _, shard := range shards {
 		chunkResult, err := ExtractChunk(ctx, m, shard)
@@ -202,17 +190,22 @@ func Compress(ctx context.Context, m model.BaseChatModel, session *mem.Session, 
 		return nil
 	}
 
-	// Step 5: Write extracted results as new session (short-term memory)
+	// Write extracted results as new session (short-term memory)
 	if err := session.ResetWithMessages(extracted); err != nil {
 		return fmt.Errorf("failed to write short-term memory: %w", err)
 	}
 
-	// Step 6: Promote to long-term memory
+	// Delete original JSONL
+	if err := session.DeleteChunks(); err != nil {
+		slog.Error("failed to delete original chunks", "err", err)
+	}
+
+	// Promote to long-term memory
 	if err := PromoteToMemory(ctx, m, session, sm); err != nil {
 		slog.Error("failed to promote to memory", "err", err)
 	}
 
-	// Step 7: Periodic cleanup
+	// Periodic cleanup
 	if shouldCleanMemory() {
 		if err := CleanMemory(ctx, m, sm); err != nil {
 			slog.Error("failed to clean memory", "err", err)
