@@ -2,6 +2,7 @@ package registry
 
 import (
 	"digital-labor/pkg/ctxmanager"
+	local "digital-labor/pkg/middleware/lbackend"
 	"digital-labor/pkg/workspace"
 	"fmt"
 	"log/slog"
@@ -21,7 +22,7 @@ func GetSkillMiddleware() adk.ChatModelAgentMiddleware {
 	fmt.Println("skillsDir", "path", skillsDir)
 	slog.Debug("skillsDir", "path", skillsDir)
 	skillBackend, err := skill.NewBackendFromFilesystem(ctx, &skill.BackendFromFilesystemConfig{
-		Backend: backend,
+		Backend: local.GetBackend(),
 		BaseDir: skillsDir,
 	})
 	if err != nil {

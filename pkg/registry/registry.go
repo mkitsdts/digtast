@@ -1,31 +1,17 @@
 package registry
 
 import (
-	"context"
-	"sync"
-
-	localbk "digital-labor/pkg/lbackend"
-
 	"github.com/cloudwego/eino/adk"
-	"github.com/cloudwego/eino/adk/middlewares/filesystem"
 )
 
 var (
-	backend     *localbk.Local
-	backendOnce sync.Once
+	handlers []adk.ChatModelAgentMiddleware
 )
 
-func GetBackendMiddleware() adk.ChatModelAgentMiddleware {
-	var err error
-	backend, err = localbk.NewBackend(context.TODO(), &localbk.Config{})
+func RegisterHandler(middleware adk.ChatModelAgentMiddleware) {
+	handlers = append(handlers, middleware)
+}
 
-	middleware, err := filesystem.New(context.Background(), &filesystem.MiddlewareConfig{
-		Backend:        backend,
-		StreamingShell: backend,
-	})
-	if err != nil {
-		return nil
-	}
-
-	return middleware
+func GetHandlers() []adk.ChatModelAgentMiddleware {
+	return handlers
 }
