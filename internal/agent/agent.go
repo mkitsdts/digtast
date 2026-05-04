@@ -52,9 +52,9 @@ func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 	}
 
 	dga := &DigitalAgent{
-		state: state.NewStateManager(cfg.ID),
-		ID:    cfg.ID,
-		Name:  cfg.Name,
+		state:  state.NewStateManager(cfg.ID),
+		ID:     cfg.ID,
+		Name:   cfg.Name,
 		memory: store,
 	}
 
@@ -77,6 +77,7 @@ func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 
 	var handlers []adk.ChatModelAgentMiddleware
 	handlers = append(handlers, registry.GetBackendMiddleware())
+	handlers = append(handlers, registry.GetSkillMiddleware())
 
 	dga.agent, err = adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
 		Name:  cfg.Name,
@@ -150,8 +151,10 @@ func (dga *DigitalAgent) UpdateTools() error {
 
 	ctx := ctxmanager.GetOrCreate(dga.ID)
 
+	// TODO：如果有更多中间件需求，需要更改编码实现
 	var handlers []adk.ChatModelAgentMiddleware
 	handlers = append(handlers, registry.GetBackendMiddleware())
+	handlers = append(handlers, registry.GetSkillMiddleware())
 
 	ag, err := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
 		Name:  dga.agent.Name(context.Background()),
@@ -177,4 +180,3 @@ func (dga *DigitalAgent) UpdateTools() error {
 
 	return nil
 }
-
