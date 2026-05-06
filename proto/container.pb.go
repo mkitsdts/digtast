@@ -1018,6 +1018,7 @@ func (x *SendMessageResponse) GetIsFinal() bool {
 type AddMCPRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	Provider      string                 `protobuf:"bytes,2,opt,name=provider,proto3" json:"provider,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1055,6 +1056,13 @@ func (*AddMCPRequest) Descriptor() ([]byte, []int) {
 func (x *AddMCPRequest) GetUrl() string {
 	if x != nil {
 		return x.Url
+	}
+	return ""
+}
+
+func (x *AddMCPRequest) GetProvider() string {
+	if x != nil {
+		return x.Provider
 	}
 	return ""
 }
@@ -1263,9 +1271,10 @@ const file_labor_v1_container_proto_rawDesc = "" +
 	"\tis_stream\x18\x03 \x01(\bR\bisStream\"U\n" +
 	"\x13SendMessageResponse\x12#\n" +
 	"\rdelta_content\x18\x01 \x01(\tR\fdeltaContent\x12\x19\n" +
-	"\bis_final\x18\x02 \x01(\bR\aisFinal\"!\n" +
+	"\bis_final\x18\x02 \x01(\bR\aisFinal\"=\n" +
 	"\rAddMCPRequest\x12\x10\n" +
-	"\x03url\x18\x01 \x01(\tR\x03url\"D\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\x12\x1a\n" +
+	"\bprovider\x18\x02 \x01(\tR\bprovider\"D\n" +
 	"\x0eAddMCPResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\",\n" +

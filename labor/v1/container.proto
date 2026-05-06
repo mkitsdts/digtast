@@ -121,6 +121,7 @@ message SendMessageResponse {
 // --- 工具 ---
 message AddMCPRequest {
   string url = 1;
+  string provider = 2;
 }
 message AddMCPResponse {
   bool success = 1;
