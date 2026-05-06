@@ -10,7 +10,7 @@ import (
 )
 
 func TestCreateAgent_MissingConfig(t *testing.T) {
-	AgentManager = agent.GetManager()
+	AgentManager = agent.NewManager()
 	_, err := AgentManager.CreateAgent("nil", nil)
 	if err == nil {
 		t.Fatal("expected error for nil config")
@@ -18,7 +18,7 @@ func TestCreateAgent_MissingConfig(t *testing.T) {
 }
 
 func TestCreateAgent_EmptyFields(t *testing.T) {
-	AgentManager = agent.GetManager()
+	AgentManager = agent.NewManager()
 	// Mock model config
 	conf.Conf.Models = map[string]conf.ModelConfig{
 		"valid-model": {Provider: "openai", Key: "test-key", ModelNames: []string{"gpt-4"}},
@@ -62,7 +62,7 @@ func TestRemove_NotFound(t *testing.T) {
 }
 
 func TestRemove_EmptyID(t *testing.T) {
-	AgentManager = agent.GetManager()
+	AgentManager = agent.NewManager()
 	err := AgentManager.RemoveAgent("")
 	if err == nil {
 		t.Fatal("expected error for empty id")
