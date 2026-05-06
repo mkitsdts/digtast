@@ -17,12 +17,10 @@ type Manager struct {
 	agents map[string]*DigitalAgent
 }
 
-var manager *Manager = &Manager{
-	agents: make(map[string]*DigitalAgent),
-}
-
-func GetManager() *Manager {
-	return manager
+func NewManager() *Manager {
+	return &Manager{
+		agents: make(map[string]*DigitalAgent),
+	}
 }
 
 // 智能体相关

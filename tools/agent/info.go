@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"digital-labor/internal/agent"
 	"digital-labor/internal/center"
 	pkgagent "digital-labor/pkg/agent"
 
@@ -107,7 +106,7 @@ func (t *SubAgentTool) InvokableRun(ctx context.Context, argumentsInJSON string,
 	// Run the agent
 	// We need a way to run the adk.ChatModelAgent directly.
 	// adk.ChatModelAgent.Run returns a stream of events.
-	mainAgent, err := agent.GetManager().GetAgent(agentID)
+	mainAgent, err := center.AgentManager.GetAgent(agentID)
 	if err != nil {
 		return "", fmt.Errorf("failed to get main agent: %w", err)
 	}
