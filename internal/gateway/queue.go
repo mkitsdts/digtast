@@ -9,7 +9,7 @@ import (
 	"log/slog"
 )
 
-var que *queue.Queue[*UserMessage] = &queue.Queue[*UserMessage]{}
+var que *queue.Queue[*UserMessage] = queue.NewQueue[*UserMessage]()
 
 func PushUserMessage(msg *UserMessage) {
 	que.Push(msg)
@@ -26,7 +26,7 @@ func ConsumeMessage() {
 		if !ok {
 			continue
 		}
-
+		slog.Info("consume message", "notifyWay", msg.NotifyWay, "content", msg.Content)
 		channel := gateway.NewChannel(msg.NotifyWay)
 		if channel == nil {
 			slog.Error("channel not exist", "notifyWay", msg.NotifyWay)
@@ -34,14 +34,18 @@ func ConsumeMessage() {
 		}
 		defer func() {
 			// send result to user
-			if err := channel.Send(result, msg.Params); err != nil {
-				slog.Error("failed to send message", "error", err)
-			}
+
 		}()
 
 		agent, err := center.AgentManager.GetDefaultAgent()
 		if err != nil {
 			slog.Error("failed to get agent", "error", err)
+			result.Success = false
+			result.Error = err
+			if err := channel.Send(result, msg.Params); err != nil {
+				slog.Error("failed to send message", "error", err)
+			}
+			slog.Info("agent notify success", "content", msg.Content)
 			return
 		}
 
@@ -49,11 +53,19 @@ func ConsumeMessage() {
 		if err != nil {
 			result.Success = false
 			result.Error = err
+			if err := channel.Send(result, msg.Params); err != nil {
+				slog.Error("failed to send message", "error", err)
+			}
+			slog.Info("agent notify success", "content", msg.Content)
+			slog.Error("failed to run agent", "error", err)
 			continue
 		}
 
 		result.Content = <-sm
 		result.Success = true
-
+		if err := channel.Send(result, msg.Params); err != nil {
+			slog.Error("failed to send message", "error", err)
+		}
+		slog.Info("agent notify success", "content", msg.Content)
 	}
 }

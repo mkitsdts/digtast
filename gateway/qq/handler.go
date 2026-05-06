@@ -34,6 +34,7 @@ func (c *QQChannel) C2CMessageEventHandler() func(msg json.RawMessage) error {
 			NotifyWay: "qq",
 			Params:    map[string]any{"user_id": data.Author.UserOpenID, "msg_id": data.ID},
 		})
+		slog.Info("message pushed", "content", content, "user_id", data.Author.UserOpenID, "msg_id", data.ID)
 
 		return nil
 	}

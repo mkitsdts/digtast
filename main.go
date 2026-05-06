@@ -4,6 +4,7 @@ import (
 	_ "digital-labor/gateway"
 	"digital-labor/internal/center"
 	"digital-labor/internal/cli"
+	gw "digital-labor/internal/gateway"
 	"digital-labor/internal/server"
 	"digital-labor/pkg/chatmodel"
 	"digital-labor/pkg/conf"
@@ -44,4 +45,5 @@ func Init() {
 	chatmodel.Init()
 	center.Init()
 	gateway.LoadChannels()
+	gw.Start()
 }

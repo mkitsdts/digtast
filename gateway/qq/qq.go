@@ -63,11 +63,13 @@ func (c *QQChannel) Init(params map[string]any) error {
 func (c *QQChannel) Send(result model.Result, params map[string]any) error {
 	userid, ok := params["user_id"]
 	if !ok {
+		slog.Error("user_id not found", "params", params)
 		return errors.New("user_id not found")
 	}
 
-	messageid, ok := params["message_id"]
+	messageid, ok := params["msg_id"]
 	if !ok {
+		slog.Error("message_id not found", "params", params)
 		return errors.New("message_id not found")
 	}
 
