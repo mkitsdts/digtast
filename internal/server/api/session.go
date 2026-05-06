@@ -95,6 +95,16 @@ func (s *ContainerServer) StopTask(ctx context.Context, req *pb.StopTaskRequest)
 	return &pb.StopTaskResponse{Success: true}, nil
 }
 
+func (s *ContainerServer) GetTaskStatus(ctx context.Context, req *pb.GetTaskStatusRequest) (*pb.GetTaskStatusResponse, error) {
+	// Placeholder for task status. 
+	// In a real implementation, this would query the agent's current state.
+	return &pb.GetTaskStatusResponse{
+		AgentId:    req.AgentId,
+		Status:     "idle",
+		LastAction: "none",
+	}, nil
+}
+
 // CompressAgentHistory triggers manual memory compression for the agent.
 func (s *ContainerServer) CompressAgentHistory(ctx context.Context, req *pb.CompressAgentHistoryRequest) (*pb.CompressAgentHistoryResponse, error) {
 	ag, err := center.AgentManager.GetAgent(req.AgentId)

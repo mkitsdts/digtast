@@ -9,12 +9,19 @@ import (
 	"github.com/mark3labs/mcp-go/client"
 )
 
+type ClientInfo struct {
+	URL     string
+	Enabled bool
+}
+
 type Manager struct {
 	clients map[string]*Client
+	enabled map[string]bool
 }
 
 var manager *Manager = &Manager{
 	clients: make(map[string]*Client),
+	enabled: make(map[string]bool),
 }
 
 func NewManager() *Manager {
@@ -27,7 +34,8 @@ func (m *Manager) AddClient(url string) error {
 		return err
 	}
 	ctx := ctxmanager.GetOrCreate(url)
-	m.clients[url] = &Client{Client: cli}
+	m.clients[url] = &Client{Client: cli, url: url}
+	m.enabled[url] = true
 	m.clients[url].Start(ctx)
 	tools, _ := m.clients[url].GetTools(ctx)
 	registerMCPTools(tools)
@@ -41,11 +49,34 @@ func (m *Manager) GetClient(url string) (*Client, bool) {
 
 func (m *Manager) RemoveClient(url string) {
 	delete(m.clients, url)
+	delete(m.enabled, url)
+}
+
+func (m *Manager) GetAllClients() []ClientInfo {
+	var infos []ClientInfo
+	for url := range m.clients {
+		infos = append(infos, ClientInfo{
+			URL:     url,
+			Enabled: m.enabled[url],
+		})
+	}
+	return infos
+}
+
+func (m *Manager) DisableClient(url string) {
+	m.enabled[url] = false
+}
+
+func (m *Manager) EnableClient(url string) {
+	m.enabled[url] = true
 }
 
 func (m *Manager) GetAllTools() []tool.BaseTool {
 	var tools []tool.BaseTool
-	for _, client := range m.clients {
+	for url, client := range m.clients {
+		if !m.enabled[url] {
+			continue
+		}
 		ctx := ctxmanager.GetOrCreate(client.url)
 		result, err := client.GetTools(ctx)
 		if err != nil {
