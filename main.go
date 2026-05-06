@@ -8,6 +8,7 @@ import (
 	"digital-labor/pkg/chatmodel"
 	"digital-labor/pkg/conf"
 	"digital-labor/pkg/gateway"
+	_ "digital-labor/pkg/middleware"
 	"digital-labor/pkg/workspace"
 	_ "digital-labor/prompt"
 	_ "digital-labor/tools"
