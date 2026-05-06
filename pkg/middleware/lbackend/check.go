@@ -37,14 +37,7 @@ func (s *Local) checkSecurity(ctx context.Context, op string, target string) (st
 
 	if s.isOutside(realPath) {
 		msg := fmt.Sprintf("Accessing path outside workspace: %s (operation: %s)", realPath, op)
-		if !s.requestConsent(ctx, msg) {
-			return "", fmt.Errorf("user refused access to %s, please try another way", realPath)
-		}
-	} else {
-		// Inside workspace
-		if op == "write" || op == "edit" {
-			fmt.Printf("\033[33m[SECURITY WARNING]\033[0m %s operation on %s\n", strings.ToUpper(op), fullPath)
-		}
+		fmt.Println("ACTION: ", msg)
 	}
 
 	return fullPath, nil
