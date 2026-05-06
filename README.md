@@ -45,10 +45,6 @@ time=... level=INFO msg="server listening at" address=[::]:10086
 
 ### 📦 1. 容器/服务级操作
 负责应用实例和智能体的生命周期管理：
-- `StartService`：启动服务。需要传入 `container_id`, `agent_id`。
-- `StopService`：暂停服务。
-- `RestartService`：重启服务，重新建立连接等。
-- `RemoveService`：移除服务，将会销毁内部创建的智能体和对应的运行资源。
 - `BackupService`：备份当前容器状态与记忆。
 
 ### 💬 2. 对话与会话管理
