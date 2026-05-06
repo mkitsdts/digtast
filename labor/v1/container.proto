@@ -23,6 +23,9 @@ service ContainerService {
   rpc ClearAgentHistory(ClearAgentHistoryRequest) returns (ClearAgentHistoryResponse);
   rpc CompressAgentHistory(CompressAgentHistoryRequest) returns (CompressAgentHistoryResponse);
 
+  // --- MCP管理 ---
+  rpc AddMCP(AddMCPRequest) returns (AddMCPResponse);
+
   // --- 对话 ---
   rpc SendMessage(SendMessageRequest) returns (stream SendMessageResponse);
 
@@ -113,6 +116,15 @@ message SendMessageRequest {
 message SendMessageResponse {
   string delta_content = 1;
   bool is_final = 2;
+}
+
+// --- 工具 ---
+message AddMCPRequest {
+  string url = 1;
+}
+message AddMCPResponse {
+  bool success = 1;
+  string message = 2;
 }
 
 // --- 任务 ---

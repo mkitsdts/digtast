@@ -1014,6 +1014,103 @@ func (x *SendMessageResponse) GetIsFinal() bool {
 	return false
 }
 
+// --- 工具 ---
+type AddMCPRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AddMCPRequest) Reset() {
+	*x = AddMCPRequest{}
+	mi := &file_labor_v1_container_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AddMCPRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddMCPRequest) ProtoMessage() {}
+
+func (x *AddMCPRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_labor_v1_container_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AddMCPRequest.ProtoReflect.Descriptor instead.
+func (*AddMCPRequest) Descriptor() ([]byte, []int) {
+	return file_labor_v1_container_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *AddMCPRequest) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+type AddMCPResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AddMCPResponse) Reset() {
+	*x = AddMCPResponse{}
+	mi := &file_labor_v1_container_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AddMCPResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddMCPResponse) ProtoMessage() {}
+
+func (x *AddMCPResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_labor_v1_container_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AddMCPResponse.ProtoReflect.Descriptor instead.
+func (*AddMCPResponse) Descriptor() ([]byte, []int) {
+	return file_labor_v1_container_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *AddMCPResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *AddMCPResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
 // --- 任务 ---
 type StopTaskRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1024,7 +1121,7 @@ type StopTaskRequest struct {
 
 func (x *StopTaskRequest) Reset() {
 	*x = StopTaskRequest{}
-	mi := &file_labor_v1_container_proto_msgTypes[19]
+	mi := &file_labor_v1_container_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1036,7 +1133,7 @@ func (x *StopTaskRequest) String() string {
 func (*StopTaskRequest) ProtoMessage() {}
 
 func (x *StopTaskRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[19]
+	mi := &file_labor_v1_container_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1049,7 +1146,7 @@ func (x *StopTaskRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopTaskRequest.ProtoReflect.Descriptor instead.
 func (*StopTaskRequest) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{19}
+	return file_labor_v1_container_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *StopTaskRequest) GetAgentId() string {
@@ -1068,7 +1165,7 @@ type StopTaskResponse struct {
 
 func (x *StopTaskResponse) Reset() {
 	*x = StopTaskResponse{}
-	mi := &file_labor_v1_container_proto_msgTypes[20]
+	mi := &file_labor_v1_container_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1080,7 +1177,7 @@ func (x *StopTaskResponse) String() string {
 func (*StopTaskResponse) ProtoMessage() {}
 
 func (x *StopTaskResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_labor_v1_container_proto_msgTypes[20]
+	mi := &file_labor_v1_container_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1093,7 +1190,7 @@ func (x *StopTaskResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopTaskResponse.ProtoReflect.Descriptor instead.
 func (*StopTaskResponse) Descriptor() ([]byte, []int) {
-	return file_labor_v1_container_proto_rawDescGZIP(), []int{20}
+	return file_labor_v1_container_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *StopTaskResponse) GetSuccess() bool {
@@ -1166,11 +1263,16 @@ const file_labor_v1_container_proto_rawDesc = "" +
 	"\tis_stream\x18\x03 \x01(\bR\bisStream\"U\n" +
 	"\x13SendMessageResponse\x12#\n" +
 	"\rdelta_content\x18\x01 \x01(\tR\fdeltaContent\x12\x19\n" +
-	"\bis_final\x18\x02 \x01(\bR\aisFinal\",\n" +
+	"\bis_final\x18\x02 \x01(\bR\aisFinal\"!\n" +
+	"\rAddMCPRequest\x12\x10\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\"D\n" +
+	"\x0eAddMCPResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\",\n" +
 	"\x0fStopTaskRequest\x12\x19\n" +
 	"\bagent_id\x18\x01 \x01(\tR\aagentId\",\n" +
 	"\x10StopTaskResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess2\xdc\x06\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess2\x99\a\n" +
 	"\x10ContainerService\x12R\n" +
 	"\rBackupService\x12\x1e.labor.v1.BackupServiceRequest\x1a\x1f.labor.v1.BackupServiceResponse0\x01\x12V\n" +
 	"\x0fCreateChatModel\x12 .labor.v1.CreateChatModelRequest\x1a!.labor.v1.CreateChatModelResponse\x12V\n" +
@@ -1179,7 +1281,8 @@ const file_labor_v1_container_proto_rawDesc = "" +
 	"\vRemoveAgent\x12\x1c.labor.v1.RemoveAgentRequest\x1a\x1d.labor.v1.RemoveAgentResponse\x12V\n" +
 	"\x0fGetAgentSession\x12 .labor.v1.GetAgentSessionRequest\x1a!.labor.v1.GetAgentSessionResponse\x12\\\n" +
 	"\x11ClearAgentHistory\x12\".labor.v1.ClearAgentHistoryRequest\x1a#.labor.v1.ClearAgentHistoryResponse\x12e\n" +
-	"\x14CompressAgentHistory\x12%.labor.v1.CompressAgentHistoryRequest\x1a&.labor.v1.CompressAgentHistoryResponse\x12L\n" +
+	"\x14CompressAgentHistory\x12%.labor.v1.CompressAgentHistoryRequest\x1a&.labor.v1.CompressAgentHistoryResponse\x12;\n" +
+	"\x06AddMCP\x12\x17.labor.v1.AddMCPRequest\x1a\x18.labor.v1.AddMCPResponse\x12L\n" +
 	"\vSendMessage\x12\x1c.labor.v1.SendMessageRequest\x1a\x1d.labor.v1.SendMessageResponse0\x01\x12A\n" +
 	"\bStopTask\x12\x19.labor.v1.StopTaskRequest\x1a\x1a.labor.v1.StopTaskResponseB\x15Z\x13digital-labor/protob\x06proto3"
 
@@ -1195,7 +1298,7 @@ func file_labor_v1_container_proto_rawDescGZIP() []byte {
 	return file_labor_v1_container_proto_rawDescData
 }
 
-var file_labor_v1_container_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_labor_v1_container_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
 var file_labor_v1_container_proto_goTypes = []any{
 	(*BackupServiceRequest)(nil),         // 0: labor.v1.BackupServiceRequest
 	(*BackupServiceResponse)(nil),        // 1: labor.v1.BackupServiceResponse
@@ -1216,8 +1319,10 @@ var file_labor_v1_container_proto_goTypes = []any{
 	(*CompressAgentHistoryResponse)(nil), // 16: labor.v1.CompressAgentHistoryResponse
 	(*SendMessageRequest)(nil),           // 17: labor.v1.SendMessageRequest
 	(*SendMessageResponse)(nil),          // 18: labor.v1.SendMessageResponse
-	(*StopTaskRequest)(nil),              // 19: labor.v1.StopTaskRequest
-	(*StopTaskResponse)(nil),             // 20: labor.v1.StopTaskResponse
+	(*AddMCPRequest)(nil),                // 19: labor.v1.AddMCPRequest
+	(*AddMCPResponse)(nil),               // 20: labor.v1.AddMCPResponse
+	(*StopTaskRequest)(nil),              // 21: labor.v1.StopTaskRequest
+	(*StopTaskResponse)(nil),             // 22: labor.v1.StopTaskResponse
 }
 var file_labor_v1_container_proto_depIdxs = []int32{
 	11, // 0: labor.v1.GetAgentSessionResponse.messages:type_name -> labor.v1.Message
@@ -1229,20 +1334,22 @@ var file_labor_v1_container_proto_depIdxs = []int32{
 	10, // 6: labor.v1.ContainerService.GetAgentSession:input_type -> labor.v1.GetAgentSessionRequest
 	13, // 7: labor.v1.ContainerService.ClearAgentHistory:input_type -> labor.v1.ClearAgentHistoryRequest
 	15, // 8: labor.v1.ContainerService.CompressAgentHistory:input_type -> labor.v1.CompressAgentHistoryRequest
-	17, // 9: labor.v1.ContainerService.SendMessage:input_type -> labor.v1.SendMessageRequest
-	19, // 10: labor.v1.ContainerService.StopTask:input_type -> labor.v1.StopTaskRequest
-	1,  // 11: labor.v1.ContainerService.BackupService:output_type -> labor.v1.BackupServiceResponse
-	3,  // 12: labor.v1.ContainerService.CreateChatModel:output_type -> labor.v1.CreateChatModelResponse
-	5,  // 13: labor.v1.ContainerService.RemoveChatModel:output_type -> labor.v1.RemoveChatModelResponse
-	7,  // 14: labor.v1.ContainerService.CreateAgent:output_type -> labor.v1.CreateAgentResponse
-	9,  // 15: labor.v1.ContainerService.RemoveAgent:output_type -> labor.v1.RemoveAgentResponse
-	12, // 16: labor.v1.ContainerService.GetAgentSession:output_type -> labor.v1.GetAgentSessionResponse
-	14, // 17: labor.v1.ContainerService.ClearAgentHistory:output_type -> labor.v1.ClearAgentHistoryResponse
-	16, // 18: labor.v1.ContainerService.CompressAgentHistory:output_type -> labor.v1.CompressAgentHistoryResponse
-	18, // 19: labor.v1.ContainerService.SendMessage:output_type -> labor.v1.SendMessageResponse
-	20, // 20: labor.v1.ContainerService.StopTask:output_type -> labor.v1.StopTaskResponse
-	11, // [11:21] is the sub-list for method output_type
-	1,  // [1:11] is the sub-list for method input_type
+	19, // 9: labor.v1.ContainerService.AddMCP:input_type -> labor.v1.AddMCPRequest
+	17, // 10: labor.v1.ContainerService.SendMessage:input_type -> labor.v1.SendMessageRequest
+	21, // 11: labor.v1.ContainerService.StopTask:input_type -> labor.v1.StopTaskRequest
+	1,  // 12: labor.v1.ContainerService.BackupService:output_type -> labor.v1.BackupServiceResponse
+	3,  // 13: labor.v1.ContainerService.CreateChatModel:output_type -> labor.v1.CreateChatModelResponse
+	5,  // 14: labor.v1.ContainerService.RemoveChatModel:output_type -> labor.v1.RemoveChatModelResponse
+	7,  // 15: labor.v1.ContainerService.CreateAgent:output_type -> labor.v1.CreateAgentResponse
+	9,  // 16: labor.v1.ContainerService.RemoveAgent:output_type -> labor.v1.RemoveAgentResponse
+	12, // 17: labor.v1.ContainerService.GetAgentSession:output_type -> labor.v1.GetAgentSessionResponse
+	14, // 18: labor.v1.ContainerService.ClearAgentHistory:output_type -> labor.v1.ClearAgentHistoryResponse
+	16, // 19: labor.v1.ContainerService.CompressAgentHistory:output_type -> labor.v1.CompressAgentHistoryResponse
+	20, // 20: labor.v1.ContainerService.AddMCP:output_type -> labor.v1.AddMCPResponse
+	18, // 21: labor.v1.ContainerService.SendMessage:output_type -> labor.v1.SendMessageResponse
+	22, // 22: labor.v1.ContainerService.StopTask:output_type -> labor.v1.StopTaskResponse
+	12, // [12:23] is the sub-list for method output_type
+	1,  // [1:12] is the sub-list for method input_type
 	1,  // [1:1] is the sub-list for extension type_name
 	1,  // [1:1] is the sub-list for extension extendee
 	0,  // [0:1] is the sub-list for field type_name
@@ -1259,7 +1366,7 @@ func file_labor_v1_container_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_labor_v1_container_proto_rawDesc), len(file_labor_v1_container_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   21,
+			NumMessages:   23,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

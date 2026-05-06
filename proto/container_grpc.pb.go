@@ -27,6 +27,7 @@ const (
 	ContainerService_GetAgentSession_FullMethodName      = "/labor.v1.ContainerService/GetAgentSession"
 	ContainerService_ClearAgentHistory_FullMethodName    = "/labor.v1.ContainerService/ClearAgentHistory"
 	ContainerService_CompressAgentHistory_FullMethodName = "/labor.v1.ContainerService/CompressAgentHistory"
+	ContainerService_AddMCP_FullMethodName               = "/labor.v1.ContainerService/AddMCP"
 	ContainerService_SendMessage_FullMethodName          = "/labor.v1.ContainerService/SendMessage"
 	ContainerService_StopTask_FullMethodName             = "/labor.v1.ContainerService/StopTask"
 )
@@ -50,6 +51,8 @@ type ContainerServiceClient interface {
 	GetAgentSession(ctx context.Context, in *GetAgentSessionRequest, opts ...grpc.CallOption) (*GetAgentSessionResponse, error)
 	ClearAgentHistory(ctx context.Context, in *ClearAgentHistoryRequest, opts ...grpc.CallOption) (*ClearAgentHistoryResponse, error)
 	CompressAgentHistory(ctx context.Context, in *CompressAgentHistoryRequest, opts ...grpc.CallOption) (*CompressAgentHistoryResponse, error)
+	// --- MCP管理 ---
+	AddMCP(ctx context.Context, in *AddMCPRequest, opts ...grpc.CallOption) (*AddMCPResponse, error)
 	// --- 对话 ---
 	SendMessage(ctx context.Context, in *SendMessageRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[SendMessageResponse], error)
 	// --- 任务 ---
@@ -153,6 +156,16 @@ func (c *containerServiceClient) CompressAgentHistory(ctx context.Context, in *C
 	return out, nil
 }
 
+func (c *containerServiceClient) AddMCP(ctx context.Context, in *AddMCPRequest, opts ...grpc.CallOption) (*AddMCPResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddMCPResponse)
+	err := c.cc.Invoke(ctx, ContainerService_AddMCP_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *containerServiceClient) SendMessage(ctx context.Context, in *SendMessageRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[SendMessageResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	stream, err := c.cc.NewStream(ctx, &ContainerService_ServiceDesc.Streams[1], ContainerService_SendMessage_FullMethodName, cOpts...)
@@ -201,6 +214,8 @@ type ContainerServiceServer interface {
 	GetAgentSession(context.Context, *GetAgentSessionRequest) (*GetAgentSessionResponse, error)
 	ClearAgentHistory(context.Context, *ClearAgentHistoryRequest) (*ClearAgentHistoryResponse, error)
 	CompressAgentHistory(context.Context, *CompressAgentHistoryRequest) (*CompressAgentHistoryResponse, error)
+	// --- MCP管理 ---
+	AddMCP(context.Context, *AddMCPRequest) (*AddMCPResponse, error)
 	// --- 对话 ---
 	SendMessage(*SendMessageRequest, grpc.ServerStreamingServer[SendMessageResponse]) error
 	// --- 任务 ---
@@ -238,6 +253,9 @@ func (UnimplementedContainerServiceServer) ClearAgentHistory(context.Context, *C
 }
 func (UnimplementedContainerServiceServer) CompressAgentHistory(context.Context, *CompressAgentHistoryRequest) (*CompressAgentHistoryResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CompressAgentHistory not implemented")
+}
+func (UnimplementedContainerServiceServer) AddMCP(context.Context, *AddMCPRequest) (*AddMCPResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AddMCP not implemented")
 }
 func (UnimplementedContainerServiceServer) SendMessage(*SendMessageRequest, grpc.ServerStreamingServer[SendMessageResponse]) error {
 	return status.Error(codes.Unimplemented, "method SendMessage not implemented")
@@ -403,6 +421,24 @@ func _ContainerService_CompressAgentHistory_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ContainerService_AddMCP_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddMCPRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).AddMCP(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_AddMCP_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).AddMCP(ctx, req.(*AddMCPRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ContainerService_SendMessage_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(SendMessageRequest)
 	if err := stream.RecvMsg(m); err != nil {
@@ -466,6 +502,10 @@ var ContainerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CompressAgentHistory",
 			Handler:    _ContainerService_CompressAgentHistory_Handler,
+		},
+		{
+			MethodName: "AddMCP",
+			Handler:    _ContainerService_AddMCP_Handler,
 		},
 		{
 			MethodName: "StopTask",
