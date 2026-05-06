@@ -1,6 +1,7 @@
 package task
 
 import (
+	"digital-labor/pkg/ctxmanager"
 	"digital-labor/pkg/errs"
 	"digital-labor/pkg/model"
 	"sync"
@@ -140,6 +141,20 @@ func UpdateTask(agentID, taskid string, cfg UpdateConfig) *model.Task {
 		}
 	}
 	return t
+}
+
+func StopTask(agentID, taskid string) {
+	if _, ok := globalTaskManager.Tasks[agentID][taskid]; ok {
+		ctx := ctxmanager.GetOrCreate(taskid)
+		ctx.Done()
+	}
+	UpdateTask(
+		agentID,
+		taskid,
+		UpdateConfig{
+			Status: model.TaskStatusStopped,
+		},
+	)
 }
 
 func CreateStep(taskid, agentID string, cfg StepConfig) *model.Step {

@@ -3,10 +3,11 @@ package model
 import "time"
 
 const (
-	StatusRunning   string = "running"
-	StatusStreaming string = "streaming"
-	StatusDone      string = "done"
-	StatusFailed    string = "failed"
+	StatusRunning     string = "running"
+	StatusStreaming   string = "streaming"
+	StatusDone        string = "done"
+	StatusFailed      string = "failed"
+	TaskStatusStopped string = "stopped"
 )
 
 type Step struct {
