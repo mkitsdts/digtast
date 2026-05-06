@@ -83,6 +83,7 @@ func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 		ChatModel: cm,
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
+				Tools: registry.GetTools(),
 				ToolCallMiddlewares: []compose.ToolMiddleware{
 					{Invokable: registry.Invokable},
 				},
@@ -95,6 +96,7 @@ func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 		ModelRetryConfig: &adk.ModelRetryConfig{
 			MaxRetries: 5,
 		},
+		WithoutWriteTodos: true,
 	})
 
 	if err != nil {
