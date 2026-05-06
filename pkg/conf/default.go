@@ -31,5 +31,6 @@ func DefaultConfig() Config {
 		State: LocalRunningStateConfig{
 			LastUsedAgent: "",
 		},
+		Channels: map[string]map[string]any{},
 	}
 }
