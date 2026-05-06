@@ -6,6 +6,7 @@ import (
 	"digital-labor/internal/cli"
 	"digital-labor/internal/gateway"
 	"digital-labor/internal/server"
+	"digital-labor/pkg/chatmodel"
 	"digital-labor/pkg/conf"
 	"digital-labor/pkg/workspace"
 	_ "digital-labor/prompt"
@@ -39,6 +40,7 @@ func main() {
 
 func Init() {
 	workspace.InitWorkspace()
+	chatmodel.Init()
 	center.Init()
 	gateway.LoadChannels()
 }
