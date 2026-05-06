@@ -35,7 +35,7 @@
 ```text
 time=... level=INFO msg="server listening at" address=[::]:10086
 ```
-*(注：服务支持响应 SIGINT/SIGTERM 信号进行优雅退出 Graceful Stop)*
+*(注：服务支持响应 SIGINT/SIGTERM 信号进行 Graceful Stop)* 暂时不支持多模态
 
 ---
 
@@ -45,10 +45,6 @@ time=... level=INFO msg="server listening at" address=[::]:10086
 
 ### 📦 1. 容器/服务级操作
 负责应用实例和智能体的生命周期管理：
-- `StartService`：启动服务。需要传入 `container_id`, `agent_id`。
-- `StopService`：暂停服务。
-- `RestartService`：重启服务，重新建立连接等。
-- `RemoveService`：移除服务，将会销毁内部创建的智能体和对应的运行资源。
 - `BackupService`：备份当前容器状态与记忆。
 
 ### 💬 2. 对话与会话管理
@@ -69,15 +65,25 @@ time=... level=INFO msg="server listening at" address=[::]:10086
 
 ###    5. 智能体管理
 负责智能体管理
-- `CreateAgent`:核心接口，创建智能体。不同智能体可以启用不同的 Skill 和工具
+- `CreateAgent`:核心接口，创建智能体。方便不同智能体启用不同的 Skill 和工具
 - `RemoveAgent`:删除智能体
 
-###    6. Skill 和 Tool 管理
-负责 Skill 和 Tool 的启用与禁用。目前在考虑是否需要自定义安装 Skill。初步思考，用户应该通过对话创建 Skill。实在有需要，通过远程文件手动管理 Skill,不提供接口
+###    6. Skill 和 MCP 管理
+负责 Skill 和 MCP 的启用与禁用。目前在考虑是否需要自定义安装 Skill。初步思考，用户应该通过对话创建 Skill。实在有需要，通过远程文件手动管理 Skill,不提供接口
 - `GetAllSkills`:获取全部 Skill
-- `GetAllTools`:获取全部 Tool
 - `DisableSkill`:禁用某个 Skill
-- `DisableTool`:禁用某个 Tool
+- `EnableSkill`:启用某个 Skill
+- `AddMCP`:添加 MCP
+- `GetAllMCPs`:获取全部 MCP
+- `DisableMCP`:禁用某个 MCP
+- `EnableMCP`:启用某个 MCP
+
+###    7. 通道管理
+- `GetAllChannels`:获取全部通道
+- `CreateChannel`:创建通道
+- `RemoveChannel`:删除通道
+- `EnableChannel`:启用通道
+- `DisableChannel`:禁用通道
 
 ## 🔌 终端指南
 

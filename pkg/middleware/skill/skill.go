@@ -3,6 +3,7 @@ package registry
 import (
 	"digital-labor/pkg/ctxmanager"
 	local "digital-labor/pkg/middleware/lbackend"
+	"digital-labor/pkg/registry"
 	"digital-labor/pkg/workspace"
 	"fmt"
 	"log/slog"
@@ -36,4 +37,8 @@ func GetSkillMiddleware() adk.ChatModelAgentMiddleware {
 	}
 
 	return skillMiddleware
+}
+
+func init() {
+	registry.RegisterHandler(GetSkillMiddleware())
 }

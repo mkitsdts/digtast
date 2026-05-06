@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             (unknown)
-// source: labor/v1/container.proto
+// source: container.proto
 
 package proto
 
@@ -19,6 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	ContainerService_StartService_FullMethodName         = "/labor.v1.ContainerService/StartService"
+	ContainerService_StopService_FullMethodName          = "/labor.v1.ContainerService/StopService"
+	ContainerService_RestartService_FullMethodName       = "/labor.v1.ContainerService/RestartService"
+	ContainerService_RemoveService_FullMethodName        = "/labor.v1.ContainerService/RemoveService"
 	ContainerService_BackupService_FullMethodName        = "/labor.v1.ContainerService/BackupService"
 	ContainerService_CreateChatModel_FullMethodName      = "/labor.v1.ContainerService/CreateChatModel"
 	ContainerService_RemoveChatModel_FullMethodName      = "/labor.v1.ContainerService/RemoveChatModel"
@@ -27,8 +31,22 @@ const (
 	ContainerService_GetAgentSession_FullMethodName      = "/labor.v1.ContainerService/GetAgentSession"
 	ContainerService_ClearAgentHistory_FullMethodName    = "/labor.v1.ContainerService/ClearAgentHistory"
 	ContainerService_CompressAgentHistory_FullMethodName = "/labor.v1.ContainerService/CompressAgentHistory"
+	ContainerService_AddSkill_FullMethodName             = "/labor.v1.ContainerService/AddSkill"
+	ContainerService_GetAllSkills_FullMethodName         = "/labor.v1.ContainerService/GetAllSkills"
+	ContainerService_DisableSkill_FullMethodName         = "/labor.v1.ContainerService/DisableSkill"
+	ContainerService_EnableSkill_FullMethodName          = "/labor.v1.ContainerService/EnableSkill"
+	ContainerService_AddMCP_FullMethodName               = "/labor.v1.ContainerService/AddMCP"
+	ContainerService_GetAllMCPs_FullMethodName           = "/labor.v1.ContainerService/GetAllMCPs"
+	ContainerService_DisableMCP_FullMethodName           = "/labor.v1.ContainerService/DisableMCP"
+	ContainerService_EnableMCP_FullMethodName            = "/labor.v1.ContainerService/EnableMCP"
+	ContainerService_GetAllChannels_FullMethodName       = "/labor.v1.ContainerService/GetAllChannels"
+	ContainerService_CreateChannel_FullMethodName        = "/labor.v1.ContainerService/CreateChannel"
+	ContainerService_RemoveChannel_FullMethodName        = "/labor.v1.ContainerService/RemoveChannel"
+	ContainerService_EnableChannel_FullMethodName        = "/labor.v1.ContainerService/EnableChannel"
+	ContainerService_DisableChannel_FullMethodName       = "/labor.v1.ContainerService/DisableChannel"
 	ContainerService_SendMessage_FullMethodName          = "/labor.v1.ContainerService/SendMessage"
 	ContainerService_StopTask_FullMethodName             = "/labor.v1.ContainerService/StopTask"
+	ContainerService_GetTaskStatus_FullMethodName        = "/labor.v1.ContainerService/GetTaskStatus"
 )
 
 // ContainerServiceClient is the client API for ContainerService service.
@@ -39,6 +57,10 @@ const (
 // 一个 Agent 绑定一个 Session，agent_id 即 session_id
 type ContainerServiceClient interface {
 	// --- 容器 ---
+	StartService(ctx context.Context, in *StartServiceRequest, opts ...grpc.CallOption) (*StartServiceResponse, error)
+	StopService(ctx context.Context, in *StopServiceRequest, opts ...grpc.CallOption) (*StopServiceResponse, error)
+	RestartService(ctx context.Context, in *RestartServiceRequest, opts ...grpc.CallOption) (*RestartServiceResponse, error)
+	RemoveService(ctx context.Context, in *RemoveServiceRequest, opts ...grpc.CallOption) (*RemoveServiceResponse, error)
 	BackupService(ctx context.Context, in *BackupServiceRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[BackupServiceResponse], error)
 	// --- 模型 ---
 	CreateChatModel(ctx context.Context, in *CreateChatModelRequest, opts ...grpc.CallOption) (*CreateChatModelResponse, error)
@@ -50,10 +72,27 @@ type ContainerServiceClient interface {
 	GetAgentSession(ctx context.Context, in *GetAgentSessionRequest, opts ...grpc.CallOption) (*GetAgentSessionResponse, error)
 	ClearAgentHistory(ctx context.Context, in *ClearAgentHistoryRequest, opts ...grpc.CallOption) (*ClearAgentHistoryResponse, error)
 	CompressAgentHistory(ctx context.Context, in *CompressAgentHistoryRequest, opts ...grpc.CallOption) (*CompressAgentHistoryResponse, error)
+	// --- Skill管理 ---
+	AddSkill(ctx context.Context, in *AddSkillRequest, opts ...grpc.CallOption) (*AddSkillResponse, error)
+	GetAllSkills(ctx context.Context, in *GetAllSkillsRequest, opts ...grpc.CallOption) (*GetAllSkillsResponse, error)
+	DisableSkill(ctx context.Context, in *DisableSkillRequest, opts ...grpc.CallOption) (*DisableSkillResponse, error)
+	EnableSkill(ctx context.Context, in *EnableSkillRequest, opts ...grpc.CallOption) (*EnableSkillResponse, error)
+	// --- MCP管理 ---
+	AddMCP(ctx context.Context, in *AddMCPRequest, opts ...grpc.CallOption) (*AddMCPResponse, error)
+	GetAllMCPs(ctx context.Context, in *GetAllMCPsRequest, opts ...grpc.CallOption) (*GetAllMCPsResponse, error)
+	DisableMCP(ctx context.Context, in *DisableMCPRequest, opts ...grpc.CallOption) (*DisableMCPResponse, error)
+	EnableMCP(ctx context.Context, in *EnableMCPRequest, opts ...grpc.CallOption) (*EnableMCPResponse, error)
+	// --- 通道管理 ---
+	GetAllChannels(ctx context.Context, in *GetAllChannelsRequest, opts ...grpc.CallOption) (*GetAllChannelsResponse, error)
+	CreateChannel(ctx context.Context, in *CreateChannelRequest, opts ...grpc.CallOption) (*CreateChannelResponse, error)
+	RemoveChannel(ctx context.Context, in *RemoveChannelRequest, opts ...grpc.CallOption) (*RemoveChannelResponse, error)
+	EnableChannel(ctx context.Context, in *EnableChannelRequest, opts ...grpc.CallOption) (*EnableChannelResponse, error)
+	DisableChannel(ctx context.Context, in *DisableChannelRequest, opts ...grpc.CallOption) (*DisableChannelResponse, error)
 	// --- 对话 ---
 	SendMessage(ctx context.Context, in *SendMessageRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[SendMessageResponse], error)
 	// --- 任务 ---
 	StopTask(ctx context.Context, in *StopTaskRequest, opts ...grpc.CallOption) (*StopTaskResponse, error)
+	GetTaskStatus(ctx context.Context, in *GetTaskStatusRequest, opts ...grpc.CallOption) (*GetTaskStatusResponse, error)
 }
 
 type containerServiceClient struct {
@@ -62,6 +101,46 @@ type containerServiceClient struct {
 
 func NewContainerServiceClient(cc grpc.ClientConnInterface) ContainerServiceClient {
 	return &containerServiceClient{cc}
+}
+
+func (c *containerServiceClient) StartService(ctx context.Context, in *StartServiceRequest, opts ...grpc.CallOption) (*StartServiceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StartServiceResponse)
+	err := c.cc.Invoke(ctx, ContainerService_StartService_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *containerServiceClient) StopService(ctx context.Context, in *StopServiceRequest, opts ...grpc.CallOption) (*StopServiceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StopServiceResponse)
+	err := c.cc.Invoke(ctx, ContainerService_StopService_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *containerServiceClient) RestartService(ctx context.Context, in *RestartServiceRequest, opts ...grpc.CallOption) (*RestartServiceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RestartServiceResponse)
+	err := c.cc.Invoke(ctx, ContainerService_RestartService_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *containerServiceClient) RemoveService(ctx context.Context, in *RemoveServiceRequest, opts ...grpc.CallOption) (*RemoveServiceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RemoveServiceResponse)
+	err := c.cc.Invoke(ctx, ContainerService_RemoveService_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *containerServiceClient) BackupService(ctx context.Context, in *BackupServiceRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[BackupServiceResponse], error) {
@@ -153,6 +232,136 @@ func (c *containerServiceClient) CompressAgentHistory(ctx context.Context, in *C
 	return out, nil
 }
 
+func (c *containerServiceClient) AddSkill(ctx context.Context, in *AddSkillRequest, opts ...grpc.CallOption) (*AddSkillResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddSkillResponse)
+	err := c.cc.Invoke(ctx, ContainerService_AddSkill_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *containerServiceClient) GetAllSkills(ctx context.Context, in *GetAllSkillsRequest, opts ...grpc.CallOption) (*GetAllSkillsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetAllSkillsResponse)
+	err := c.cc.Invoke(ctx, ContainerService_GetAllSkills_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *containerServiceClient) DisableSkill(ctx context.Context, in *DisableSkillRequest, opts ...grpc.CallOption) (*DisableSkillResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DisableSkillResponse)
+	err := c.cc.Invoke(ctx, ContainerService_DisableSkill_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *containerServiceClient) EnableSkill(ctx context.Context, in *EnableSkillRequest, opts ...grpc.CallOption) (*EnableSkillResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EnableSkillResponse)
+	err := c.cc.Invoke(ctx, ContainerService_EnableSkill_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *containerServiceClient) AddMCP(ctx context.Context, in *AddMCPRequest, opts ...grpc.CallOption) (*AddMCPResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddMCPResponse)
+	err := c.cc.Invoke(ctx, ContainerService_AddMCP_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *containerServiceClient) GetAllMCPs(ctx context.Context, in *GetAllMCPsRequest, opts ...grpc.CallOption) (*GetAllMCPsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetAllMCPsResponse)
+	err := c.cc.Invoke(ctx, ContainerService_GetAllMCPs_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *containerServiceClient) DisableMCP(ctx context.Context, in *DisableMCPRequest, opts ...grpc.CallOption) (*DisableMCPResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DisableMCPResponse)
+	err := c.cc.Invoke(ctx, ContainerService_DisableMCP_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *containerServiceClient) EnableMCP(ctx context.Context, in *EnableMCPRequest, opts ...grpc.CallOption) (*EnableMCPResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EnableMCPResponse)
+	err := c.cc.Invoke(ctx, ContainerService_EnableMCP_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *containerServiceClient) GetAllChannels(ctx context.Context, in *GetAllChannelsRequest, opts ...grpc.CallOption) (*GetAllChannelsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetAllChannelsResponse)
+	err := c.cc.Invoke(ctx, ContainerService_GetAllChannels_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *containerServiceClient) CreateChannel(ctx context.Context, in *CreateChannelRequest, opts ...grpc.CallOption) (*CreateChannelResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateChannelResponse)
+	err := c.cc.Invoke(ctx, ContainerService_CreateChannel_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *containerServiceClient) RemoveChannel(ctx context.Context, in *RemoveChannelRequest, opts ...grpc.CallOption) (*RemoveChannelResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RemoveChannelResponse)
+	err := c.cc.Invoke(ctx, ContainerService_RemoveChannel_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *containerServiceClient) EnableChannel(ctx context.Context, in *EnableChannelRequest, opts ...grpc.CallOption) (*EnableChannelResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EnableChannelResponse)
+	err := c.cc.Invoke(ctx, ContainerService_EnableChannel_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *containerServiceClient) DisableChannel(ctx context.Context, in *DisableChannelRequest, opts ...grpc.CallOption) (*DisableChannelResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DisableChannelResponse)
+	err := c.cc.Invoke(ctx, ContainerService_DisableChannel_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *containerServiceClient) SendMessage(ctx context.Context, in *SendMessageRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[SendMessageResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	stream, err := c.cc.NewStream(ctx, &ContainerService_ServiceDesc.Streams[1], ContainerService_SendMessage_FullMethodName, cOpts...)
@@ -182,6 +391,16 @@ func (c *containerServiceClient) StopTask(ctx context.Context, in *StopTaskReque
 	return out, nil
 }
 
+func (c *containerServiceClient) GetTaskStatus(ctx context.Context, in *GetTaskStatusRequest, opts ...grpc.CallOption) (*GetTaskStatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetTaskStatusResponse)
+	err := c.cc.Invoke(ctx, ContainerService_GetTaskStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ContainerServiceServer is the server API for ContainerService service.
 // All implementations must embed UnimplementedContainerServiceServer
 // for forward compatibility.
@@ -190,6 +409,10 @@ func (c *containerServiceClient) StopTask(ctx context.Context, in *StopTaskReque
 // 一个 Agent 绑定一个 Session，agent_id 即 session_id
 type ContainerServiceServer interface {
 	// --- 容器 ---
+	StartService(context.Context, *StartServiceRequest) (*StartServiceResponse, error)
+	StopService(context.Context, *StopServiceRequest) (*StopServiceResponse, error)
+	RestartService(context.Context, *RestartServiceRequest) (*RestartServiceResponse, error)
+	RemoveService(context.Context, *RemoveServiceRequest) (*RemoveServiceResponse, error)
 	BackupService(*BackupServiceRequest, grpc.ServerStreamingServer[BackupServiceResponse]) error
 	// --- 模型 ---
 	CreateChatModel(context.Context, *CreateChatModelRequest) (*CreateChatModelResponse, error)
@@ -201,10 +424,27 @@ type ContainerServiceServer interface {
 	GetAgentSession(context.Context, *GetAgentSessionRequest) (*GetAgentSessionResponse, error)
 	ClearAgentHistory(context.Context, *ClearAgentHistoryRequest) (*ClearAgentHistoryResponse, error)
 	CompressAgentHistory(context.Context, *CompressAgentHistoryRequest) (*CompressAgentHistoryResponse, error)
+	// --- Skill管理 ---
+	AddSkill(context.Context, *AddSkillRequest) (*AddSkillResponse, error)
+	GetAllSkills(context.Context, *GetAllSkillsRequest) (*GetAllSkillsResponse, error)
+	DisableSkill(context.Context, *DisableSkillRequest) (*DisableSkillResponse, error)
+	EnableSkill(context.Context, *EnableSkillRequest) (*EnableSkillResponse, error)
+	// --- MCP管理 ---
+	AddMCP(context.Context, *AddMCPRequest) (*AddMCPResponse, error)
+	GetAllMCPs(context.Context, *GetAllMCPsRequest) (*GetAllMCPsResponse, error)
+	DisableMCP(context.Context, *DisableMCPRequest) (*DisableMCPResponse, error)
+	EnableMCP(context.Context, *EnableMCPRequest) (*EnableMCPResponse, error)
+	// --- 通道管理 ---
+	GetAllChannels(context.Context, *GetAllChannelsRequest) (*GetAllChannelsResponse, error)
+	CreateChannel(context.Context, *CreateChannelRequest) (*CreateChannelResponse, error)
+	RemoveChannel(context.Context, *RemoveChannelRequest) (*RemoveChannelResponse, error)
+	EnableChannel(context.Context, *EnableChannelRequest) (*EnableChannelResponse, error)
+	DisableChannel(context.Context, *DisableChannelRequest) (*DisableChannelResponse, error)
 	// --- 对话 ---
 	SendMessage(*SendMessageRequest, grpc.ServerStreamingServer[SendMessageResponse]) error
 	// --- 任务 ---
 	StopTask(context.Context, *StopTaskRequest) (*StopTaskResponse, error)
+	GetTaskStatus(context.Context, *GetTaskStatusRequest) (*GetTaskStatusResponse, error)
 	mustEmbedUnimplementedContainerServiceServer()
 }
 
@@ -215,6 +455,18 @@ type ContainerServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedContainerServiceServer struct{}
 
+func (UnimplementedContainerServiceServer) StartService(context.Context, *StartServiceRequest) (*StartServiceResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method StartService not implemented")
+}
+func (UnimplementedContainerServiceServer) StopService(context.Context, *StopServiceRequest) (*StopServiceResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method StopService not implemented")
+}
+func (UnimplementedContainerServiceServer) RestartService(context.Context, *RestartServiceRequest) (*RestartServiceResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RestartService not implemented")
+}
+func (UnimplementedContainerServiceServer) RemoveService(context.Context, *RemoveServiceRequest) (*RemoveServiceResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RemoveService not implemented")
+}
 func (UnimplementedContainerServiceServer) BackupService(*BackupServiceRequest, grpc.ServerStreamingServer[BackupServiceResponse]) error {
 	return status.Error(codes.Unimplemented, "method BackupService not implemented")
 }
@@ -239,11 +491,53 @@ func (UnimplementedContainerServiceServer) ClearAgentHistory(context.Context, *C
 func (UnimplementedContainerServiceServer) CompressAgentHistory(context.Context, *CompressAgentHistoryRequest) (*CompressAgentHistoryResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CompressAgentHistory not implemented")
 }
+func (UnimplementedContainerServiceServer) AddSkill(context.Context, *AddSkillRequest) (*AddSkillResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AddSkill not implemented")
+}
+func (UnimplementedContainerServiceServer) GetAllSkills(context.Context, *GetAllSkillsRequest) (*GetAllSkillsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetAllSkills not implemented")
+}
+func (UnimplementedContainerServiceServer) DisableSkill(context.Context, *DisableSkillRequest) (*DisableSkillResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DisableSkill not implemented")
+}
+func (UnimplementedContainerServiceServer) EnableSkill(context.Context, *EnableSkillRequest) (*EnableSkillResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method EnableSkill not implemented")
+}
+func (UnimplementedContainerServiceServer) AddMCP(context.Context, *AddMCPRequest) (*AddMCPResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AddMCP not implemented")
+}
+func (UnimplementedContainerServiceServer) GetAllMCPs(context.Context, *GetAllMCPsRequest) (*GetAllMCPsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetAllMCPs not implemented")
+}
+func (UnimplementedContainerServiceServer) DisableMCP(context.Context, *DisableMCPRequest) (*DisableMCPResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DisableMCP not implemented")
+}
+func (UnimplementedContainerServiceServer) EnableMCP(context.Context, *EnableMCPRequest) (*EnableMCPResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method EnableMCP not implemented")
+}
+func (UnimplementedContainerServiceServer) GetAllChannels(context.Context, *GetAllChannelsRequest) (*GetAllChannelsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetAllChannels not implemented")
+}
+func (UnimplementedContainerServiceServer) CreateChannel(context.Context, *CreateChannelRequest) (*CreateChannelResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateChannel not implemented")
+}
+func (UnimplementedContainerServiceServer) RemoveChannel(context.Context, *RemoveChannelRequest) (*RemoveChannelResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RemoveChannel not implemented")
+}
+func (UnimplementedContainerServiceServer) EnableChannel(context.Context, *EnableChannelRequest) (*EnableChannelResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method EnableChannel not implemented")
+}
+func (UnimplementedContainerServiceServer) DisableChannel(context.Context, *DisableChannelRequest) (*DisableChannelResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DisableChannel not implemented")
+}
 func (UnimplementedContainerServiceServer) SendMessage(*SendMessageRequest, grpc.ServerStreamingServer[SendMessageResponse]) error {
 	return status.Error(codes.Unimplemented, "method SendMessage not implemented")
 }
 func (UnimplementedContainerServiceServer) StopTask(context.Context, *StopTaskRequest) (*StopTaskResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method StopTask not implemented")
+}
+func (UnimplementedContainerServiceServer) GetTaskStatus(context.Context, *GetTaskStatusRequest) (*GetTaskStatusResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetTaskStatus not implemented")
 }
 func (UnimplementedContainerServiceServer) mustEmbedUnimplementedContainerServiceServer() {}
 func (UnimplementedContainerServiceServer) testEmbeddedByValue()                          {}
@@ -264,6 +558,78 @@ func RegisterContainerServiceServer(s grpc.ServiceRegistrar, srv ContainerServic
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&ContainerService_ServiceDesc, srv)
+}
+
+func _ContainerService_StartService_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StartServiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).StartService(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_StartService_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).StartService(ctx, req.(*StartServiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContainerService_StopService_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StopServiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).StopService(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_StopService_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).StopService(ctx, req.(*StopServiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContainerService_RestartService_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RestartServiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).RestartService(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_RestartService_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).RestartService(ctx, req.(*RestartServiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContainerService_RemoveService_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveServiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).RemoveService(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_RemoveService_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).RemoveService(ctx, req.(*RemoveServiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _ContainerService_BackupService_Handler(srv interface{}, stream grpc.ServerStream) error {
@@ -403,6 +769,240 @@ func _ContainerService_CompressAgentHistory_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ContainerService_AddSkill_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddSkillRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).AddSkill(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_AddSkill_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).AddSkill(ctx, req.(*AddSkillRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContainerService_GetAllSkills_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAllSkillsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).GetAllSkills(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_GetAllSkills_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).GetAllSkills(ctx, req.(*GetAllSkillsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContainerService_DisableSkill_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DisableSkillRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).DisableSkill(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_DisableSkill_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).DisableSkill(ctx, req.(*DisableSkillRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContainerService_EnableSkill_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EnableSkillRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).EnableSkill(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_EnableSkill_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).EnableSkill(ctx, req.(*EnableSkillRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContainerService_AddMCP_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddMCPRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).AddMCP(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_AddMCP_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).AddMCP(ctx, req.(*AddMCPRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContainerService_GetAllMCPs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAllMCPsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).GetAllMCPs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_GetAllMCPs_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).GetAllMCPs(ctx, req.(*GetAllMCPsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContainerService_DisableMCP_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DisableMCPRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).DisableMCP(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_DisableMCP_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).DisableMCP(ctx, req.(*DisableMCPRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContainerService_EnableMCP_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EnableMCPRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).EnableMCP(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_EnableMCP_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).EnableMCP(ctx, req.(*EnableMCPRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContainerService_GetAllChannels_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAllChannelsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).GetAllChannels(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_GetAllChannels_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).GetAllChannels(ctx, req.(*GetAllChannelsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContainerService_CreateChannel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateChannelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).CreateChannel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_CreateChannel_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).CreateChannel(ctx, req.(*CreateChannelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContainerService_RemoveChannel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveChannelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).RemoveChannel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_RemoveChannel_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).RemoveChannel(ctx, req.(*RemoveChannelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContainerService_EnableChannel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EnableChannelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).EnableChannel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_EnableChannel_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).EnableChannel(ctx, req.(*EnableChannelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContainerService_DisableChannel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DisableChannelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).DisableChannel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_DisableChannel_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).DisableChannel(ctx, req.(*DisableChannelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ContainerService_SendMessage_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(SendMessageRequest)
 	if err := stream.RecvMsg(m); err != nil {
@@ -432,6 +1032,24 @@ func _ContainerService_StopTask_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ContainerService_GetTaskStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTaskStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).GetTaskStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_GetTaskStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).GetTaskStatus(ctx, req.(*GetTaskStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ContainerService_ServiceDesc is the grpc.ServiceDesc for ContainerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -439,6 +1057,22 @@ var ContainerService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "labor.v1.ContainerService",
 	HandlerType: (*ContainerServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "StartService",
+			Handler:    _ContainerService_StartService_Handler,
+		},
+		{
+			MethodName: "StopService",
+			Handler:    _ContainerService_StopService_Handler,
+		},
+		{
+			MethodName: "RestartService",
+			Handler:    _ContainerService_RestartService_Handler,
+		},
+		{
+			MethodName: "RemoveService",
+			Handler:    _ContainerService_RemoveService_Handler,
+		},
 		{
 			MethodName: "CreateChatModel",
 			Handler:    _ContainerService_CreateChatModel_Handler,
@@ -468,8 +1102,64 @@ var ContainerService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ContainerService_CompressAgentHistory_Handler,
 		},
 		{
+			MethodName: "AddSkill",
+			Handler:    _ContainerService_AddSkill_Handler,
+		},
+		{
+			MethodName: "GetAllSkills",
+			Handler:    _ContainerService_GetAllSkills_Handler,
+		},
+		{
+			MethodName: "DisableSkill",
+			Handler:    _ContainerService_DisableSkill_Handler,
+		},
+		{
+			MethodName: "EnableSkill",
+			Handler:    _ContainerService_EnableSkill_Handler,
+		},
+		{
+			MethodName: "AddMCP",
+			Handler:    _ContainerService_AddMCP_Handler,
+		},
+		{
+			MethodName: "GetAllMCPs",
+			Handler:    _ContainerService_GetAllMCPs_Handler,
+		},
+		{
+			MethodName: "DisableMCP",
+			Handler:    _ContainerService_DisableMCP_Handler,
+		},
+		{
+			MethodName: "EnableMCP",
+			Handler:    _ContainerService_EnableMCP_Handler,
+		},
+		{
+			MethodName: "GetAllChannels",
+			Handler:    _ContainerService_GetAllChannels_Handler,
+		},
+		{
+			MethodName: "CreateChannel",
+			Handler:    _ContainerService_CreateChannel_Handler,
+		},
+		{
+			MethodName: "RemoveChannel",
+			Handler:    _ContainerService_RemoveChannel_Handler,
+		},
+		{
+			MethodName: "EnableChannel",
+			Handler:    _ContainerService_EnableChannel_Handler,
+		},
+		{
+			MethodName: "DisableChannel",
+			Handler:    _ContainerService_DisableChannel_Handler,
+		},
+		{
 			MethodName: "StopTask",
 			Handler:    _ContainerService_StopTask_Handler,
+		},
+		{
+			MethodName: "GetTaskStatus",
+			Handler:    _ContainerService_GetTaskStatus_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
@@ -484,5 +1174,5 @@ var ContainerService_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "labor/v1/container.proto",
+	Metadata: "container.proto",
 }

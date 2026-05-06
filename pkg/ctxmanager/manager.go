@@ -5,6 +5,11 @@ import (
 	"sync"
 )
 
+type ctxInfo struct {
+	ctx    context.Context
+	cancel context.CancelFunc
+}
+
 type Manager struct {
 	ctxs sync.Map
 }
@@ -18,18 +23,27 @@ func New() *Manager {
 }
 
 func SetOrCreate(key string, ctx context.Context) {
-	globalManager.ctxs.Store(key, ctx)
+	globalManager.ctxs.Store(key, ctxInfo{ctx: ctx})
 }
 
 func GetOrCreate(key string) context.Context {
-	if ctx, ok := globalManager.ctxs.Load(key); ok {
-		return ctx.(context.Context)
+	if info, ok := globalManager.ctxs.Load(key); ok {
+		return info.(ctxInfo).ctx
 	}
-	ctx := context.Background()
-	globalManager.ctxs.Store(key, ctx)
+	ctx, cancel := context.WithCancel(context.Background())
+	globalManager.ctxs.Store(key, ctxInfo{ctx: ctx, cancel: cancel})
 	return ctx
 }
 
-func Delete(key string) {
+func Remove(key string) {
+	if info, ok := globalManager.ctxs.Load(key); ok {
+		if cancel := info.(ctxInfo).cancel; cancel != nil {
+			cancel()
+		}
+	}
 	globalManager.ctxs.Delete(key)
+}
+
+func Delete(key string) {
+	Remove(key)
 }

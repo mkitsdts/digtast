@@ -2,8 +2,9 @@ package telegram
 
 import (
 	"context"
-	"digital-labor/internal/center"
-	"digital-labor/internal/gateway"
+	gw "digital-labor/internal/gateway"
+	"digital-labor/pkg/gateway"
+	"digital-labor/pkg/model"
 	"digital-labor/pkg/workspace"
 	"errors"
 	"fmt"
@@ -43,7 +44,16 @@ func (tg *TelegramChannel) Init(params map[string]any) error {
 	return nil
 }
 
-func (tg *TelegramChannel) Send(content string) error {
+func (tg *TelegramChannel) Send(result model.Result, params map[string]any) error {
+	chatid, ok := params["chatid"]
+	if !ok {
+		return errors.New("chatid not found")
+	}
+	ctx := context.Background()
+	tg.Bot.SendMessage(ctx, &bot.SendMessageParams{
+		ChatID: chatid,
+		Text:   result.Content,
+	})
 	return nil
 }
 
@@ -76,24 +86,11 @@ func (tg *TelegramChannel) Serve(ctx context.Context) error {
 			slog.Info("received message", "text", update.Message.Text)
 			if update.Message != nil && update.Message.Text != "" {
 				userText := update.Message.Text
-				// TODO: 暂时没有处理好这里，徐娅获取对应的智能体
-				agent, err := center.AgentManager.GetAgent(tg.AgentID)
-				if err != nil {
-					agent, err = center.AgentManager.GetDefaultAgent()
-					if err != nil {
-						slog.Error("failed to get agent", "error", err)
-						return
-					}
-				}
-				sm, err := agent.Run(ctx, userText, false)
-				if err != nil {
-					return
-				}
-
-				// 在这里做你想做的任何事，比如：
-				b.SendMessage(ctx, &bot.SendMessageParams{
-					ChatID: update.Message.Chat.ID,
-					Text:   <-sm,
+				// 异步处理
+				gw.PushUserMessage(&gw.UserMessage{
+					Content:   userText,
+					NotifyWay: "telegram",
+					Params:    map[string]any{"chat_id": update.Message.Chat.ID},
 				})
 			}
 		}),

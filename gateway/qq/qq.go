@@ -2,8 +2,9 @@ package qq
 
 import (
 	"context"
-	"digital-labor/internal/gateway"
-	"digital-labor/pkg/conf"
+	"digital-labor/pkg/gateway"
+	"digital-labor/pkg/model"
+	"digital-labor/pkg/workspace"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -54,13 +55,25 @@ func (c *QQChannel) Init(params map[string]any) error {
 	if agentID, ok := params["agentid"]; ok {
 		c.AgentID = agentID.(string)
 	} else {
-		c.AgentID = conf.Conf.State.LastUsedAgent
+		c.AgentID = workspace.DefaultAgentID()
 	}
 	return nil
 }
 
-func (c *QQChannel) Send(content string) error {
-	return nil
+func (c *QQChannel) Send(result model.Result, params map[string]any) error {
+	userid, ok := params["user_id"]
+	if !ok {
+		slog.Error("user_id not found", "params", params)
+		return errors.New("user_id not found")
+	}
+
+	messageid, ok := params["msg_id"]
+	if !ok {
+		slog.Error("message_id not found", "params", params)
+		return errors.New("message_id not found")
+	}
+
+	return c.SendMessage(result.Content, userid.(string), messageid.(string))
 }
 
 func (c *QQChannel) GetConfig() map[string]any {

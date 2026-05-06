@@ -2,6 +2,7 @@ package registry
 
 import (
 	"context"
+	"digital-labor/pkg/registry"
 	"errors"
 	"fmt"
 	"io"
@@ -14,6 +15,16 @@ import (
 
 type safeToolMiddleware struct {
 	*adk.BaseChatModelAgentMiddleware
+}
+
+var stm *safeToolMiddleware = &safeToolMiddleware{}
+
+func NewSafeToolMiddleware() *safeToolMiddleware {
+	return stm
+}
+
+func init() {
+	registry.RegisterHandler(NewSafeToolMiddleware())
 }
 
 func (m *safeToolMiddleware) WrapInvokableToolCall(

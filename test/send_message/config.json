@@ -1,0 +1,12 @@
+{
+  "addr": "127.0.0.1:10086",
+  "container_id": "local-container",
+  "agent_id": "local-agent",
+  "session_id": "test-session",
+  "message": "Hello",
+  "timeout": "2m",
+  "provider": "doubao",
+  "api_key": "***REMOVED***",
+  "base_url": "https://ark.cn-beijing.volces.com/api/v3",
+  "model_name": "doubao-seed-2-0-lite-260215"
+}
