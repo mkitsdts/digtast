@@ -3,9 +3,9 @@ package cli
 import (
 	"fmt"
 
-	"digital-labor/internal/gateway"
 	"digital-labor/pkg/conf"
 	"digital-labor/pkg/ctxmanager"
+	"digital-labor/pkg/gateway"
 )
 
 func (s *replState) cmdChannel(args []string) {

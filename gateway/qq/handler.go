@@ -2,8 +2,7 @@ package qq
 
 import (
 	"bytes"
-	"context"
-	"digital-labor/internal/center"
+	"digital-labor/internal/gateway"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -28,21 +27,15 @@ func (c *QQChannel) C2CMessageEventHandler() func(msg json.RawMessage) error {
 			return err
 		}
 		slog.Debug("message received", "content", data.Content)
-		ag, err := center.AgentManager.GetAgent(c.AgentID)
-		if err != nil {
-			ag, err = center.AgentManager.GetDefaultAgent()
-			if err != nil {
-				slog.Error("failed to get agent", "error", err)
-				return err
-			}
-		}
+
 		content := data.Content
-		sm, err := ag.Run(context.Background(), content, false)
-		if err != nil {
-			return err
-		}
-		result := <-sm
-		return c.SendMessage(result, data.Author.UserOpenID, data.ID)
+		gateway.PushUserMessage(&gateway.UserMessage{
+			Content:   content,
+			NotifyWay: "qq",
+			Params:    map[string]any{"user_id": data.Author.UserOpenID, "msg_id": data.ID},
+		})
+
+		return nil
 	}
 }
 
