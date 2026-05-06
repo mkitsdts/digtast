@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"digital-labor/pkg/chatmodel"
 	"digital-labor/pkg/conf"
 )
 
@@ -23,13 +24,14 @@ func (s *replState) cmdModel(args []string) {
 }
 
 func (s *replState) cmdModelList() {
-	if len(conf.Conf.Models) == 0 {
+	models := chatmodel.ModelManager.ListModels()
+	if len(models) == 0 {
 		fmt.Println("No model providers configured.")
 		return
 	}
 	fmt.Println("Configured Providers & Models:")
-	for name, cfg := range conf.Conf.Models {
-		fmt.Printf("- Provider: %s\n", name)
+	for name, cfg := range models {
+		fmt.Printf("- Provider Config: %s\n", name)
 		fmt.Printf("  Type: %s\n", cfg.Provider)
 		fmt.Printf("  Models: %s\n", strings.Join(cfg.ModelNames, ", "))
 	}
@@ -62,15 +64,17 @@ func (s *replState) cmdModelAdd() {
 		modelNames[i] = strings.TrimSpace(modelNames[i])
 	}
 
-	if conf.Conf.Models == nil {
-		conf.Conf.Models = make(map[string]conf.ModelConfig)
-	}
-	conf.Conf.Models[configName] = conf.ModelConfig{
+	err := chatmodel.ModelManager.CreateModel(configName, conf.ModelConfig{
 		Provider:   provider,
 		Key:        key,
 		ModelNames: modelNames,
 		URL:        baseURL,
+	})
+
+	if err != nil {
+		errorMsg("Failed to save model configuration: %v", err)
+		return
 	}
-	conf.SaveConfig()
+
 	successMsg("Model configuration '%s' saved!", configName)
 }

@@ -2,23 +2,20 @@ package api
 
 import (
 	"context"
+	"digital-labor/pkg/chatmodel"
 	"digital-labor/pkg/conf"
 	pb "digital-labor/proto"
 )
 
 func (s *ContainerServer) CreateChatModel(ctx context.Context, req *pb.CreateChatModelRequest) (*pb.CreateChatModelResponse, error) {
-	if conf.Conf.Models == nil {
-		conf.Conf.Models = make(map[string]conf.ModelConfig)
-	}
-
-	conf.Conf.Models[req.ModelName] = conf.ModelConfig{
+	err := chatmodel.ModelManager.CreateModel(req.ModelName, conf.ModelConfig{
 		ModelNames: []string{req.ModelName},
 		Provider:   req.Provider,
 		URL:        req.BaseUrl,
 		Key:        req.Key,
-	}
+	})
 
-	if err := conf.SaveConfig(); err != nil {
+	if err != nil {
 		return &pb.CreateChatModelResponse{
 			Success: false,
 			Message: err.Error(),
@@ -32,11 +29,9 @@ func (s *ContainerServer) CreateChatModel(ctx context.Context, req *pb.CreateCha
 }
 
 func (s *ContainerServer) RemoveChatModel(ctx context.Context, req *pb.RemoveChatModelRequest) (*pb.RemoveChatModelResponse, error) {
-	if conf.Conf.Models != nil {
-		delete(conf.Conf.Models, req.ChatModelId)
-	}
+	err := chatmodel.ModelManager.RemoveModel(req.ChatModelId)
 
-	if err := conf.SaveConfig(); err != nil {
+	if err != nil {
 		return &pb.RemoveChatModelResponse{
 			Success: false,
 			Message: err.Error(),

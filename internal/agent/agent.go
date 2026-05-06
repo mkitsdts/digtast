@@ -4,6 +4,7 @@ import (
 	"context"
 	mem "digital-labor/internal/memory"
 	"digital-labor/internal/state"
+	"digital-labor/pkg/chatmodel"
 	"digital-labor/pkg/conf"
 	"digital-labor/pkg/ctxmanager"
 	"digital-labor/pkg/errs"
@@ -69,7 +70,7 @@ func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 		cfg.ModelKind = mCfg.ModelNames[0]
 	}
 
-	cm, err := newChatModel(ctx, mCfg.Provider, mCfg.Key, mCfg.URL, cfg.ModelKind)
+	cm, err := chatmodel.ModelManager.GetChatModelByConfig(ctx, cfg.Model, cfg.ModelKind)
 	if err != nil {
 		return nil, err
 	}
@@ -97,6 +98,10 @@ func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 		return nil, err
 	}
 	return dga, nil
+}
+
+func (dga *DigitalAgent) GetModel() model.ToolCallingChatModel {
+	return dga.cm
 }
 
 // Run starts a conversation turn. The agent uses its own ID as the session key.

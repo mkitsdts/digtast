@@ -1,15 +1,14 @@
-package agent
+package chatmodel
 
 import (
 	"context"
-	"digital-labor/pkg/conf"
 	"errors"
 	"log/slog"
-	"slices"
 	"strings"
 
 	"github.com/cloudwego/eino-ext/components/model/ark"
 	"github.com/cloudwego/eino-ext/components/model/deepseek"
+	"github.com/cloudwego/eino-ext/components/model/openai"
 	"github.com/cloudwego/eino-ext/components/model/qwen"
 	"github.com/cloudwego/eino/components/model"
 )
@@ -18,6 +17,8 @@ const (
 	DEEPSEEK = "deepseek"
 	QWEN     = "qwen"
 	DOUBAO   = "doubao"
+	ARK      = "ark"
+	OPENAI   = "openai"
 
 	DeepseekDefaultBaseURL = ""
 	DeepseekDefaultModel   = ""
@@ -39,15 +40,6 @@ func newChatModel(ctx context.Context, provider, key, url, name string) (model.T
 	}
 	if name == "" {
 		slog.Warn("name is empty, using default")
-	}
-
-	var models conf.ModelConfig
-	var ok bool
-	if models, ok = conf.Conf.Models[provider]; !ok {
-		return nil, errors.New("no model config for provider " + provider)
-	}
-	if !slices.Contains(models.ModelNames, name) {
-		return nil, errors.New("model " + name + " not found for provider " + provider)
 	}
 
 	switch provider {
@@ -79,7 +71,7 @@ func newChatModel(ctx context.Context, provider, key, url, name string) (model.T
 			BaseURL: url,
 			Model:   name,
 		})
-	case DOUBAO:
+	case DOUBAO, ARK:
 		if url == "" {
 			slog.Warn("url is empty, using default")
 			url = DoubaoDefaultBaseURL
@@ -93,7 +85,13 @@ func newChatModel(ctx context.Context, provider, key, url, name string) (model.T
 			BaseURL: url,
 			Model:   name,
 		})
+	case OPENAI:
+		return openai.NewChatModel(ctx, &openai.ChatModelConfig{
+			APIKey:  key,
+			BaseURL: url,
+			Model:   name,
+		})
 	default:
-		return nil, errors.New("unknown provider")
+		return nil, errors.New("unknown provider: " + provider)
 	}
 }
