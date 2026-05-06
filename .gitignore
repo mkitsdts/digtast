@@ -1,6 +1,7 @@
 /internal/agent/secret.go
-/test/send_message/config.json
 /gateway/*/secret.yaml
 
 /skills/code-review-go
 /skills/ppt-creator
+
+/test/*/config.json
