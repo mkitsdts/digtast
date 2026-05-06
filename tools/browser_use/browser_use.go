@@ -22,6 +22,8 @@ func NewBrowserTool() *browseruse.Tool {
 }
 
 func init() {
-	registry.RegisterTool(NewBrowserTool())
+	t := NewBrowserTool()
+	registry.RegisterTool(t)
+	registry.RegisterBaseTool(t)
 	slog.Info("register browser_use tool")
 }
