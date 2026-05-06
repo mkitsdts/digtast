@@ -69,15 +69,25 @@ time=... level=INFO msg="server listening at" address=[::]:10086
 
 ###    5. 智能体管理
 负责智能体管理
-- `CreateAgent`:核心接口，创建智能体。不同智能体可以启用不同的 Skill 和工具
+- `CreateAgent`:核心接口，创建智能体。方便不同智能体启用不同的 Skill 和工具
 - `RemoveAgent`:删除智能体
 
-###    6. Skill 和 Tool 管理
-负责 Skill 和 Tool 的启用与禁用。目前在考虑是否需要自定义安装 Skill。初步思考，用户应该通过对话创建 Skill。实在有需要，通过远程文件手动管理 Skill,不提供接口
+###    6. Skill 和 MCP 管理
+负责 Skill 和 MCP 的启用与禁用。目前在考虑是否需要自定义安装 Skill。初步思考，用户应该通过对话创建 Skill。实在有需要，通过远程文件手动管理 Skill,不提供接口
 - `GetAllSkills`:获取全部 Skill
-- `GetAllTools`:获取全部 Tool
 - `DisableSkill`:禁用某个 Skill
-- `DisableTool`:禁用某个 Tool
+- `EnableSkill`:启用某个 Skill
+- `AddMCP`:添加 MCP
+- `GetAllMCPs`:获取全部 MCP
+- `DisableMCP`:禁用某个 MCP
+- `EnableMCP`:启用某个 MCP
+
+###    7. 通道管理
+- `GetAllChannels`:获取全部通道
+- `CreateChannel`:创建通道
+- `RemoveChannel`:删除通道
+- `EnableChannel`:启用通道
+- `DisableChannel`:禁用通道
 
 ## 🔌 终端指南
 
