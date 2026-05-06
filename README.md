@@ -35,7 +35,7 @@
 ```text
 time=... level=INFO msg="server listening at" address=[::]:10086
 ```
-*(注：服务支持响应 SIGINT/SIGTERM 信号进行优雅退出 Graceful Stop)*
+*(注：服务支持响应 SIGINT/SIGTERM 信号进行 Graceful Stop)* 暂时不支持多模态
 
 ---
 
