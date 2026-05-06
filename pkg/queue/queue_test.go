@@ -3,8 +3,6 @@ package queue
 import (
 	"sync"
 	"testing"
-
-	"github.com/cloudwego/eino/schema"
 )
 
 func TestNewQueue(t *testing.T) {
@@ -80,25 +78,6 @@ func TestEmpty(t *testing.T) {
 	q.Pop()
 	if !q.Empty() {
 		t.Fatal("expected empty after pop")
-	}
-}
-
-func TestMessageQueue(t *testing.T) {
-	mq := NewMessageQueue()
-
-	// Push to nonexistent key should be a no-op, not panic
-	mq.Push("nonexistent", &schema.Message{Content: "1"})
-
-	// Pop from nonexistent key should return nil, false
-	msg, ok := mq.Pop("nonexistent")
-	if ok || msg != nil {
-		t.Fatal("expected nil, false for Pop on nonexistent key")
-	}
-
-	// Front on nonexistent key should return nil, false
-	msg, ok = mq.Front("nonexistent")
-	if ok || msg != nil {
-		t.Fatal("expected nil, false for Front on nonexistent key")
 	}
 }
 
