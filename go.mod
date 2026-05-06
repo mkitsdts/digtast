@@ -7,6 +7,7 @@ require (
 	github.com/cloudwego/eino v0.8.0
 	github.com/cloudwego/eino-ext/components/model/ark v0.1.65
 	github.com/cloudwego/eino-ext/components/model/deepseek v0.1.2
+	github.com/cloudwego/eino-ext/components/model/openai v0.1.13
 	github.com/cloudwego/eino-ext/components/model/qwen v0.1.9
 	github.com/cloudwego/eino-ext/components/tool/browseruse v0.0.0-20260416081055-0ebab92e14f2
 	github.com/cloudwego/eino-ext/components/tool/duckduckgo v0.0.0-20260427010451-749e3706378b
