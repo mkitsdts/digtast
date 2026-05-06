@@ -97,10 +97,10 @@ time=... level=INFO msg="server listening at" address=[::]:10086
 ### 📋 任务管理系统
 - [ X ] **任务中心**：建立独立的任务追踪模块，支持对异步执行的 Agent 任务进行编号和状态管理。
 - [ X ] **状态查询接口**：实现 `GetTaskStatus`，允许用户实时查看 Agent 的行动轨迹（如：正在调用某工具、正在思考）。
-- [ X ] **任务控制增强**：完善 `StopTask` 并增加 `Pause/ResumeTask` 功能。
+- [ X ] **任务控制增强**：完善 `StopTask` 功能。
 
 ### 🔌 技能与扩展性
-- [ X ] **动态工具加载**：实现 `CreateTool` 接口，支持通过配置文件或远程地址动态为 Agent 挂载新工具。
+- [ X ] **动态工具加载**：实现 `CreateTool` 接口，支持动态为 Agent 挂载远程工具。
 - [ X ] **技能包 (Skill) 支持**：定义 Skill 规范，允许将一组 Prompt + Tools 封装为特定技能（如：翻译专家、代码审计员）。
 - [ ] **MCP 协议对接**：实现 Model Context Protocol (MCP)，支持挂载标准化的外部上下文服务器。
 
