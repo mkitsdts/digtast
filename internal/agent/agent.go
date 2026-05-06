@@ -8,6 +8,7 @@ import (
 	"digital-labor/pkg/conf"
 	"digital-labor/pkg/ctxmanager"
 	"digital-labor/pkg/errs"
+	local "digital-labor/pkg/middleware/lbackend"
 	mmodel "digital-labor/pkg/model"
 	"digital-labor/pkg/registry"
 	"errors"
@@ -16,6 +17,7 @@ import (
 	"sync"
 
 	"github.com/cloudwego/eino/adk"
+	"github.com/cloudwego/eino/adk/prebuilt/deep"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/compose"
 	"github.com/google/uuid"
@@ -27,7 +29,7 @@ type DigitalAgent struct {
 	ID       string
 	Name     string
 	cm       model.ToolCallingChatModel
-	agent    *adk.ChatModelAgent
+	agent    adk.ResumableAgent
 	state    *state.StateManager
 	runMu    sync.Mutex
 	runStops context.CancelFunc
@@ -76,19 +78,20 @@ func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 	}
 	dga.cm = cm
 
-	dga.agent, err = adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
-		Name:  cfg.Name,
-		Model: cm,
+	dga.agent, err = deep.New(ctx, &deep.Config{
+		Name:      cfg.Name,
+		ChatModel: cm,
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
-				Tools: registry.GetTools(),
 				ToolCallMiddlewares: []compose.ToolMiddleware{
 					{Invokable: registry.Invokable},
 				},
 			},
 		},
-		Description: cfg.Description,
-		Handlers:    registry.GetHandlers(),
+		Backend:        local.GetBackend(),
+		StreamingShell: local.GetBackend(),
+		Description:    cfg.Description,
+		Handlers:       registry.GetHandlers(),
 		ModelRetryConfig: &adk.ModelRetryConfig{
 			MaxRetries: 5,
 		},
