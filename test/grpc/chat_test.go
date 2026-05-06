@@ -11,9 +11,18 @@ func TestChatMethods(t *testing.T) {
 	ctx := getContext()
 	agentID := cfg.AgentID
 
+	// 确保模型存在
+	client.CreateChatModel(ctx, &pb.CreateChatModelRequest{
+		ModelName: cfg.ModelName,
+		Key:       cfg.APIKey,
+		BaseUrl:   cfg.BaseURL,
+		Provider:  cfg.Provider,
+	})
+
 	// 确保 Agent 存在
 	client.CreateAgent(ctx, &pb.CreateAgentRequest{
-		AgentName: agentID,
+		AgentName:   agentID,
+		ChatModelId: cfg.ModelName,
 	})
 
 	t.Run("SendMessage", func(t *testing.T) {
