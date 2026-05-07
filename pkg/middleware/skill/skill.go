@@ -20,7 +20,6 @@ type Skill struct {
 func GetSkillMiddleware() adk.ChatModelAgentMiddleware {
 	ctx := ctxmanager.GetOrCreate("skill-middleware")
 	skillsDir := fmt.Sprintf("%s/skills", workspace.GetWorkspacePath())
-	fmt.Println("skillsDir", "path", skillsDir)
 	slog.Debug("skillsDir", "path", skillsDir)
 	skillBackend, err := skill.NewBackendFromFilesystem(ctx, &skill.BackendFromFilesystemConfig{
 		Backend: local.GetBackend(),

@@ -93,7 +93,7 @@ func LoadConfig() error {
 		Conf = DefaultConfig()
 		return SaveConfig()
 	}
-	slog.Info("config loaded", "config", Conf)
+	slog.Debug("config loaded", "config", Conf)
 	return nil
 }
 

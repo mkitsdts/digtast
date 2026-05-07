@@ -32,5 +32,4 @@ func init() {
 	}
 	registry.RegisterTool(t)
 	registry.RegisterBaseTool(t)
-	slog.Info("web_search tool registered")
 }

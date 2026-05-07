@@ -26,14 +26,12 @@ func NewChannel(kind string) MessageChannel {
 // 提供通道实现注册
 func RegisterChannel(kind string, f func(kind string) MessageChannel) {
 	register[kind] = f
-	slog.Info("register channel", "kind", kind)
+	slog.Debug("register channel", "kind", kind)
 }
 
 func LoadChannels() {
-	fmt.Println("load channels")
 	if conf.Conf.Channels == nil {
 		slog.Info("channels is nil")
-		fmt.Println("load channels")
 		return
 	}
 	for kind := range conf.Conf.Channels {

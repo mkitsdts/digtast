@@ -27,7 +27,7 @@ func RegisterBaseTool(t tool.BaseTool) {
 		slog.Error("failed to get tool info", "error", err)
 		return
 	}
-	slog.Info("registering tool", "name", info.Name)
+	slog.Debug("registering tool", "name", info.Name)
 	baseTools = append(baseTools, t)
 }
 
@@ -42,7 +42,7 @@ func RegisterTool(t tool.BaseTool) {
 		slog.Error("failed to get tool info", "error", err)
 		return
 	}
-	slog.Info("registering tool", "name", info.Name)
+	slog.Debug("registering tool", "name", info.Name)
 	tools = append(tools, t)
 }
 

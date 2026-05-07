@@ -21,6 +21,7 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/mark3labs/mcp-go v0.52.0
 	github.com/spf13/afero v1.15.0
+	github.com/spf13/cobra v1.10.2
 	github.com/wk8/go-ordered-map/v2 v2.1.8
 	google.golang.org/grpc v1.80.0
 	google.golang.org/protobuf v1.36.11
@@ -62,6 +63,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/jsonschema-go v0.4.2 // indirect
 	github.com/goph/emperror v0.17.2 // indirect
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -83,6 +85,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/slongfield/pyfmt v0.0.0-20220222012616-ea85ff4c361f // indirect
 	github.com/spf13/cast v1.7.1 // indirect
+	github.com/spf13/pflag v1.0.9 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/volcengine/volc-sdk-golang v1.0.199 // indirect
 	github.com/volcengine/volcengine-go-sdk v1.2.9 // indirect

@@ -25,5 +25,5 @@ func init() {
 	t := NewBrowserTool()
 	registry.RegisterTool(t)
 	registry.RegisterBaseTool(t)
-	slog.Info("register browser_use tool")
+	slog.Debug("register browser_use tool")
 }

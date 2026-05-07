@@ -18,5 +18,5 @@ func init() {
 		return
 	}
 	registry.RegisterTool(t)
-	slog.Info("ask user tool registered")
+	slog.Debug("ask user tool registered")
 }
