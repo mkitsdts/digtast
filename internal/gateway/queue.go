@@ -32,10 +32,6 @@ func ConsumeMessage() {
 			slog.Error("channel not exist", "notifyWay", msg.NotifyWay)
 			continue
 		}
-		defer func() {
-			// send result to user
-
-		}()
 
 		agent, err := center.AgentManager.GetDefaultAgent()
 		if err != nil {
