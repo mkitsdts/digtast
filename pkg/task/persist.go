@@ -8,10 +8,22 @@ import (
 )
 
 func persist() {
-	for event := range globalTaskManager.eventChan {
-		data, err := json.Marshal(event)
-		if err != nil {
-			slog.Error("failed to marshal task event", "error", err)
+	data := make([]byte, 0, 1024)
+	var err error
+	for {
+		var event TaskEvent
+		var ok bool
+		select {
+		case event, ok = <-globalTaskManager.eventChan:
+			if !ok {
+				continue
+			}
+			data, err = json.Marshal(event)
+			if err != nil {
+				slog.Error("failed to marshal task event", "error", err)
+				continue
+			}
+		default:
 			continue
 		}
 
