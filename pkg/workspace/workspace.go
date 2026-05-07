@@ -41,11 +41,14 @@ func InitWorkspace() {
 		return
 	}
 
-	logPath := fmt.Sprintf("%s/app.log", path)
-	if err := os.MkdirAll(path, 0755); err != nil {
-		slog.Error("Failed to create log directory", "path", logPath, "err", err)
+	agentsPath := fmt.Sprintf("%s/agents.json", path)
+	_, err := os.OpenFile(agentsPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		slog.Error("Failed to init agent file", "path", agentsPath, "err", err)
 		return
 	}
+
+	logPath := fmt.Sprintf("%s/app.log", path)
 	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		slog.Error("Failed to open log file", "path", logPath, "err", err)
