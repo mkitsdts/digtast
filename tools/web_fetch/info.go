@@ -16,7 +16,7 @@ import (
 
 type FetchTool struct {
 	client *http.Client
-	mux    sync.Mutex
+	mux    *sync.Mutex
 }
 
 func (t *FetchTool) Info(ctx context.Context) (*schema.ToolInfo, error) {
