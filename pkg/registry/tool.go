@@ -63,27 +63,36 @@ func GetToolsByType(typ string) []tool.BaseTool {
 	var targetNames []string
 
 	switch typ {
-	case "research":
+	case "research", "researcher":
 		targetNames = []string{"duckduckgo_search", "browser_use"}
-	case "execution":
-		targetNames = []string{"ask_user"}
+		nameMap := make(map[string]bool)
+		for _, n := range targetNames {
+			nameMap[n] = true
+		}
+
+		for _, t := range tools {
+			info, err := t.Info(context.Background())
+			if err != nil {
+				continue
+			}
+			if nameMap[info.Name] {
+				result = append(result, t)
+			}
+		}
+	case "execution", "executer":
+		for _, t := range tools {
+			info, err := t.Info(context.Background())
+			if err != nil {
+				continue
+			}
+			if info.Name == "fork_subagent" {
+				continue
+			}
+			result = append(result, t)
+		}
 	default:
 		return nil
 	}
 
-	nameMap := make(map[string]bool)
-	for _, n := range targetNames {
-		nameMap[n] = true
-	}
-
-	for _, t := range tools {
-		info, err := t.Info(context.Background())
-		if err != nil {
-			continue
-		}
-		if nameMap[info.Name] {
-			result = append(result, t)
-		}
-	}
 	return result
 }
