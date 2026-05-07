@@ -145,6 +145,8 @@ func (dga *DigitalAgent) Cancel() error {
 
 // Compress triggers manual memory compression for the agent's session.
 func (dga *DigitalAgent) Compress() error {
+	dga.runMu.Lock()
+	defer dga.runMu.Unlock()
 	session, err := dga.memory.GetOrCreate()
 	if err != nil {
 		return err
