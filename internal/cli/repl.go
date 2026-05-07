@@ -15,6 +15,7 @@ func RunLocalREPL() {
 	s := &replState{
 		scanner: bufio.NewScanner(os.Stdin),
 	}
+	activeState = s
 
 	s.initAgent()
 	printWelcome()
@@ -33,11 +34,23 @@ func RunLocalREPL() {
 		}
 
 		if strings.HasPrefix(input, "/") {
-			parts := strings.Split(input, " ")
-			cmd := parts[0]
-			args := parts[1:]
+			// Use Cobra to parse and execute commands
+			cmdStr := strings.TrimPrefix(input, "/")
+			args := strings.Split(cmdStr, " ")
 
-			if s.dispatch(cmd, args) {
+			// Special case for /help to use cobra's help
+			if args[0] == "help" {
+				rootCmd.Help()
+				continue
+			}
+
+			rootCmd.SetArgs(args)
+			if err := rootCmd.Execute(); err != nil {
+				// Cobra already prints the error if it's a usage error or similar
+			}
+
+			if exitREPL {
+				fmt.Println("Goodbye!")
 				return
 			}
 			continue
@@ -45,39 +58,6 @@ func RunLocalREPL() {
 
 		s.runChat(input)
 	}
-}
-
-func (s *replState) dispatch(cmd string, args []string) bool {
-	switch cmd {
-	case "/exit", "/quit":
-		fmt.Println("Goodbye!")
-		return true
-
-	case "/help":
-		printHelp()
-
-	case "/ls":
-		s.cmdLs()
-
-	case "/use":
-		s.cmdUse(args)
-
-	case "/new":
-		s.cmdNew()
-
-	case "/reset":
-		s.cmdReset()
-
-	case "/model":
-		s.cmdModel(args)
-
-	case "/channel":
-		s.cmdChannel(args)
-
-	default:
-		errorMsg("Unknown command: %s", cmd)
-	}
-	return false
 }
 
 func (s *replState) initAgent() {

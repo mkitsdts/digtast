@@ -13,6 +13,8 @@ type replState struct {
 	agentName   string
 }
 
+var activeState *replState
+
 func (s *replState) prompt() string {
 	if s.agentID != "" {
 		return colorBlue + "[" + s.agentName + "]" + colorReset + " >>> "
