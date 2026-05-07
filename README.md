@@ -8,7 +8,7 @@
 
 数字助理在内部主要划分为五个核心部分：
 
-1. **网关 (Gateway)**：解决与主节点的通信传输，并负责管理视觉显示（如启动 VNC 、FTP）。
+1. **网关 (Gateway)**：解决与主节点的通信传输，并负责管理视觉显示（如启动 FTP）。
 2. **会话 (Session)**：负责维护用户的对话上下文，保障多轮对话的连贯性。
 3. **记忆 (Memory)**：负责整理并持久化对话内容，为智能体提供长期记忆支持。
 4. **执行 (Execution)**：核心的行动层，包含工具管理器 (Tool)、MCP 管理器和技能管理器 (Skill)。
@@ -108,7 +108,7 @@ time=... level=INFO msg="server listening at" address=[::]:10086
 ### 🔌 技能与扩展性
 - [ X ] **动态工具加载**：实现 `CreateTool` 接口，支持动态为 Agent 挂载远程工具。
 - [ X ] **技能包 (Skill) 支持**：定义 Skill 规范，允许将一组 Prompt + Tools 封装为特定技能（如：翻译专家、代码审计员）。
-- [ ] **MCP 协议对接**：实现 Model Context Protocol (MCP)，支持挂载标准化的外部上下文服务器。
+- [ X ] **MCP 协议对接**：实现 Model Context Protocol (MCP)，支持挂载标准化的外部上下文服务器。
 
 ###    通道内容交互
 - [ X ] **QQ**
