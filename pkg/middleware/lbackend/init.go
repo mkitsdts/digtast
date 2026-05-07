@@ -8,6 +8,9 @@ import (
 var (
 	backend     *Local
 	backendOnce sync.Once
+
+	secureBackend     *SecureLocal
+	secureBackendOnce sync.Once
 )
 
 func init() {
@@ -16,8 +19,17 @@ func init() {
 			ValidateCommand: nil,
 		})
 	})
+	secureBackendOnce.Do(func() {
+		secureBackend, _ = NewSecureBackend(context.Background(), &Config{
+			ValidateCommand: nil,
+		})
+	})
 }
 
 func GetBackend() *Local {
 	return backend
+}
+
+func GetSecureBackend() *SecureLocal {
+	return secureBackend
 }

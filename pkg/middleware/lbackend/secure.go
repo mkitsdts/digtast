@@ -26,12 +26,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"runtime/debug"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/bmatcuk/doublestar/v4"
@@ -39,19 +37,12 @@ import (
 	"github.com/cloudwego/eino/schema"
 )
 
-type Config struct {
-	ValidateCommand func(string) error // Deprecated: internal security check is used instead
-	WorkPath        string
-}
-
-type Local struct {
+type SecureLocal struct {
 	workPath string
 }
 
-var dangerousKeywords = regexp.MustCompile(`(?i)\b(rm|sudo|chmod|chown)\b`)
-
 // NewBackend creates a new local filesystem Local instance.
-func NewBackend(_ context.Context, cfg *Config) (*Local, error) {
+func NewSecureBackend(_ context.Context, cfg *Config) (*SecureLocal, error) {
 	if cfg == nil {
 		return nil, errors.New("config is required")
 	}
@@ -73,12 +64,12 @@ func NewBackend(_ context.Context, cfg *Config) (*Local, error) {
 		return nil, fmt.Errorf("failed to create workspace directory: %w", err)
 	}
 
-	return &Local{
+	return &SecureLocal{
 		workPath: absPath,
 	}, nil
 }
 
-func (s *Local) LsInfo(ctx context.Context, req *filesystem.LsInfoRequest) ([]filesystem.FileInfo, error) {
+func (s *SecureLocal) LsInfo(ctx context.Context, req *filesystem.LsInfoRequest) ([]filesystem.FileInfo, error) {
 	path, err := checkSecurity(ctx, "list", req.Path)
 	if err != nil {
 		return nil, err
@@ -115,7 +106,7 @@ func (s *Local) LsInfo(ctx context.Context, req *filesystem.LsInfoRequest) ([]fi
 	return files, nil
 }
 
-func (s *Local) Read(ctx context.Context, req *filesystem.ReadRequest) (*filesystem.FileContent, error) {
+func (s *SecureLocal) Read(ctx context.Context, req *filesystem.ReadRequest) (*filesystem.FileContent, error) {
 	path, err := checkSecurity(ctx, "read", req.FilePath)
 	if err != nil {
 		return nil, err
@@ -183,20 +174,7 @@ func (s *Local) Read(ctx context.Context, req *filesystem.ReadRequest) (*filesys
 	}, nil
 }
 
-type rgJSON struct {
-	Type string `json:"type"`
-	Data struct {
-		Path struct {
-			Text string `json:"text"`
-		} `json:"path"`
-		LineNumber int `json:"line_number"`
-		Lines      struct {
-			Text string `json:"text"`
-		} `json:"lines"`
-	} `json:"data"`
-}
-
-func (s *Local) GrepRaw(ctx context.Context, req *filesystem.GrepRequest) ([]filesystem.GrepMatch, error) {
+func (s *SecureLocal) GrepRaw(ctx context.Context, req *filesystem.GrepRequest) ([]filesystem.GrepMatch, error) {
 	if req.Pattern == "" {
 		return nil, fmt.Errorf("pattern is required")
 	}
@@ -276,7 +254,7 @@ func (s *Local) GrepRaw(ctx context.Context, req *filesystem.GrepRequest) ([]fil
 	return matches, nil
 }
 
-func (s *Local) GlobInfo(ctx context.Context, req *filesystem.GlobInfoRequest) ([]filesystem.FileInfo, error) {
+func (s *SecureLocal) GlobInfo(ctx context.Context, req *filesystem.GlobInfoRequest) ([]filesystem.FileInfo, error) {
 	path, err := checkSecurity(ctx, "list", req.Path)
 	if err != nil {
 		return nil, err
@@ -340,71 +318,16 @@ func (s *Local) GlobInfo(ctx context.Context, req *filesystem.GlobInfoRequest) (
 	return files, nil
 }
 
-func (s *Local) Write(ctx context.Context, req *filesystem.WriteRequest) error {
-	path, err := checkSecurity(ctx, "write", req.FilePath)
-	if err != nil {
-		return err
-	}
+func (s *SecureLocal) Write(ctx context.Context, req *filesystem.WriteRequest) error {
+	return nil
+}
 
-	parentDir := filepath.Dir(path)
-	if err := os.MkdirAll(parentDir, 0755); err != nil {
-		return fmt.Errorf("failed to create parent directory: %w", err)
-	}
-
-	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-	if err != nil {
-		return fmt.Errorf("failed to open file for writing: %w", err)
-	}
-	defer file.Close()
-
-	_, err = file.Write([]byte(req.Content))
-	if err != nil {
-		return fmt.Errorf("failed to write to file: %w", err)
-	}
+func (s *SecureLocal) Edit(ctx context.Context, req *filesystem.EditRequest) error {
 
 	return nil
 }
 
-func (s *Local) Edit(ctx context.Context, req *filesystem.EditRequest) error {
-	path, err := checkSecurity(ctx, "edit", req.FilePath)
-	if err != nil {
-		return err
-	}
-
-	if req.OldString == "" {
-		return fmt.Errorf("old string is required")
-	}
-
-	if req.OldString == req.NewString {
-		return fmt.Errorf("new string must be different from old string")
-	}
-
-	content, err := os.ReadFile(path)
-	if err != nil {
-		return fmt.Errorf("failed to read file: %w", err)
-	}
-
-	text := string(content)
-	count := strings.Count(text, req.OldString)
-
-	if count == 0 {
-		return fmt.Errorf("string not found in file: '%s'", req.OldString)
-	}
-	if count > 1 && !req.ReplaceAll {
-		return fmt.Errorf("string '%s' appears multiple times. Use replace_all=True to replace all occurrences", req.OldString)
-	}
-
-	var newText string
-	if req.ReplaceAll {
-		newText = strings.Replace(text, req.OldString, req.NewString, -1)
-	} else {
-		newText = strings.Replace(text, req.OldString, req.NewString, 1)
-	}
-
-	return os.WriteFile(path, []byte(newText), 0644)
-}
-
-func (s *Local) ExecuteStreaming(ctx context.Context, input *filesystem.ExecuteRequest) (result *schema.StreamReader[*filesystem.ExecuteResponse], err error) {
+func (s *SecureLocal) ExecuteStreaming(ctx context.Context, input *filesystem.ExecuteRequest) (result *schema.StreamReader[*filesystem.ExecuteResponse], err error) {
 	if input.Command == "" {
 		return nil, fmt.Errorf("command is required")
 	}
@@ -439,7 +362,7 @@ func (s *Local) ExecuteStreaming(ctx context.Context, input *filesystem.ExecuteR
 }
 
 // initStreamingCmd creates command with stdout and stderr pipes.
-func (s *Local) initStreamingCmd(ctx context.Context, command string) (*exec.Cmd, io.ReadCloser, io.ReadCloser, error) {
+func (s *SecureLocal) initStreamingCmd(ctx context.Context, command string) (*exec.Cmd, io.ReadCloser, io.ReadCloser, error) {
 	name, args := s.getShellArgs(command)
 	cmd := exec.CommandContext(ctx, name, args...)
 	cmd.Dir = s.workPath
@@ -459,7 +382,7 @@ func (s *Local) initStreamingCmd(ctx context.Context, command string) (*exec.Cmd
 }
 
 // getShellArgs returns the platform-appropriate shell and arguments for command execution.
-func (s *Local) getShellArgs(command string) (string, []string) {
+func (s *SecureLocal) getShellArgs(command string) (string, []string) {
 	if runtime.GOOS == "windows" {
 		return "powershell", []string{"-NoProfile", "-Command", command}
 	}
@@ -468,7 +391,7 @@ func (s *Local) getShellArgs(command string) (string, []string) {
 
 // runCmdInBackground executes command in background without waiting for completion.
 // The caller controls timeout/cancellation via ctx.Done().
-func (s *Local) runCmdInBackground(ctx context.Context, cmd *exec.Cmd, stdout, stderr io.ReadCloser, w *schema.StreamWriter[*filesystem.ExecuteResponse]) {
+func (s *SecureLocal) runCmdInBackground(ctx context.Context, cmd *exec.Cmd, stdout, stderr io.ReadCloser, w *schema.StreamWriter[*filesystem.ExecuteResponse]) {
 	go func() {
 		defer func() {
 			if pe := recover(); pe != nil {
@@ -498,23 +421,8 @@ func (s *Local) runCmdInBackground(ctx context.Context, cmd *exec.Cmd, stdout, s
 	}()
 }
 
-// drainPipesConcurrently consumes stdout and stderr concurrently to prevent pipe blocking.
-func drainPipesConcurrently(stdout, stderr io.Reader) {
-	var wg sync.WaitGroup
-	wg.Add(2)
-	go func() {
-		defer wg.Done()
-		_, _ = io.Copy(io.Discard, stdout)
-	}()
-	go func() {
-		defer wg.Done()
-		_, _ = io.Copy(io.Discard, stderr)
-	}()
-	wg.Wait()
-}
-
 // streamCmdOutput handles streaming command output to the writer.
-func (s *Local) streamCmdOutput(ctx context.Context, cmd *exec.Cmd, stdout, stderr io.ReadCloser, w *schema.StreamWriter[*filesystem.ExecuteResponse]) {
+func (s *SecureLocal) streamCmdOutput(ctx context.Context, cmd *exec.Cmd, stdout, stderr io.ReadCloser, w *schema.StreamWriter[*filesystem.ExecuteResponse]) {
 	defer func() {
 		if pe := recover(); pe != nil {
 			w.Send(nil, newPanicErr(pe, debug.Stack()))
@@ -539,7 +447,7 @@ func (s *Local) streamCmdOutput(ctx context.Context, cmd *exec.Cmd, stdout, stde
 }
 
 // readStderrAsync reads stderr in a separate goroutine.
-func (s *Local) readStderrAsync(stderr io.Reader) (*[]byte, <-chan error) {
+func (s *SecureLocal) readStderrAsync(stderr io.Reader) (*[]byte, <-chan error) {
 	stderrData := new([]byte)
 	stderrErr := make(chan error, 1)
 
@@ -562,7 +470,7 @@ func (s *Local) readStderrAsync(stderr io.Reader) (*[]byte, <-chan error) {
 }
 
 // streamStdout streams stdout line by line to the writer.
-func (s *Local) streamStdout(ctx context.Context, cmd *exec.Cmd, stdout io.Reader, w *schema.StreamWriter[*filesystem.ExecuteResponse]) (bool, error) {
+func (s *SecureLocal) streamStdout(ctx context.Context, cmd *exec.Cmd, stdout io.Reader, w *schema.StreamWriter[*filesystem.ExecuteResponse]) (bool, error) {
 	scanner := bufio.NewScanner(stdout)
 	hasOutput := false
 
@@ -586,7 +494,7 @@ func (s *Local) streamStdout(ctx context.Context, cmd *exec.Cmd, stdout io.Reade
 }
 
 // handleCmdCompletion handles command completion and sends final response.
-func (s *Local) handleCmdCompletion(cmd *exec.Cmd, stderrData *[]byte, hasOutput bool, w *schema.StreamWriter[*filesystem.ExecuteResponse]) {
+func (s *SecureLocal) handleCmdCompletion(cmd *exec.Cmd, stderrData *[]byte, hasOutput bool, w *schema.StreamWriter[*filesystem.ExecuteResponse]) {
 	if err := cmd.Wait(); err != nil {
 		exitCode := 0
 		var exitError *exec.ExitError
@@ -603,27 +511,5 @@ func (s *Local) handleCmdCompletion(cmd *exec.Cmd, stderrData *[]byte, hasOutput
 
 	if !hasOutput {
 		w.Send(&filesystem.ExecuteResponse{ExitCode: new(int)}, nil)
-	}
-}
-
-// sendErrorAndClose sends an error to the stream and closes it.
-func sendErrorAndClose(w *schema.StreamWriter[*filesystem.ExecuteResponse], err error) {
-	defer w.Close()
-	w.Send(nil, err)
-}
-
-type panicErr struct {
-	info  any
-	stack []byte
-}
-
-func (p *panicErr) Error() string {
-	return fmt.Sprintf("panic error: %v, \nstack: %s", p.info, string(p.stack))
-}
-
-func newPanicErr(info any, stack []byte) error {
-	return &panicErr{
-		info:  info,
-		stack: stack,
 	}
 }
