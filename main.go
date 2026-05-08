@@ -19,7 +19,7 @@ import (
 )
 
 func main() {
-	localMode := flag.Bool("local", true, "Run in local interactive mode")
+	localMode := flag.Bool("local", false, "Run in local interactive mode")
 	port := flag.String("port", "10086", "gRPC server port")
 	flag.Parse()
 
