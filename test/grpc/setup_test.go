@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"digital-labor/internal/server"
 	pb "digital-labor/proto"
 
 	"google.golang.org/grpc"
@@ -47,15 +46,11 @@ func TestMain(m *testing.M) {
 	// 启动服务器
 	// 假设我们在测试中启动本地服务器，或者连接到配置中的地址
 	// 如果配置中的地址是远程的，我们可以跳过本地启动
-	go func() {
-		server.Start(":" + "10086") // 强制使用 10086 或者从 cfg.Addr 提取端口
-	}()
-
 	// 等待服务器启动
 	time.Sleep(1 * time.Second)
 
 	// 创建客户端连接
-	conn, err = grpc.Dial(cfg.Addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err = grpc.NewClient(cfg.Addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
