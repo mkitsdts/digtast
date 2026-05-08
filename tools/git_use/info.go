@@ -56,7 +56,6 @@ type GitUseArguments struct {
 }
 
 func (t *GitTool) InvokableRun(ctx context.Context, argumentsInJSON string, opts ...tool.Option) (string, error) {
-	// TODO: 加入漂亮的交互式
 	args := GitUseArguments{}
 	if err := json.Unmarshal([]byte(argumentsInJSON), &args); err != nil {
 		return "", err

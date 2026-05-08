@@ -16,13 +16,12 @@ const (
 )
 
 func printWelcome() {
-	banner := `
-    ____  _       _ _        _
-   |  _ \(_) __ _(_) |_ __ _| |
-   | | | | |/ _` + "`" + ` | |
-   | |_| | | (_| | | || (_| | |
-   |____/|_|\__, |_|\__\__,_|_|
-            |___/`
+	banner := `  ____  _       _ _        _
+ / ___|(_) __ _(_) |_ __ _| |
+| |  _ | |/ _` + "`" + ` | | __/ _` + "`" + ` | |
+| |_| || | (_| | | || (_| | |
+ \____||_|\__, |_|\__\__,_|_|
+          |___/`
 	fmt.Print(colorCyan + banner + colorReset)
 	fmt.Printf("%s%s=== Digital Local Interactive Mode ===%s\n", colorBold, colorCyan, colorReset)
 	fmt.Println("Type " + colorYellow + "/help" + colorReset + " for available commands, " + colorYellow + "/exit" + colorReset + " to quit.")
