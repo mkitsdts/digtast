@@ -30,6 +30,7 @@ func (c *Client) Start(ctx context.Context) error {
 	err := c.Client.Start(ctx)
 	if err != nil {
 		slog.Error("failed to start mcp client", "err", err)
+		return err
 	}
 
 	initRequest := mcp.InitializeRequest{}
