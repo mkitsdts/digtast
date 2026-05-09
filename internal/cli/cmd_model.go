@@ -55,10 +55,6 @@ var modelAddCmd = &cobra.Command{
 		}
 
 		key := activeState.promptString("API Key")
-		if key == "" {
-			errorMsg("API Key is required.")
-			return
-		}
 
 		modelsInput := activeState.promptString("Model Names (comma separated, e.g., gpt-4,gpt-3.5-turbo)")
 		baseURL := activeState.promptOptional("Base URL")
