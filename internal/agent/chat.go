@@ -21,10 +21,12 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 		return nil, err
 	}
 
-	if err := session.Append(&schema.Message{
-		Role:    schema.User,
-		Content: req.Content,
-	}); err != nil {
+	msg, err := buildUserMessage(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := session.Append(msg); err != nil {
 		return nil, err
 	}
 
@@ -173,6 +175,103 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 	}()
 
 	return ch, nil
+}
+
+func buildUserMessage(req mmodel.ChatRequest) (*schema.Message, error) {
+	msg := new(schema.Message)
+
+	msg.Content = req.Content
+
+	arts, err := buildMessageInputParts(req.Content, req.MultiModalResources)
+	if err != nil {
+		return nil, err
+	}
+	msg.UserInputMultiContent = arts
+
+	return msg, nil
+}
+
+func buildMessageInputParts(content string, resources []mmodel.MultiModalResource) ([]schema.MessageInputPart, error) {
+	if len(resources) == 0 {
+		return nil, nil
+	}
+
+	parts := make([]schema.MessageInputPart, 0, len(resources)+1)
+	if content != "" {
+		parts = append(parts, schema.MessageInputPart{
+			Type: schema.ChatMessagePartTypeText,
+			Text: content,
+		})
+	}
+
+	for _, resource := range resources {
+		part, err := buildMessageInputPart(resource)
+		if err != nil {
+			return nil, err
+		}
+		parts = append(parts, part)
+	}
+
+	return parts, nil
+}
+
+func buildMessageInputPart(resource mmodel.MultiModalResource) (schema.MessageInputPart, error) {
+	switch resource.Type {
+	case mmodel.MultiModalResourceTypeText:
+		return schema.MessageInputPart{
+			Type:  schema.ChatMessagePartTypeText,
+			Text:  resource.Text,
+			Extra: resource.Extra,
+		}, nil
+	case mmodel.MultiModalResourceTypeImage:
+		return schema.MessageInputPart{
+			Type: schema.ChatMessagePartTypeImageURL,
+			Image: &schema.MessageInputImage{
+				MessagePartCommon: messagePartCommon(resource),
+				Detail:            schema.ImageURLDetail(resource.Detail),
+			},
+			Extra: resource.Extra,
+		}, nil
+	case mmodel.MultiModalResourceTypeAudio:
+		return schema.MessageInputPart{
+			Type:  schema.ChatMessagePartTypeAudioURL,
+			Audio: &schema.MessageInputAudio{MessagePartCommon: messagePartCommon(resource)},
+			Extra: resource.Extra,
+		}, nil
+	case mmodel.MultiModalResourceTypeVideo:
+		return schema.MessageInputPart{
+			Type:  schema.ChatMessagePartTypeVideoURL,
+			Video: &schema.MessageInputVideo{MessagePartCommon: messagePartCommon(resource)},
+			Extra: resource.Extra,
+		}, nil
+	case mmodel.MultiModalResourceTypeFile:
+		return schema.MessageInputPart{
+			Type: schema.ChatMessagePartTypeFileURL,
+			File: &schema.MessageInputFile{
+				MessagePartCommon: messagePartCommon(resource),
+				Name:              resource.Name,
+			},
+			Extra: resource.Extra,
+		}, nil
+	default:
+		return schema.MessageInputPart{}, errors.New("unsupported multimodal resource type")
+	}
+}
+
+func messagePartCommon(resource mmodel.MultiModalResource) schema.MessagePartCommon {
+	common := schema.MessagePartCommon{
+		MIMEType: resource.MIMEType,
+		Extra:    resource.Extra,
+	}
+
+	if resource.URL != "" {
+		common.URL = &resource.URL
+	}
+	if resource.Base64Data != "" {
+		common.Base64Data = &resource.Base64Data
+	}
+
+	return common
 }
 
 func (dga *DigitalAgent) stop() error {

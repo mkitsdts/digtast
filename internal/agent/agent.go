@@ -110,16 +110,17 @@ func (dga *DigitalAgent) GetModel() model.ToolCallingChatModel {
 }
 
 // Run starts a conversation turn. The agent uses its own ID as the session key.
-func (dga *DigitalAgent) Run(ctx context.Context, content string, isStream bool) (chan string, error) {
-	if content == "" {
+func (dga *DigitalAgent) Run(ctx context.Context, content string, resources []mmodel.MultiModalResource, isStream bool) (chan string, error) {
+	if content == "" && len(resources) == 0 {
 		return nil, errors.New("content is empty")
 	}
 
 	vctx := ctxmanager.GetOrCreate(dga.ID)
 
 	return dga.run(vctx, mmodel.ChatRequest{
-		Content:  content,
-		IsStream: isStream,
+		Content:             content,
+		MultiModalResources: resources,
+		IsStream:            isStream,
 	})
 }
 

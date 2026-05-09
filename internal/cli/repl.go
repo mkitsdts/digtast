@@ -96,7 +96,7 @@ func (s *replState) runChat(input string) {
 	ctx := context.Background()
 	fmt.Printf("%sAssistant: %s", colorCyan, colorReset)
 
-	ch, err := s.agent.Run(ctx, input, true)
+	ch, err := s.agent.Run(ctx, input, nil, true)
 	if err != nil {
 		fmt.Printf("\n")
 		errorMsg("%v", err)

@@ -83,6 +83,9 @@ func ShardMessages(msgs []*schema.Message, tokenLimit int) [][]*schema.Message {
 		for _, part := range msg.MultiContent {
 			msgTokens += estimateTokens(part.Text)
 		}
+		for _, part := range msg.UserInputMultiContent {
+			msgTokens += estimateTokens(part.Text)
+		}
 
 		if currentTokens+msgTokens > tokenLimit && len(currentShard) > 0 {
 			shards = append(shards, currentShard)
@@ -113,6 +116,11 @@ func ExtractChunk(ctx context.Context, m model.BaseChatModel, chunk []*schema.Me
 			conversation.WriteString(fmt.Sprintf("[%s] %s\n", role, msg.Content))
 		}
 		for _, part := range msg.MultiContent {
+			if part.Text != "" {
+				conversation.WriteString(fmt.Sprintf("[%s] %s\n", role, part.Text))
+			}
+		}
+		for _, part := range msg.UserInputMultiContent {
 			if part.Text != "" {
 				conversation.WriteString(fmt.Sprintf("[%s] %s\n", role, part.Text))
 			}

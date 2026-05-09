@@ -157,6 +157,21 @@ func (s *Session) Size() int {
 		for _, part := range msg.MultiContent {
 			total += len(part.Text)
 		}
+		for _, part := range msg.UserInputMultiContent {
+			total += len(part.Text)
+			if part.Image != nil && part.Image.Base64Data != nil {
+				total += len(*part.Image.Base64Data)
+			}
+			if part.Audio != nil && part.Audio.Base64Data != nil {
+				total += len(*part.Audio.Base64Data)
+			}
+			if part.Video != nil && part.Video.Base64Data != nil {
+				total += len(*part.Video.Base64Data)
+			}
+			if part.File != nil && part.File.Base64Data != nil {
+				total += len(*part.File.Base64Data)
+			}
+		}
 	}
 	return total / 4
 }

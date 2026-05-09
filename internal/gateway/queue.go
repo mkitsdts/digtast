@@ -6,7 +6,11 @@ import (
 	"digital-labor/pkg/gateway"
 	"digital-labor/pkg/model"
 	"digital-labor/pkg/queue"
+	"encoding/base64"
 	"log/slog"
+	"mime"
+	"path/filepath"
+	"strings"
 )
 
 var que *queue.Queue[*UserMessage] = queue.NewQueue[*UserMessage]()
@@ -45,7 +49,7 @@ func ConsumeMessage() {
 			return
 		}
 
-		sm, err := agent.Run(context.Background(), msg.Content, false)
+		sm, err := agent.Run(context.Background(), msg.Content, multiContentToResources(msg.MultiContent), false)
 		if err != nil {
 			result.Success = false
 			result.Error = err
@@ -63,5 +67,39 @@ func ConsumeMessage() {
 			slog.Error("failed to send message", "error", err)
 		}
 		slog.Info("agent notify success", "content", msg.Content)
+	}
+}
+
+func multiContentToResources(content map[string][]byte) []model.MultiModalResource {
+	if len(content) == 0 {
+		return nil
+	}
+
+	resources := make([]model.MultiModalResource, 0, len(content))
+	for name, data := range content {
+		mimeType := mime.TypeByExtension(filepath.Ext(name))
+		if mimeType == "" {
+			mimeType = "application/octet-stream"
+		}
+		resources = append(resources, model.MultiModalResource{
+			Type:       resourceTypeFromMIME(mimeType),
+			Base64Data: base64.StdEncoding.EncodeToString(data),
+			MIMEType:   mimeType,
+			Name:       name,
+		})
+	}
+	return resources
+}
+
+func resourceTypeFromMIME(mimeType string) model.MultiModalResourceType {
+	switch {
+	case strings.HasPrefix(mimeType, "image/"):
+		return model.MultiModalResourceTypeImage
+	case strings.HasPrefix(mimeType, "audio/"):
+		return model.MultiModalResourceTypeAudio
+	case strings.HasPrefix(mimeType, "video/"):
+		return model.MultiModalResourceTypeVideo
+	default:
+		return model.MultiModalResourceTypeFile
 	}
 }

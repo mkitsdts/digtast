@@ -27,7 +27,7 @@ func TestChat(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	ch, err := agent.Run(ctx, "帮我查一下广州的天气", true)
+	ch, err := agent.Run(ctx, "帮我查一下广州的天气", nil, true)
 	if err != nil {
 		t.Fatal(err)
 	}

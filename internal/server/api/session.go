@@ -61,7 +61,7 @@ func (s *ContainerServer) SendMessage(req *pb.SendMessageRequest, stream pb.Cont
 		return err
 	}
 
-	sm, err := digitalAgent.Run(ctx, req.Message, req.IsStream)
+	sm, err := digitalAgent.Run(ctx, req.Message, nil, req.IsStream)
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func (s *ContainerServer) StopTask(ctx context.Context, req *pb.StopTaskRequest)
 }
 
 func (s *ContainerServer) GetTaskStatus(ctx context.Context, req *pb.GetTaskStatusRequest) (*pb.GetTaskStatusResponse, error) {
-	// Placeholder for task status. 
+	// Placeholder for task status.
 	// In a real implementation, this would query the agent's current state.
 	return &pb.GetTaskStatusResponse{
 		AgentId:    req.AgentId,
