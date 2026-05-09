@@ -5,6 +5,7 @@ import (
 	"digital-labor/internal/gateway"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 )
@@ -117,9 +118,9 @@ func (c *QQChannel) GetMultiContent(url string) ([]byte, error) {
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
-	body := make([]byte, 0)
-	if _, err = resp.Body.Read(body); err != nil {
-		return nil, err
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read body failed: %w", err)
 	}
 	return body, nil
 }
