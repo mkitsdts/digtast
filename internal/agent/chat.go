@@ -182,6 +182,7 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 func buildUserMessage(req mmodel.ChatRequest) (*schema.Message, error) {
 	msg := new(schema.Message)
 
+	msg.Role = schema.User
 	msg.Content = req.Content
 
 	arts, err := buildMessageInputParts(req.Content, req.MultiModalResources)
