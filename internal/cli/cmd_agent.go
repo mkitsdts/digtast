@@ -25,7 +25,7 @@ var lsCmd = &cobra.Command{
 
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 		fmt.Fprintln(w, colorCyan+"ID\tName"+colorReset)
-		
+
 		for _, a := range ags {
 			fmt.Fprintf(w, "%s\t%s\n", a.ID, a.Name)
 		}
@@ -63,19 +63,15 @@ var newCmd = &cobra.Command{
 			return
 		}
 
-		modelName := activeState.promptString("Model Name (supported: doubao, deepseek)")
+		modelName := activeState.promptString("Model Name (e.g., doubao, deepseek)")
 		if modelName == "" {
 			errorMsg("Model name is required.")
 			return
 		}
 
-		modelVersion := activeState.promptString("Model Version (e.g., doubao-seed-2-0-lite-260215)")
-		if modelVersion == "" {
-			errorMsg("Model version is required.")
-			return
-		}
+		modelVersion := activeState.promptString("Model Version(optional)")
 
-		description := activeState.promptOptional("Description")
+		description := activeState.promptOptional("Init Prompt(optional)")
 
 		cfg := &model.DigitalAgentConfig{
 			Name:        name,

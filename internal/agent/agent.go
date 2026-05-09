@@ -68,7 +68,7 @@ func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 	slog.Info("model config found", "model", cfg.Model, "modelKind", mCfg.ModelNames)
 
 	ctx := ctxmanager.GetOrCreate(cfg.ID)
-	if cfg.ModelKind == "default" {
+	if cfg.ModelKind == "" || cfg.ModelKind == "default" {
 		cfg.ModelKind = mCfg.ModelNames[0]
 	}
 

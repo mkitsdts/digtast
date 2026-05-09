@@ -42,12 +42,6 @@ var modelAddCmd = &cobra.Command{
 	Use:   "add",
 	Short: "Add a new model provider interactively",
 	Run: func(cmd *cobra.Command, args []string) {
-		configName := activeState.promptString("Provider Config Name (e.g., my-openai)")
-		if configName == "" {
-			errorMsg("Config name is required.")
-			return
-		}
-
 		provider := activeState.promptString("LLM Provider (ark/openai/qwen/deepseek)")
 		if provider == "" {
 			errorMsg("Provider is required.")
@@ -64,7 +58,7 @@ var modelAddCmd = &cobra.Command{
 			modelNames[i] = strings.TrimSpace(modelNames[i])
 		}
 
-		err := chatmodel.ModelManager.CreateModel(configName, conf.ModelConfig{
+		err := chatmodel.ModelManager.CreateModel(provider, conf.ModelConfig{
 			Provider:   provider,
 			Key:        key,
 			ModelNames: modelNames,
@@ -76,7 +70,7 @@ var modelAddCmd = &cobra.Command{
 			return
 		}
 
-		successMsg("Model configuration '%s' saved!", configName)
+		successMsg("Model configuration '%s' saved!", provider)
 	},
 }
 
