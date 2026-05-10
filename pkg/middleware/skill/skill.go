@@ -3,9 +3,8 @@ package registry
 import (
 	"digital-labor/pkg/ctxmanager"
 	local "digital-labor/pkg/middleware/lbackend"
-	"digital-labor/pkg/registry"
+	skillmgr "digital-labor/pkg/skill"
 	"digital-labor/pkg/workspace"
-	"fmt"
 	"log/slog"
 
 	"github.com/cloudwego/eino/adk"
@@ -18,8 +17,12 @@ type Skill struct {
 }
 
 func GetSkillMiddleware() adk.ChatModelAgentMiddleware {
+	return GetSkillMiddlewareForAgent(workspace.DefaultAgentID())
+}
+
+func GetSkillMiddlewareForAgent(agentID string) adk.ChatModelAgentMiddleware {
 	ctx := ctxmanager.GetOrCreate("skill-middleware")
-	skillsDir := fmt.Sprintf("%s/skills", workspace.GetWorkspacePath())
+	skillsDir := skillmgr.NewManagerForAgent(agentID).BaseDir()
 	slog.Debug("skillsDir", "path", skillsDir)
 	skillBackend, err := skill.NewBackendFromFilesystem(ctx, &skill.BackendFromFilesystemConfig{
 		Backend: local.GetBackend(),
@@ -36,8 +39,4 @@ func GetSkillMiddleware() adk.ChatModelAgentMiddleware {
 	}
 
 	return skillMiddleware
-}
-
-func init() {
-	registry.RegisterHandler(GetSkillMiddleware())
 }
