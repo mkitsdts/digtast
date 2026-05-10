@@ -74,6 +74,16 @@ type ChunkRecord struct {
 	Updated time.Time `json:"updated"`
 }
 
+// CompressionRecord stores one compressed summary segment and the original
+// JSONL line range it summarizes. Line numbers are 1-based over LoadSession order.
+type CompressionRecord struct {
+	ID              string            `json:"id"`
+	SourceStartLine int               `json:"source_start_line"`
+	SourceEndLine   int               `json:"source_end_line"`
+	Messages        []*schema.Message `json:"messages"`
+	Created         time.Time         `json:"created"`
+}
+
 var (
 	defaultMemoryOnce  sync.Once
 	defaultMemoryStore *MemoryStore
@@ -250,6 +260,105 @@ func (s *MemoryStore) LoadSession(agentID string) ([]*schema.Message, error) {
 	return messages, nil
 }
 
+// PersistCompression appends one compressed segment to sessions/{agentID}/compress.jsonl.
+func (s *MemoryStore) PersistCompression(agentID string, startLine, endLine int, messages []*schema.Message) error {
+	if err := validateID(agentID, "agent_id"); err != nil {
+		return err
+	}
+	if startLine <= 0 || endLine < startLine {
+		return fmt.Errorf("invalid compression line range: %d-%d", startLine, endLine)
+	}
+	if len(messages) == 0 {
+		return nil
+	}
+
+	path := s.compressionAbsPath(agentID)
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	record := CompressionRecord{
+		ID:              uuid.New().String(),
+		SourceStartLine: startLine,
+		SourceEndLine:   endLine,
+		Messages:        cloneMessages(messages),
+		Created:         time.Now().UTC(),
+	}
+	data, err := json.Marshal(record)
+	if err != nil {
+		return err
+	}
+	_, err = file.Write(append(data, '\n'))
+	return err
+}
+
+// LoadCompressedSession returns all compressed segments for an agent.
+func (s *MemoryStore) LoadCompressedSession(agentID string) ([]CompressionRecord, error) {
+	path := s.compressionAbsPath(agentID)
+	file, err := os.Open(path)
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var records []CompressionRecord
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+		var record CompressionRecord
+		if err := json.Unmarshal([]byte(line), &record); err != nil {
+			continue
+		}
+		if record.SourceStartLine <= 0 || record.SourceEndLine < record.SourceStartLine {
+			continue
+		}
+		record.Messages = cloneMessages(record.Messages)
+		records = append(records, record)
+	}
+	return records, scanner.Err()
+}
+
+// LoadPromptSession returns compressed summaries followed by the original
+// messages that have not yet been covered by any compression record.
+func (s *MemoryStore) LoadPromptSession(agentID string) ([]*schema.Message, error) {
+	messages, err := s.LoadSession(agentID)
+	if err != nil {
+		return nil, err
+	}
+	records, err := s.LoadCompressedSession(agentID)
+	if err != nil {
+		return nil, err
+	}
+	if len(records) == 0 {
+		return messages, nil
+	}
+
+	var result []*schema.Message
+	compressedThrough := 0
+	for _, record := range records {
+		if record.SourceEndLine <= compressedThrough {
+			continue
+		}
+		result = append(result, cloneMessages(record.Messages)...)
+		compressedThrough = record.SourceEndLine
+	}
+	if compressedThrough < len(messages) {
+		result = append(result, cloneMessages(messages[compressedThrough:])...)
+	}
+	return result, nil
+}
+
 // DeleteSession removes all chunk files and the index entry for an agent.
 func (s *MemoryStore) DeleteSession(agentID string) error {
 	s.mu.Lock()
@@ -266,6 +375,9 @@ func (s *MemoryStore) DeleteSession(agentID string) error {
 		if err := os.Remove(s.chunkAbsPath(chunk)); err != nil && !os.IsNotExist(err) {
 			return err
 		}
+	}
+	if err := os.Remove(s.compressionAbsPath(agentID)); err != nil && !os.IsNotExist(err) {
+		return err
 	}
 	s.requestFlush()
 	return nil
@@ -414,6 +526,10 @@ func (s *MemoryStore) chunkAbsPath(chunk ChunkRecord) string {
 	return filepath.Join(s.root, filepath.FromSlash(chunk.Path))
 }
 
+func (s *MemoryStore) compressionAbsPath(agentID string) string {
+	return filepath.Join(s.root, "sessions", agentID, "compress.jsonl")
+}
+
 func (s *MemoryStore) indexPath() string {
 	return filepath.Join(s.root, "memory.json")
 }
@@ -426,6 +542,18 @@ func validateID(id, name string) error {
 		return fmt.Errorf("%s contains path separator", name)
 	}
 	return nil
+}
+
+func cloneMessages(messages []*schema.Message) []*schema.Message {
+	result := make([]*schema.Message, len(messages))
+	for i, msg := range messages {
+		if msg == nil {
+			continue
+		}
+		cp := *msg
+		result[i] = &cp
+	}
+	return result
 }
 
 // Backward-compatible package helpers use the default store.

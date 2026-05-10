@@ -104,6 +104,56 @@ func ShardMessages(msgs []*schema.Message, tokenLimit int) [][]*schema.Message {
 	return shards
 }
 
+type indexedMessage struct {
+	line int
+	msg  *schema.Message
+}
+
+func shardIndexedMessages(msgs []indexedMessage, tokenLimit int) [][]indexedMessage {
+	if tokenLimit <= 0 {
+		tokenLimit = 4000
+	}
+
+	var shards [][]indexedMessage
+	var currentShard []indexedMessage
+	currentTokens := 0
+
+	for _, item := range msgs {
+		if item.msg == nil {
+			continue
+		}
+		msgTokens := messageTokens(item.msg)
+		if currentTokens+msgTokens > tokenLimit && len(currentShard) > 0 {
+			shards = append(shards, currentShard)
+			currentShard = nil
+			currentTokens = 0
+		}
+
+		currentShard = append(currentShard, item)
+		currentTokens += msgTokens
+	}
+
+	if len(currentShard) > 0 {
+		shards = append(shards, currentShard)
+	}
+
+	return shards
+}
+
+func messageTokens(msg *schema.Message) int {
+	if msg == nil {
+		return 0
+	}
+	msgTokens := estimateTokens(msg.Content)
+	for _, part := range msg.MultiContent {
+		msgTokens += estimateTokens(part.Text)
+	}
+	for _, part := range msg.UserInputMultiContent {
+		msgTokens += estimateTokens(part.Text)
+	}
+	return msgTokens
+}
+
 // ExtractChunk calls the LLM to extract key information from a conversation chunk.
 func ExtractChunk(ctx context.Context, m model.BaseChatModel, chunk []*schema.Message) ([]*schema.Message, error) {
 	var conversation strings.Builder
@@ -168,8 +218,23 @@ func Compress(ctx context.Context, m model.BaseChatModel, session *mem.Session, 
 		return nil
 	}
 
-	// Remove tool/system messages
-	filtered := FilterUserAssistant(msgs)
+	compressedThrough := session.CompressedThrough()
+	if compressedThrough >= len(msgs) {
+		return nil
+	}
+
+	var filtered []indexedMessage
+	for idx, msg := range msgs[compressedThrough:] {
+		if msg == nil {
+			continue
+		}
+		if msg.Role == schema.User || msg.Role == schema.Assistant {
+			filtered = append(filtered, indexedMessage{
+				line: compressedThrough + idx + 1,
+				msg:  msg,
+			})
+		}
+	}
 	if len(filtered) == 0 {
 		return nil
 	}
@@ -179,17 +244,28 @@ func Compress(ctx context.Context, m model.BaseChatModel, session *mem.Session, 
 	if chunkLimit <= 0 {
 		chunkLimit = 4000
 	}
-	shards := ShardMessages(filtered, chunkLimit)
+	shards := shardIndexedMessages(filtered, chunkLimit)
 
 	//LLM extract each shard
 	var extracted []*schema.Message
 	for _, shard := range shards {
-		chunkResult, err := ExtractChunk(ctx, m, shard)
+		chunk := make([]*schema.Message, 0, len(shard))
+		for _, item := range shard {
+			chunk = append(chunk, item.msg)
+		}
+		chunkResult, err := ExtractChunk(ctx, m, chunk)
 		if err != nil {
 			slog.Error("failed to extract chunk", "err", err)
 			// Fallback: keep the shard as-is
-			extracted = append(extracted, shard...)
+			chunkResult = chunk
+		}
+		if len(chunkResult) == 0 {
 			continue
+		}
+		startLine := shard[0].line
+		endLine := shard[len(shard)-1].line
+		if err := session.AppendCompression(startLine, endLine, chunkResult); err != nil {
+			return fmt.Errorf("failed to write compressed session: %w", err)
 		}
 		extracted = append(extracted, chunkResult...)
 	}
@@ -198,18 +274,8 @@ func Compress(ctx context.Context, m model.BaseChatModel, session *mem.Session, 
 		return nil
 	}
 
-	// Write extracted results as new session (short-term memory)
-	if err := session.ResetWithMessages(extracted); err != nil {
-		return fmt.Errorf("failed to write short-term memory: %w", err)
-	}
-
-	// Delete original JSONL
-	if err := session.DeleteChunks(); err != nil {
-		slog.Error("failed to delete original chunks", "err", err)
-	}
-
 	// Promote to long-term memory
-	if err := PromoteToMemory(ctx, m, session, sm); err != nil {
+	if err := PromoteMessagesToMemory(ctx, m, extracted, sm); err != nil {
 		slog.Error("failed to promote to memory", "err", err)
 	}
 
@@ -237,10 +303,13 @@ func shouldCleanMemory() bool {
 // PromoteToMemory analyzes short-term memory and existing memory.md,
 // promoting frequently mentioned or important items to long-term memory.
 func PromoteToMemory(ctx context.Context, m model.BaseChatModel, session *mem.Session, sm *StateManager) error {
+	return PromoteMessagesToMemory(ctx, m, session.GetPromptMessages(), sm)
+}
+
+func PromoteMessagesToMemory(ctx context.Context, m model.BaseChatModel, msgs []*schema.Message, sm *StateManager) error {
 	existing := sm.LoadMemory()
 
 	// Build short-term memory context from session messages
-	msgs := session.GetMessages()
 	var stmBuilder strings.Builder
 	for _, msg := range msgs {
 		if msg == nil || (msg.Role != schema.User && msg.Role != schema.Assistant) {

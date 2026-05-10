@@ -16,6 +16,19 @@ func getAgentsConfigPath() string {
 	return filepath.Join(GetWorkspacePath(), "agents.json")
 }
 
+// AgentDir returns the root directory for files owned by one agent.
+func AgentDir(agentID string) string {
+	if agentID == "" {
+		agentID = DefaultAgentID()
+	}
+	return filepath.Join(GetWorkspacePath(), "agents", agentID)
+}
+
+// AgentSkillsDir returns the directory containing one agent's skill folders.
+func AgentSkillsDir(agentID string) string {
+	return filepath.Join(AgentDir(agentID), "skills")
+}
+
 // SaveAgentConfig saves or updates an agent configuration in the workspace.
 func SaveAgentConfig(cfg *model.DigitalAgentConfig) error {
 	agentMu.Lock()

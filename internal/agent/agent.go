@@ -9,6 +9,7 @@ import (
 	"digital-labor/pkg/ctxmanager"
 	"digital-labor/pkg/errs"
 	local "digital-labor/pkg/middleware/lbackend"
+	skillmw "digital-labor/pkg/middleware/skill"
 	mmodel "digital-labor/pkg/model"
 	"digital-labor/pkg/registry"
 	"errors"
@@ -77,6 +78,10 @@ func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 		return nil, err
 	}
 	dga.cm = cm
+	handlers := registry.GetHandlers()
+	if skillHandler := skillmw.GetSkillMiddlewareForAgent(cfg.ID); skillHandler != nil {
+		handlers = append(handlers, skillHandler)
+	}
 
 	dga.agent, err = deep.New(ctx, &deep.Config{
 		Name:      cfg.Name,
@@ -92,7 +97,7 @@ func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 		Backend:        local.GetBackend(),
 		StreamingShell: local.GetBackend(),
 		Description:    cfg.Description,
-		Handlers:       registry.GetHandlers(),
+		Handlers:       handlers,
 		ModelRetryConfig: &adk.ModelRetryConfig{
 			MaxRetries: 5,
 		},
@@ -162,6 +167,10 @@ func (dga *DigitalAgent) UpdateTools() error {
 	}
 
 	ctx := ctxmanager.GetOrCreate(dga.ID)
+	handlers := registry.GetHandlers()
+	if skillHandler := skillmw.GetSkillMiddlewareForAgent(dga.ID); skillHandler != nil {
+		handlers = append(handlers, skillHandler)
+	}
 
 	ag, err := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
 		Name:  dga.agent.Name(context.Background()),
@@ -175,7 +184,7 @@ func (dga *DigitalAgent) UpdateTools() error {
 			},
 		},
 		Description: dga.agent.Description(ctx),
-		Handlers:    registry.GetHandlers(),
+		Handlers:    handlers,
 	})
 	if err != nil {
 		return err

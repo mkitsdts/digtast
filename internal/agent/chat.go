@@ -31,7 +31,7 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 	}
 
 	sysMsg := &schema.Message{Role: schema.System, Content: dga.state.Build()}
-	msgs := append([]*schema.Message{sysMsg}, session.GetMessages()...)
+	msgs := append([]*schema.Message{sysMsg}, session.GetPromptMessages()...)
 
 	t, err := task.CreateTask(dga.ID, task.Config{
 		AgentID: dga.ID,

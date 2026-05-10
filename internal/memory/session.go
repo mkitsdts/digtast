@@ -92,6 +92,25 @@ func (s *Session) GetMessages() []*schema.Message {
 	return result
 }
 
+// GetPromptMessages returns the compacted view used as model context:
+// compressed summaries followed by original messages not yet summarized.
+func (s *Session) GetPromptMessages() []*schema.Message {
+	s.mu.Lock()
+	store := s.store
+	agentID := s.AgentID
+	fallback := cloneSchemaMessages(s.messages)
+	s.mu.Unlock()
+
+	if store == nil || store.persist == nil {
+		return fallback
+	}
+	messages, err := store.persist.LoadPromptSession(agentID)
+	if err != nil {
+		return fallback
+	}
+	return messages
+}
+
 // CompleteTurn rotates to a new chunk after the current task finishes when the previous chunk is too large.
 func (s *Session) CompleteTurn() error {
 	s.mu.Lock()
@@ -189,6 +208,42 @@ func (s *Session) DeleteChunks() error {
 	return store.persist.DeleteSessionChunks(agentID)
 }
 
+// AppendCompression persists a compressed segment without mutating full history.
+func (s *Session) AppendCompression(startLine, endLine int, msgs []*schema.Message) error {
+	s.mu.Lock()
+	store := s.store
+	agentID := s.AgentID
+	s.mu.Unlock()
+
+	if store == nil || store.persist == nil {
+		return nil
+	}
+	return store.persist.PersistCompression(agentID, startLine, endLine, msgs)
+}
+
+// CompressedThrough returns the highest original line number covered by compression.
+func (s *Session) CompressedThrough() int {
+	s.mu.Lock()
+	store := s.store
+	agentID := s.AgentID
+	s.mu.Unlock()
+
+	if store == nil || store.persist == nil {
+		return 0
+	}
+	records, err := store.persist.LoadCompressedSession(agentID)
+	if err != nil {
+		return 0
+	}
+	maxLine := 0
+	for _, record := range records {
+		if record.SourceEndLine > maxLine {
+			maxLine = record.SourceEndLine
+		}
+	}
+	return maxLine
+}
+
 // Title derives a display title from the first user message.
 func (s *Session) Title() string {
 	s.mu.Lock()
@@ -204,4 +259,16 @@ func (s *Session) Title() string {
 		}
 	}
 	return "New Session"
+}
+
+func cloneSchemaMessages(messages []*schema.Message) []*schema.Message {
+	result := make([]*schema.Message, len(messages))
+	for i, msg := range messages {
+		if msg == nil {
+			continue
+		}
+		cp := *msg
+		result[i] = &cp
+	}
+	return result
 }
