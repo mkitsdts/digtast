@@ -21,7 +21,12 @@ import (
 func main() {
 	localMode := flag.Bool("local", false, "Run in local interactive mode")
 	port := flag.String("port", "10086", "gRPC server port")
+	browserMode := flag.Bool("browser", false, "Run in browser mode")
 	flag.Parse()
+
+	if *browserMode {
+		conf.Conf.Browser.Enabled = true
+	}
 
 	// Get workspace path and load config
 	wp := workspace.GetWorkspacePath()
@@ -29,7 +34,6 @@ func main() {
 	if err := conf.LoadConfig(); err != nil {
 		panic(fmt.Sprintf("Failed to load config from %s: %v", configPath, err))
 	}
-
 	Init()
 	if *localMode {
 		conf.Conf.Mode = "local"

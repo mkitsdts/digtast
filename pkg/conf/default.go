@@ -31,6 +31,9 @@ func DefaultConfig() Config {
 		State: LocalRunningStateConfig{
 			LastUsedAgent: "",
 		},
+		Browser: BrowserConfig{
+			Enabled: false,
+		},
 		Channels: map[string]map[string]any{},
 	}
 }

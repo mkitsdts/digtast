@@ -19,6 +19,11 @@ type Config struct {
 	Models       map[string]ModelConfig    `json:"model"`
 	State        LocalRunningStateConfig   `json:"state"`
 	Channels     map[string]map[string]any `json:"channels"`
+	Browser      BrowserConfig             `json:"browser"`
+}
+
+type BrowserConfig struct {
+	Enabled bool `json:"enabled"`
 }
 
 type AgentConfig struct {

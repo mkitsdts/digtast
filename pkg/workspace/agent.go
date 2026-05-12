@@ -46,6 +46,15 @@ func SaveAgentConfig(cfg *model.DigitalAgentConfig) error {
 		return err
 	}
 
+	agentDir := AgentDir(cfg.ID)
+	if err := os.MkdirAll(agentDir, 0755); err != nil {
+		return err
+	}
+	skillDir := AgentSkillsDir(cfg.ID)
+	if err := os.MkdirAll(skillDir, 0755); err != nil {
+		return err
+	}
+
 	return os.WriteFile(getAgentsConfigPath(), data, 0644)
 }
 
