@@ -11,7 +11,7 @@ import (
 )
 
 // Tool Call middleware that tracks tool execution steps
-func Invokable(next compose.InvokableToolEndpoint) compose.InvokableToolEndpoint {
+func InvokableTool(next compose.InvokableToolEndpoint) compose.InvokableToolEndpoint {
 	return func(ctx context.Context, input *compose.ToolInput) (*compose.ToolOutput, error) {
 		taskId, _ := ctx.Value("task_id").(string)
 		agentId, _ := ctx.Value("agent_id").(string)

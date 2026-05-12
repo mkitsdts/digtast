@@ -90,7 +90,7 @@ func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 			ToolsNodeConfig: compose.ToolsNodeConfig{
 				Tools: registry.GetTools(),
 				ToolCallMiddlewares: []compose.ToolMiddleware{
-					{Invokable: registry.Invokable},
+					{Invokable: registry.InvokableTool},
 				},
 			},
 		},
@@ -179,7 +179,7 @@ func (dga *DigitalAgent) UpdateTools() error {
 			ToolsNodeConfig: compose.ToolsNodeConfig{
 				Tools: registry.GetTools(),
 				ToolCallMiddlewares: []compose.ToolMiddleware{
-					{Invokable: registry.Invokable},
+					{Invokable: registry.InvokableTool},
 				},
 			},
 		},
