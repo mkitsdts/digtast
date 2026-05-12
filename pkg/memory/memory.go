@@ -44,6 +44,7 @@ func (s *Store) GetOrCreate() (*Session, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	// if exist, use cache
 	if s.session != nil {
 		s.markRotateIfNeeded(s.session)
 		return s.session, nil
@@ -94,6 +95,7 @@ func (s *Store) AppendMessage(msg *schema.Message) {
 	_ = sess.Append(msg)
 }
 
+// to mark the session for rotation after the current chunk size exceeds the limit
 func (s *Store) markRotateIfNeeded(sess *Session) {
 	if sess == nil {
 		return
