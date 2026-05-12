@@ -2,10 +2,10 @@ package agent
 
 import (
 	"context"
-	"digital-labor/internal/state"
 	"digital-labor/pkg/conf"
 	"digital-labor/pkg/ctxmanager"
 	mmodel "digital-labor/pkg/model"
+	"digital-labor/pkg/state"
 	"digital-labor/pkg/task"
 	"errors"
 	"io"

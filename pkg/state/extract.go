@@ -2,8 +2,8 @@ package state
 
 import (
 	"context"
-	mem "digital-labor/internal/memory"
 	"digital-labor/pkg/conf"
+	mem "digital-labor/pkg/memory"
 	"encoding/json"
 	"fmt"
 	"log/slog"

@@ -2,16 +2,16 @@ package agent
 
 import (
 	"context"
-	mem "digital-labor/internal/memory"
-	"digital-labor/internal/state"
 	"digital-labor/pkg/chatmodel"
 	"digital-labor/pkg/conf"
 	"digital-labor/pkg/ctxmanager"
 	"digital-labor/pkg/errs"
+	mem "digital-labor/pkg/memory"
 	local "digital-labor/pkg/middleware/lbackend"
 	skillmw "digital-labor/pkg/middleware/skill"
 	mmodel "digital-labor/pkg/model"
 	"digital-labor/pkg/registry"
+	"digital-labor/pkg/state"
 	"errors"
 	"fmt"
 	"log/slog"

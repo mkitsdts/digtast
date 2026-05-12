@@ -1,7 +1,7 @@
 package agent
 
 import (
-	"digital-labor/internal/state"
+	"digital-labor/pkg/state"
 	"testing"
 
 	"github.com/cloudwego/eino/schema"

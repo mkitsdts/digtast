@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	mem "digital-labor/internal/memory"
+	mem "digital-labor/pkg/memory"
 
 	"github.com/cloudwego/eino/schema"
 )
