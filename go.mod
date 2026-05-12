@@ -4,12 +4,14 @@ go 1.26.1
 
 require (
 	github.com/bmatcuk/doublestar/v4 v4.10.0
+	github.com/bytedance/sonic v1.15.0
+	github.com/chromedp/cdproto v0.0.0-20250319231242-a755498943c8
+	github.com/chromedp/chromedp v0.13.3
 	github.com/cloudwego/eino v0.8.0
 	github.com/cloudwego/eino-ext/components/model/ark v0.1.65
 	github.com/cloudwego/eino-ext/components/model/deepseek v0.1.2
 	github.com/cloudwego/eino-ext/components/model/openai v0.1.13
 	github.com/cloudwego/eino-ext/components/model/qwen v0.1.9
-	github.com/cloudwego/eino-ext/components/tool/browseruse v0.0.0-20260416081055-0ebab92e14f2
 	github.com/cloudwego/eino-ext/components/tool/commandline v0.0.0-20260506092923-f491457522b5
 	github.com/cloudwego/eino-ext/components/tool/duckduckgo v0.0.0-20260427010451-749e3706378b
 	github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2 v2.0.0-20251114071555-14756a18ad37
@@ -23,6 +25,7 @@ require (
 	github.com/spf13/afero v1.15.0
 	github.com/spf13/cobra v1.10.2
 	github.com/wk8/go-ordered-map/v2 v2.1.8
+	golang.org/x/net v0.52.0
 	google.golang.org/grpc v1.80.0
 	google.golang.org/protobuf v1.36.11
 )
@@ -35,12 +38,9 @@ require (
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/bytedance/gopkg v0.1.3 // indirect
-	github.com/bytedance/sonic v1.15.0 // indirect
 	github.com/bytedance/sonic/loader v0.5.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/chromedp/cdproto v0.0.0-20250319231242-a755498943c8 // indirect
-	github.com/chromedp/chromedp v0.13.3 // indirect
 	github.com/chromedp/sysutil v1.1.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
 	github.com/cloudwego/eino-ext/libs/acl/openai v0.1.17 // indirect
@@ -102,7 +102,6 @@ require (
 	go.opentelemetry.io/proto/otlp v1.10.0 // indirect
 	golang.org/x/arch v0.22.0 // indirect
 	golang.org/x/exp v0.0.0-20250718183923-645b1fa84792 // indirect
-	golang.org/x/net v0.52.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/text v0.35.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260427160629-7cedc36a6bc4 // indirect
