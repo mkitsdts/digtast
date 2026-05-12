@@ -4,15 +4,13 @@ import (
 	"digital-labor/pkg/ctxmanager"
 	"digital-labor/pkg/registry"
 	"log/slog"
-
-	"github.com/cloudwego/eino-ext/components/tool/browseruse"
 )
 
-func NewBrowserTool() *browseruse.Tool {
+func NewBrowserTool() *Tool {
 	ctx := ctxmanager.GetOrCreate("browser_use")
 
 	var err error
-	browserTool, err := browseruse.NewBrowserUseTool(ctx, &browseruse.Config{
+	browserTool, err := NewBrowserUseTool(ctx, &Config{
 		Headless: false, // set headless false that container will run a true browser and user can see the browser at the same time
 	})
 	if err != nil {
