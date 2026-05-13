@@ -10,17 +10,16 @@
 
 - agent
 |   |_____ agent.md
-|   |_____ memory.md
 |   |_____ soul.md
 |   |_____ user.md
+|   |_____ rule.md
 |
 | memory
 |   |_____ sessions
 |   |         |_____ {agent-name}
-|   |         |           |_____ {session_id:chunk}.jsonl ...
-|   |_____ extract
-|   |         |_____ {date}.jsonl ...
-|   |         |_____ memory.db (save memory chunk by sqlite3,be used to RAG)
+|   |                      |_____ {session_id:chunk}.jsonl ...
+|   |                      |_____ {session_id:chunk-compress}.jsonl ...
+|   |                      |_____ memory.md
 |   |_____ memory.json (map agent session to real path)
 | workspace (save generate file)
 |

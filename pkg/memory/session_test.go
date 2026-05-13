@@ -9,29 +9,24 @@ import (
 	"github.com/cloudwego/eino/schema"
 )
 
-func newTestSessionWithFile(t *testing.T) (*Session, *workspace.MemoryStore) {
+func newTestSessionWithFile(t *testing.T) *Session {
 	t.Helper()
-	persist, err := workspace.NewMemoryStore(t.TempDir())
-	if err != nil {
-		t.Fatal(err)
-	}
 	store := &Store{
 		agentID: "test-agent",
-		persist: persist,
 	}
 
 	sess := &Session{
 		AgentID:   "test-agent",
 		CreatedAt: time.Now(),
-		store:     store,
 		messages:  make([]*schema.Message, 0),
 	}
 	store.session = sess
-	return sess, persist
+	return sess
 }
 
 func TestAppend(t *testing.T) {
-	sess, _ := newTestSessionWithFile(t)
+	sess := newTestSessionWithFile(t)
+	workspace.DeleteSession(sess.AgentID)
 
 	msg := &schema.Message{
 		Role:    schema.User,
@@ -51,7 +46,8 @@ func TestAppend(t *testing.T) {
 }
 
 func TestAppend_Multiple(t *testing.T) {
-	sess, _ := newTestSessionWithFile(t)
+	sess := newTestSessionWithFile(t)
+	workspace.DeleteSession(sess.AgentID)
 
 	sess.Append(&schema.Message{Role: schema.User, Content: "msg1"})
 	sess.Append(&schema.Message{Role: schema.Assistant, Content: "reply1"})
@@ -64,7 +60,7 @@ func TestAppend_Multiple(t *testing.T) {
 }
 
 func TestGetMessages_ReturnsSnapshot(t *testing.T) {
-	sess, _ := newTestSessionWithFile(t)
+	sess := newTestSessionWithFile(t)
 	sess.Append(&schema.Message{Role: schema.User, Content: "original"})
 
 	msgs1 := sess.GetMessages()
@@ -77,7 +73,7 @@ func TestGetMessages_ReturnsSnapshot(t *testing.T) {
 }
 
 func TestTitle(t *testing.T) {
-	sess, _ := newTestSessionWithFile(t)
+	sess := newTestSessionWithFile(t)
 	if title := sess.Title(); title != "New Session" {
 		t.Fatalf("expected 'New Session', got '%s'", title)
 	}
@@ -91,7 +87,7 @@ func TestTitle(t *testing.T) {
 }
 
 func TestTitle_Truncation(t *testing.T) {
-	sess, _ := newTestSessionWithFile(t)
+	sess := newTestSessionWithFile(t)
 	longContent := ""
 	for i := 0; i < 100; i++ {
 		longContent += "中"
@@ -105,7 +101,7 @@ func TestTitle_Truncation(t *testing.T) {
 }
 
 func TestSetAndGetPendingInterruptID(t *testing.T) {
-	sess, _ := newTestSessionWithFile(t)
+	sess := newTestSessionWithFile(t)
 
 	if id := sess.GetPendingInterruptID(); id != "" {
 		t.Fatalf("expected empty, got '%s'", id)
@@ -118,7 +114,7 @@ func TestSetAndGetPendingInterruptID(t *testing.T) {
 }
 
 func TestSetAndGetMsgIdx(t *testing.T) {
-	sess, _ := newTestSessionWithFile(t)
+	sess := newTestSessionWithFile(t)
 
 	if idx := sess.GetMsgIdx(); idx != 0 {
 		t.Fatalf("expected 0, got %d", idx)
@@ -131,14 +127,16 @@ func TestSetAndGetMsgIdx(t *testing.T) {
 }
 
 func TestAppend_PersistsToDisk(t *testing.T) {
-	sess, persist := newTestSessionWithFile(t)
+	sess := newTestSessionWithFile(t)
+	workspace.DeleteSession(sess.AgentID)
 
 	sess.Append(&schema.Message{Role: schema.User, Content: "persisted"})
 
-	msgs, err := persist.LoadSession("test-agent")
+	res, err := workspace.Load(sess.AgentID, workspace.MemTypeChunk)
 	if err != nil {
 		t.Fatal(err)
 	}
+	msgs := res.([]*schema.Message)
 	if len(msgs) != 1 {
 		t.Fatalf("expected 1 persisted message, got %d", len(msgs))
 	}

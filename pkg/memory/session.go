@@ -1,10 +1,13 @@
 package mem
 
 import (
+	"digital-labor/pkg/workspace"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/cloudwego/eino/schema"
+	"github.com/google/uuid"
 )
 
 // SessionMeta provides summary info for the session list.
@@ -24,10 +27,6 @@ type Session struct {
 	messages           []*schema.Message
 	pendingInterruptID string
 	msgIdx             int
-
-	store *Store
-
-	rotateAfterTurn bool
 }
 
 // SetPendingInterruptID saves the interrupt ID so the approve endpoint can resume it.
@@ -66,14 +65,10 @@ func (s *Session) Append(msg *schema.Message) error {
 
 	s.mu.Lock()
 	s.messages = append(s.messages, msg)
-	store := s.store
 	agentID := s.AgentID
 	s.mu.Unlock()
 
-	if store == nil || store.persist == nil {
-		return nil
-	}
-	return store.persist.PersistMessage(agentID, msg)
+	return workspace.Save(agentID, workspace.MemTypeChunk, msg)
 }
 
 // GetMessages returns a snapshot of all messages.
@@ -92,73 +87,47 @@ func (s *Session) GetMessages() []*schema.Message {
 	return result
 }
 
-// GetPromptMessages returns the compacted view used as model context:
+// GetCompressMessages returns the compacted view used as model context:
 // compressed summaries followed by original messages not yet summarized.
-func (s *Session) GetPromptMessages() []*schema.Message {
+func (s *Session) GetCompressMessages() []*schema.Message {
 	s.mu.Lock()
-	store := s.store
 	agentID := s.AgentID
 	fallback := cloneSchemaMessages(s.messages)
 	s.mu.Unlock()
 
-	if store == nil || store.persist == nil {
-		return fallback
-	}
-	messages, err := store.persist.LoadPromptSession(agentID)
+	resMsgs, err := workspace.Load(agentID, workspace.MemTypeChunk)
 	if err != nil {
 		return fallback
 	}
-	return messages
-}
+	messages := resMsgs.([]*schema.Message)
 
-// CompleteTurn rotates to a new chunk after the current task finishes when the previous chunk is too large.
-func (s *Session) CompleteTurn() error {
-	s.mu.Lock()
-	if !s.rotateAfterTurn {
-		s.mu.Unlock()
-		return nil
+	resRecs, err := workspace.Load(agentID, workspace.MemTypeCompress)
+	if err != nil {
+		return messages
 	}
-	s.rotateAfterTurn = false
-	store := s.store
-	agentID := s.AgentID
-	s.mu.Unlock()
+	records := resRecs.([]workspace.CompressionRecord)
 
-	if store == nil || store.persist == nil {
-		return nil
-	}
-	_, err := store.persist.NewSessionFile(agentID)
-	return err
-}
-
-// ResetWithMessages replaces all messages in the session with the given ones,
-// clearing old JSONL data and persisting the new messages to a fresh chunk.
-func (s *Session) ResetWithMessages(msgs []*schema.Message) error {
-	s.mu.Lock()
-	s.messages = msgs
-	store := s.store
-	agentID := s.AgentID
-	s.mu.Unlock()
-
-	if store == nil || store.persist == nil {
-		return nil
+	if len(records) == 0 {
+		return messages
 	}
 
-	// Delete old chunks and start fresh
-	if err := store.persist.DeleteSession(agentID); err != nil {
-		return err
-	}
-	if _, err := store.persist.EnsureSession(agentID); err != nil {
-		return err
-	}
-
-	// Persist the new messages
-	for _, msg := range msgs {
-		if msg != nil {
-			if err := store.persist.PersistMessage(agentID, msg); err != nil {
-				return err
-			}
+	var result []*schema.Message
+	compressedThrough := 0
+	for _, record := range records {
+		if record.SourceEndLine <= compressedThrough {
+			continue
 		}
+		result = append(result, cloneSchemaMessages(record.Messages)...)
+		compressedThrough = record.SourceEndLine
 	}
+	if compressedThrough < len(messages) {
+		result = append(result, cloneSchemaMessages(messages[compressedThrough:])...)
+	}
+	return result
+}
+
+// CompleteTurn is now a no-op as storage handles rotation internally.
+func (s *Session) CompleteTurn() error {
 	return nil
 }
 
@@ -195,46 +164,70 @@ func (s *Session) Size() int {
 	return total / 4
 }
 
-// DeleteChunks removes all JSONL chunk files for this session (used after compression).
+// DeleteChunks archives JSONL chunk files for this session to tar.gz and deletes originals.
 func (s *Session) DeleteChunks() error {
 	s.mu.Lock()
-	store := s.store
 	agentID := s.AgentID
 	s.mu.Unlock()
 
-	if store == nil || store.persist == nil {
-		return nil
+	return workspace.Archive(agentID, workspace.MemTypeChunk)
+}
+
+// Search retrieves short-term memories (compressed records) that match the query.
+func (s *Session) Search(query string) ([]*schema.Message, error) {
+	s.mu.Lock()
+	agentID := s.AgentID
+	s.mu.Unlock()
+
+	res, err := workspace.Load(agentID, workspace.MemTypeCompress)
+	if err != nil {
+		return nil, err
 	}
-	return store.persist.DeleteSessionChunks(agentID)
+	records := res.([]workspace.CompressionRecord)
+
+	var result []*schema.Message
+	for _, record := range records {
+		match := false
+		for _, msg := range record.Messages {
+			if strings.Contains(strings.ToLower(msg.Content), strings.ToLower(query)) {
+				match = true
+				break
+			}
+		}
+		if match {
+			result = append(result, cloneSchemaMessages(record.Messages)...)
+		}
+	}
+	return result, nil
 }
 
 // AppendCompression persists a compressed segment without mutating full history.
 func (s *Session) AppendCompression(startLine, endLine int, msgs []*schema.Message) error {
 	s.mu.Lock()
-	store := s.store
 	agentID := s.AgentID
 	s.mu.Unlock()
 
-	if store == nil || store.persist == nil {
-		return nil
+	record := workspace.CompressionRecord{
+		ID:              uuid.New().String(),
+		SourceStartLine: startLine,
+		SourceEndLine:   endLine,
+		Messages:        cloneSchemaMessages(msgs),
+		Created:         time.Now().UTC(),
 	}
-	return store.persist.PersistCompression(agentID, startLine, endLine, msgs)
+	return workspace.Save(agentID, workspace.MemTypeCompress, record)
 }
 
 // CompressedThrough returns the highest original line number covered by compression.
 func (s *Session) CompressedThrough() int {
 	s.mu.Lock()
-	store := s.store
 	agentID := s.AgentID
 	s.mu.Unlock()
 
-	if store == nil || store.persist == nil {
-		return 0
-	}
-	records, err := store.persist.LoadCompressedSession(agentID)
+	res, err := workspace.Load(agentID, workspace.MemTypeCompress)
 	if err != nil {
 		return 0
 	}
+	records := res.([]workspace.CompressionRecord)
 	maxLine := 0
 	for _, record := range records {
 		if record.SourceEndLine > maxLine {

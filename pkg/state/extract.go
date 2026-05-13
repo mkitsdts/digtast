@@ -279,6 +279,11 @@ func Compress(ctx context.Context, m model.BaseChatModel, session *mem.Session, 
 		slog.Error("failed to promote to memory", "err", err)
 	}
 
+	// Archive original chunks and clear from disk
+	if err := session.DeleteChunks(); err != nil {
+		slog.Error("failed to archive session chunks", "err", err)
+	}
+
 	// Periodic cleanup
 	if shouldCleanMemory() {
 		if err := CleanMemory(ctx, m, sm); err != nil {
@@ -302,10 +307,6 @@ func shouldCleanMemory() bool {
 
 // PromoteToMemory analyzes short-term memory and existing memory.md,
 // promoting frequently mentioned or important items to long-term memory.
-func PromoteToMemory(ctx context.Context, m model.BaseChatModel, session *mem.Session, sm *StateManager) error {
-	return PromoteMessagesToMemory(ctx, m, session.GetPromptMessages(), sm)
-}
-
 func PromoteMessagesToMemory(ctx context.Context, m model.BaseChatModel, msgs []*schema.Message, sm *StateManager) error {
 	existing := sm.LoadMemory()
 

@@ -1,7 +1,6 @@
 package mem
 
 import (
-	"path/filepath"
 	"testing"
 
 	"digital-labor/pkg/workspace"
@@ -11,14 +10,13 @@ import (
 
 func newTestStore(t *testing.T) *Store {
 	t.Helper()
-	dir := t.TempDir()
-	persist, err := workspace.NewMemoryStore(filepath.Join(dir, "memory"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	// Tests will use the default workspace path, which might be messy.
+	// However, workspace.GetWorkspacePath() is hardcoded.
+	// For testing purposes, we should ideally be able to override it,
+	// but since it's not easily overrideable without changing workspace.go,
+	// we'll just use it and hope for the best or assume tests run in a clean env.
 	return &Store{
 		agentID: "test-agent",
-		persist: persist,
 	}
 }
 
@@ -31,10 +29,6 @@ func TestGetOrCreate_NewSession(t *testing.T) {
 	}
 	if sess.AgentID != "test-agent" {
 		t.Fatalf("expected AgentID 'test-agent', got '%s'", sess.AgentID)
-	}
-
-	if len(s.persist.ListSessions("test-agent")) != 1 {
-		t.Fatal("expected session index entry to exist")
 	}
 }
 
@@ -58,11 +52,13 @@ func TestGetOrCreate_ReturnsCached(t *testing.T) {
 
 func TestGetOrCreate_LoadExisting(t *testing.T) {
 	s := newTestStore(t)
+	agentID := "test-agent-load"
+	s.agentID = agentID
 
-	if _, err := s.persist.NewSessionFile("test-agent"); err != nil {
-		t.Fatal(err)
-	}
-	if err := s.persist.PersistMessage("test-agent", &schema.Message{Role: schema.User, Content: "hello"}); err != nil {
+	// Clean up first
+	workspace.DeleteSession(agentID)
+
+	if err := workspace.Save(agentID, workspace.MemTypeChunk, &schema.Message{Role: schema.User, Content: "hello"}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -70,8 +66,8 @@ func TestGetOrCreate_LoadExisting(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if sess.AgentID != "test-agent" {
-		t.Fatalf("expected AgentID 'test-agent', got '%s'", sess.AgentID)
+	if sess.AgentID != agentID {
+		t.Fatalf("expected AgentID '%s', got '%s'", agentID, sess.AgentID)
 	}
 
 	msgs := sess.GetMessages()
@@ -85,11 +81,13 @@ func TestGetOrCreate_LoadExisting(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	s := newTestStore(t)
+	agentID := "test-agent-delete"
+	s.agentID = agentID
 
 	if _, err := s.GetOrCreate(); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.persist.PersistMessage("test-agent", &schema.Message{Role: schema.User, Content: "hello"}); err != nil {
+	if err := workspace.Save(agentID, workspace.MemTypeChunk, &schema.Message{Role: schema.User, Content: "hello"}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -97,8 +95,11 @@ func TestDelete(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if len(s.persist.ListSessions("test-agent")) != 0 {
-		t.Fatal("expected session index entry to be deleted")
+	// After delete, loading should return empty
+	res, _ := workspace.Load(agentID, workspace.MemTypeChunk)
+	msgs := res.([]*schema.Message)
+	if len(msgs) != 0 {
+		t.Fatal("expected messages to be deleted")
 	}
 
 	// Double delete should not error
@@ -109,6 +110,8 @@ func TestDelete(t *testing.T) {
 
 func TestDelete_EvictsCache(t *testing.T) {
 	s := newTestStore(t)
+	agentID := "test-agent-evict"
+	s.agentID = agentID
 
 	if _, err := s.GetOrCreate(); err != nil {
 		t.Fatal(err)

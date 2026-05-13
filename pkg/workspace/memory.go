@@ -1,20 +1,21 @@
 package workspace
 
 import (
+	"archive/tar"
 	"bufio"
+	"compress/gzip"
 	"digital-labor/pkg/conf"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"log/slog"
+	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/cloudwego/eino/schema"
-	"github.com/google/uuid"
 )
 
 const defaultAgentID = "default"
@@ -24,57 +25,16 @@ func DefaultAgentID() string {
 	return defaultAgentID
 }
 
-// MaxMemoryChunkSize returns the configured chunk rotation threshold.
-func MaxMemoryChunkSize() int64 {
-	return conf.Conf.Memory.MaxMessagesSize
-}
+// MemoryType defines the layers of memory.
+type MemoryType string
 
-// MemoryStore owns the workspace memory index and the session chunk files.
-type MemoryStore struct {
-	root  string
-	index *MemoryIndex
+const (
+	MemTypeChunk    MemoryType = "chunk"
+	MemTypeCompress MemoryType = "compress"
+	MemTypeLongTerm MemoryType = "md"
+)
 
-	// mu protects the in-memory index. File appends are intentionally done
-	// outside this lock so long message writes do not block metadata reads.
-	mu sync.RWMutex
-
-	// flushMu serializes memory.json writes. Index mutations can request a
-	// flush concurrently, but only one atomic replace should run at a time.
-	flushMu sync.Mutex
-
-	// flushReq is a coalescing signal: many metadata updates can collapse into
-	// one periodic flush, which keeps message writes from syncing memory.json
-	// on every append.
-	flushReq chan struct{}
-
-	// stop is reserved for a future explicit shutdown path that can force a
-	// final index flush before the process exits.
-	stop chan struct{}
-}
-
-// MemoryIndex is persisted to memory.json.
-// Keyed by agentID — each agent owns exactly one session.
-type MemoryIndex struct {
-	Sessions map[string]*SessionRecord `json:"sessions"`
-}
-
-// SessionRecord maps one agent to the chunk files that contain its conversation.
-type SessionRecord struct {
-	AgentID string        `json:"agent_id"`
-	Chunks  []ChunkRecord `json:"chunks"`
-	Created time.Time     `json:"created"`
-	Updated time.Time     `json:"updated"`
-}
-
-// ChunkRecord describes one JSONL file for a session.
-type ChunkRecord struct {
-	ID      string    `json:"id"`
-	Path    string    `json:"path"`
-	Created time.Time `json:"created"`
-	Updated time.Time `json:"updated"`
-}
-
-// CompressionRecord stores one compressed summary segment and the original
+// CompressionRecord describes one compressed summary segment and the original
 // JSONL line range it summarizes. Line numbers are 1-based over LoadSession order.
 type CompressionRecord struct {
 	ID              string            `json:"id"`
@@ -85,453 +45,312 @@ type CompressionRecord struct {
 }
 
 var (
-	defaultMemoryOnce  sync.Once
-	defaultMemoryStore *MemoryStore
-	defaultMemoryErr   error
+	memoryMu sync.RWMutex
 )
 
-// NewMemoryStore loads or creates the memory store rooted at root.
-func NewMemoryStore(root string) (*MemoryStore, error) {
-	if root == "" {
-		return nil, errors.New("memory root is empty")
-	}
-	if err := os.MkdirAll(filepath.Join(root, "sessions"), 0o755); err != nil {
-		return nil, err
-	}
-
-	store := &MemoryStore{
-		root: root,
-		index: &MemoryIndex{
-			Sessions: make(map[string]*SessionRecord),
-		},
-		flushReq: make(chan struct{}, 1),
-		stop:     make(chan struct{}),
-	}
-	if err := store.loadIndex(); err != nil {
-		return nil, err
-	}
-	go store.flushLoop()
-	return store, nil
+func getMemoryRoot() string {
+	return filepath.Join(GetWorkspacePath(), "memory")
 }
 
-// DefaultMemoryStore returns the process-wide workspace memory store.
-func DefaultMemoryStore() (*MemoryStore, error) {
-	defaultMemoryOnce.Do(func() {
-		defaultMemoryStore, defaultMemoryErr = NewMemoryStore(filepath.Join(GetWorkspacePath(), "memory"))
-	})
-	return defaultMemoryStore, defaultMemoryErr
+func getBaseName(agentID string, typ MemoryType) string {
+	switch typ {
+	case MemTypeChunk:
+		return agentID
+	case MemTypeCompress:
+		return agentID + "-compress"
+	case MemTypeLongTerm:
+		return "memory"
+	default:
+		return ""
+	}
 }
 
-// NewSessionFile allocates a new chunk for an agent without creating its JSONL file.
-func (s *MemoryStore) NewSessionFile(agentID string) (string, error) {
-	if err := validateID(agentID, "agent_id"); err != nil {
-		return "", err
-	}
-
-	now := time.Now().UTC()
-	chunkID := uuid.New().String()
-	relPath := filepath.Join("sessions", agentID, fmt.Sprintf("%s.jsonl", chunkID))
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	record := s.index.Sessions[agentID]
-	if record == nil {
-		record = &SessionRecord{
-			AgentID: agentID,
-			Created: now,
-		}
-		s.index.Sessions[agentID] = record
-	}
-
-	record.Chunks = append(record.Chunks, ChunkRecord{
-		ID:      chunkID,
-		Path:    filepath.ToSlash(relPath),
-		Created: now,
-		Updated: now,
-	})
-	record.Updated = now
-	s.requestFlush()
-	return chunkID, nil
-}
-
-// EnsureSession returns the current chunk id, creating only the index entry when needed.
-func (s *MemoryStore) EnsureSession(agentID string) (string, error) {
-	s.mu.RLock()
-	record := s.index.Sessions[agentID]
-	if record != nil && len(record.Chunks) > 0 {
-		chunkID := record.Chunks[len(record.Chunks)-1].ID
-		s.mu.RUnlock()
-		return chunkID, nil
-	}
-	s.mu.RUnlock()
-	return s.NewSessionFile(agentID)
-}
-
-// CurrentChunkSize returns the current chunk file size. Missing files are empty.
-func (s *MemoryStore) CurrentChunkSize(agentID string) (int64, error) {
-	s.mu.RLock()
-	record := s.index.Sessions[agentID]
-	if record == nil || len(record.Chunks) == 0 {
-		s.mu.RUnlock()
-		return 0, nil
-	}
-	chunk := record.Chunks[len(record.Chunks)-1]
-	path := s.chunkAbsPath(chunk)
-	s.mu.RUnlock()
-
-	info, err := os.Stat(path)
-	if os.IsNotExist(err) {
-		return 0, nil
-	}
-	if err != nil {
-		return 0, err
-	}
-	return info.Size(), nil
-}
-
-// PersistMessage appends msg to the current chunk, creating the JSONL file on first write.
-func (s *MemoryStore) PersistMessage(agentID string, msg *schema.Message) error {
-	if msg == nil {
+func getPaths(agentID string, typ MemoryType) []string {
+	root := getMemoryRoot()
+	dir := filepath.Join(root, "sessions", agentID)
+	base := getBaseName(agentID, typ)
+	if base == "" {
 		return nil
 	}
-	if _, err := s.EnsureSession(agentID); err != nil {
-		return err
+
+	if typ == MemTypeLongTerm {
+		path := filepath.Join(dir, base+".md")
+		if _, err := os.Stat(path); err == nil {
+			return []string{path}
+		}
+		return nil
 	}
 
-	s.mu.Lock()
-	record := s.index.Sessions[agentID]
-	if record == nil || len(record.Chunks) == 0 {
-		s.mu.Unlock()
-		return errors.New("session has no chunk")
-	}
-	chunkIdx := len(record.Chunks) - 1
-	chunk := record.Chunks[chunkIdx]
-	path := s.chunkAbsPath(chunk)
-	s.mu.Unlock()
-
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
-	}
-	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o644)
+	entries, err := os.ReadDir(dir)
 	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	data, err := json.Marshal(msg)
-	if err != nil {
-		return err
-	}
-	if _, err := file.Write(append(data, '\n')); err != nil {
-		return err
+		return nil
 	}
 
-	now := time.Now().UTC()
-	s.mu.Lock()
-	if record := s.index.Sessions[agentID]; record != nil && len(record.Chunks) > chunkIdx {
-		record.Chunks[chunkIdx].Updated = now
-		record.Updated = now
+	var files []string
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		if strings.HasPrefix(name, base) && strings.HasSuffix(name, ".jsonl") {
+			// Ensure it's not another type's prefix
+			if typ == MemTypeChunk && strings.Contains(name, "-compress") {
+				continue
+			}
+			files = append(files, filepath.Join(dir, name))
+		}
 	}
-	s.mu.Unlock()
-	s.requestFlush()
+	sort.Strings(files)
+	return files
+}
+
+// Save persists data for a given type. It appends for JSONL types and overwrites for md.
+func Save(agentID string, typ MemoryType, data any) error {
+	if err := validateID(agentID, "agent_id"); err != nil {
+		return err
+	}
+
+	memoryMu.Lock()
+	defer memoryMu.Unlock()
+
+	root := getMemoryRoot()
+	dir := filepath.Join(root, "sessions", agentID)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return err
+	}
+
+	paths := getPaths(agentID, typ)
+	var path string
+	if len(paths) == 0 {
+		base := getBaseName(agentID, typ)
+		ext := ".jsonl"
+		if typ == MemTypeLongTerm {
+			ext = ".md"
+		}
+		path = filepath.Join(dir, base+ext)
+	} else {
+		path = paths[len(paths)-1]
+		if typ != MemTypeLongTerm {
+			if info, err := os.Stat(path); err == nil && info.Size() > conf.Conf.Memory.MaxMessagesSize {
+				base := getBaseName(agentID, typ)
+				path = filepath.Join(dir, fmt.Sprintf("%s.%d.jsonl", base, len(paths)))
+			}
+		}
+	}
+
+	switch typ {
+	case MemTypeChunk:
+		msg, ok := data.(*schema.Message)
+		if !ok {
+			return fmt.Errorf("invalid data type for %s: %T", typ, data)
+		}
+		return appendJSONL(path, msg)
+	case MemTypeCompress:
+		record, ok := data.(CompressionRecord)
+		if !ok {
+			recordPtr, ok := data.(*CompressionRecord)
+			if !ok {
+				return fmt.Errorf("invalid data type for %s: %T", typ, data)
+			}
+			record = *recordPtr
+		}
+		return appendJSONL(path, record)
+	case MemTypeLongTerm:
+		content, ok := data.(string)
+		if !ok {
+			return fmt.Errorf("invalid data type for %s: %T", typ, data)
+		}
+		return os.WriteFile(path, []byte(content), 0644)
+	}
+
+	return fmt.Errorf("unknown memory type: %s", typ)
+}
+
+// Load retrieves data for a given type.
+func Load(agentID string, typ MemoryType) (any, error) {
+	memoryMu.RLock()
+	defer memoryMu.RUnlock()
+
+	paths := getPaths(agentID, typ)
+	if len(paths) == 0 {
+		switch typ {
+		case MemTypeChunk:
+			return ([]*schema.Message)(nil), nil
+		case MemTypeCompress:
+			return ([]CompressionRecord)(nil), nil
+		case MemTypeLongTerm:
+			return "", nil
+		}
+		return nil, nil
+	}
+
+	switch typ {
+	case MemTypeChunk:
+		var messages []*schema.Message
+		for _, p := range paths {
+			msgs, err := loadJSONL[*schema.Message](p)
+			if err != nil {
+				return nil, err
+			}
+			messages = append(messages, msgs...)
+		}
+		return messages, nil
+	case MemTypeCompress:
+		var records []CompressionRecord
+		for _, p := range paths {
+			recs, err := loadJSONL[CompressionRecord](p)
+			if err != nil {
+				return nil, err
+			}
+			records = append(records, recs...)
+		}
+		return records, nil
+	case MemTypeLongTerm:
+		data, err := os.ReadFile(paths[0])
+		if err != nil {
+			return "", err
+		}
+		return string(data), nil
+	}
+
+	return nil, fmt.Errorf("unknown memory type: %s", typ)
+}
+
+// Delete removes all files for a given type.
+func Delete(agentID string, typ MemoryType) error {
+	memoryMu.Lock()
+	defer memoryMu.Unlock()
+
+	paths := getPaths(agentID, typ)
+	for _, p := range paths {
+		if err := os.Remove(p); err != nil && !os.IsNotExist(err) {
+			return err
+		}
+	}
 	return nil
 }
 
-// LoadSession reads all chunk files for an agent, skipping malformed message lines.
-func (s *MemoryStore) LoadSession(agentID string) ([]*schema.Message, error) {
-	s.mu.RLock()
-	record := s.index.Sessions[agentID]
-	if record == nil {
-		s.mu.RUnlock()
-		return nil, nil
-	}
-	chunks := append([]ChunkRecord(nil), record.Chunks...)
-	s.mu.RUnlock()
+// DeleteSession removes all files for an agent.
+func DeleteSession(agentID string) error {
+	memoryMu.Lock()
+	defer memoryMu.Unlock()
 
-	var messages []*schema.Message
-	for _, chunk := range chunks {
-		chunkMessages, err := s.loadChunk(chunk)
-		if err != nil {
-			return nil, err
-		}
-		messages = append(messages, chunkMessages...)
-	}
-	return messages, nil
+	root := getMemoryRoot()
+	dir := filepath.Join(root, "sessions", agentID)
+	return os.RemoveAll(dir)
 }
 
-// PersistCompression appends one compressed segment to sessions/{agentID}/compress.jsonl.
-func (s *MemoryStore) PersistCompression(agentID string, startLine, endLine int, messages []*schema.Message) error {
-	if err := validateID(agentID, "agent_id"); err != nil {
-		return err
-	}
-	if startLine <= 0 || endLine < startLine {
-		return fmt.Errorf("invalid compression line range: %d-%d", startLine, endLine)
-	}
-	if len(messages) == 0 {
+// Archive compresses files of a given type into a tar.gz archive and deletes the originals.
+func Archive(agentID string, typ MemoryType) error {
+	memoryMu.Lock()
+	defer memoryMu.Unlock()
+
+	paths := getPaths(agentID, typ)
+	if len(paths) == 0 {
 		return nil
 	}
 
-	path := s.compressionAbsPath(agentID)
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+	root := getMemoryRoot()
+	dir := filepath.Join(root, "sessions", agentID)
+	archivePath := filepath.Join(dir, fmt.Sprintf("%s-%s.tar.gz", agentID, string(typ)))
+
+	f, err := os.Create(archivePath)
+	if err != nil {
 		return err
 	}
-	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o644)
+	defer f.Close()
+
+	gw := gzip.NewWriter(f)
+	defer gw.Close()
+
+	tw := tar.NewWriter(gw)
+	defer tw.Close()
+
+	for _, p := range paths {
+		if err := addFileToTar(tw, p); err != nil {
+			return err
+		}
+	}
+
+	// Close writers before deleting files
+	tw.Close()
+	gw.Close()
+	f.Close()
+
+	for _, p := range paths {
+		_ = os.Remove(p)
+	}
+
+	return nil
+}
+
+func addFileToTar(tw *tar.Writer, path string) error {
+	file, err := os.Open(path)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	record := CompressionRecord{
-		ID:              uuid.New().String(),
-		SourceStartLine: startLine,
-		SourceEndLine:   endLine,
-		Messages:        cloneMessages(messages),
-		Created:         time.Now().UTC(),
-	}
-	data, err := json.Marshal(record)
+	info, err := file.Stat()
 	if err != nil {
 		return err
 	}
-	_, err = file.Write(append(data, '\n'))
+
+	header, err := tar.FileInfoHeader(info, "")
+	if err != nil {
+		return err
+	}
+	header.Name = filepath.Base(path)
+
+	if err := tw.WriteHeader(header); err != nil {
+		return err
+	}
+
+	_, err = io.Copy(tw, file)
 	return err
 }
 
-// LoadCompressedSession returns all compressed segments for an agent.
-func (s *MemoryStore) LoadCompressedSession(agentID string) ([]CompressionRecord, error) {
-	path := s.compressionAbsPath(agentID)
-	file, err := os.Open(path)
-	if os.IsNotExist(err) {
-		return nil, nil
-	}
+// Helper functions
+
+func appendJSONL(path string, data any) error {
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	b, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+	_, err = f.Write(append(b, '\n'))
+	return err
+}
+
+func loadJSONL[T any](path string) ([]T, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
 		return nil, err
 	}
-	defer file.Close()
+	defer f.Close()
 
-	var records []CompressionRecord
-	scanner := bufio.NewScanner(file)
+	var results []T
+	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if line == "" {
 			continue
 		}
-		var record CompressionRecord
-		if err := json.Unmarshal([]byte(line), &record); err != nil {
+		var item T
+		if err := json.Unmarshal([]byte(line), &item); err != nil {
 			continue
 		}
-		if record.SourceStartLine <= 0 || record.SourceEndLine < record.SourceStartLine {
-			continue
-		}
-		record.Messages = cloneMessages(record.Messages)
-		records = append(records, record)
+		results = append(results, item)
 	}
-	return records, scanner.Err()
-}
-
-// LoadPromptSession returns compressed summaries followed by the original
-// messages that have not yet been covered by any compression record.
-func (s *MemoryStore) LoadPromptSession(agentID string) ([]*schema.Message, error) {
-	messages, err := s.LoadSession(agentID)
-	if err != nil {
-		return nil, err
-	}
-	records, err := s.LoadCompressedSession(agentID)
-	if err != nil {
-		return nil, err
-	}
-	if len(records) == 0 {
-		return messages, nil
-	}
-
-	var result []*schema.Message
-	compressedThrough := 0
-	for _, record := range records {
-		if record.SourceEndLine <= compressedThrough {
-			continue
-		}
-		result = append(result, cloneMessages(record.Messages)...)
-		compressedThrough = record.SourceEndLine
-	}
-	if compressedThrough < len(messages) {
-		result = append(result, cloneMessages(messages[compressedThrough:])...)
-	}
-	return result, nil
-}
-
-// DeleteSession removes all chunk files and the index entry for an agent.
-func (s *MemoryStore) DeleteSession(agentID string) error {
-	s.mu.Lock()
-	record := s.index.Sessions[agentID]
-	if record == nil {
-		s.mu.Unlock()
-		return nil
-	}
-	chunks := append([]ChunkRecord(nil), record.Chunks...)
-	delete(s.index.Sessions, agentID)
-	s.mu.Unlock()
-
-	for _, chunk := range chunks {
-		if err := os.Remove(s.chunkAbsPath(chunk)); err != nil && !os.IsNotExist(err) {
-			return err
-		}
-	}
-	if err := os.Remove(s.compressionAbsPath(agentID)); err != nil && !os.IsNotExist(err) {
-		return err
-	}
-	s.requestFlush()
-	return nil
-}
-
-// DeleteSessionChunks removes all chunk files for an agent but keeps the index entry.
-// Used after compression to clear original history while preserving the session record.
-func (s *MemoryStore) DeleteSessionChunks(agentID string) error {
-	s.mu.Lock()
-	record := s.index.Sessions[agentID]
-	if record == nil {
-		s.mu.Unlock()
-		return nil
-	}
-	chunks := append([]ChunkRecord(nil), record.Chunks...)
-	record.Chunks = nil
-	record.Updated = time.Now().UTC()
-	s.mu.Unlock()
-
-	for _, chunk := range chunks {
-		if err := os.Remove(s.chunkAbsPath(chunk)); err != nil && !os.IsNotExist(err) {
-			return err
-		}
-	}
-	s.requestFlush()
-	return nil
-}
-
-// ListSessions returns session records for one agent (at most one in the 1:1 model).
-func (s *MemoryStore) ListSessions(agentID string) []SessionRecord {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	record := s.index.Sessions[agentID]
-	if record == nil {
-		return nil
-	}
-	copyRecord := *record
-	copyRecord.Chunks = append([]ChunkRecord(nil), record.Chunks...)
-	return []SessionRecord{copyRecord}
-}
-
-// Flush writes pending index changes to memory.json.
-func (s *MemoryStore) Flush() error {
-	s.mu.RLock()
-	data, err := json.MarshalIndent(s.index, "", "  ")
-	s.mu.RUnlock()
-	if err != nil {
-		return err
-	}
-
-	s.flushMu.Lock()
-	defer s.flushMu.Unlock()
-
-	if err := os.MkdirAll(s.root, 0o755); err != nil {
-		return err
-	}
-	tmp := s.indexPath() + ".tmp"
-	if err := os.WriteFile(tmp, data, 0o644); err != nil {
-		return err
-	}
-	return os.Rename(tmp, s.indexPath())
-}
-
-func (s *MemoryStore) loadIndex() error {
-	data, err := os.ReadFile(s.indexPath())
-	if os.IsNotExist(err) {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
-	if len(strings.TrimSpace(string(data))) == 0 {
-		return nil
-	}
-	if err := json.Unmarshal(data, s.index); err != nil {
-		return err
-	}
-	if s.index.Sessions == nil {
-		s.index.Sessions = make(map[string]*SessionRecord)
-	}
-	return nil
-}
-
-func (s *MemoryStore) loadChunk(chunk ChunkRecord) ([]*schema.Message, error) {
-	file, err := os.Open(s.chunkAbsPath(chunk))
-	if os.IsNotExist(err) {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	var messages []*schema.Message
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
-			continue
-		}
-		var msg schema.Message
-		if err := json.Unmarshal([]byte(line), &msg); err != nil {
-			continue
-		}
-		messages = append(messages, &msg)
-	}
-	return messages, scanner.Err()
-}
-
-func (s *MemoryStore) flushLoop() {
-	ticker := time.NewTicker(2 * time.Second)
-	defer ticker.Stop()
-
-	dirty := false
-	for {
-		select {
-		case <-s.flushReq:
-			dirty = true
-		case <-ticker.C:
-			if dirty {
-				if err := s.Flush(); err != nil {
-					slog.Error("failed to flush memory index", "error", err)
-				}
-				dirty = false
-			}
-		case <-s.stop:
-			if dirty {
-				if err := s.Flush(); err != nil {
-					slog.Error("failed to flush memory index", "error", err)
-				}
-			}
-			return
-		}
-	}
-}
-
-func (s *MemoryStore) requestFlush() {
-	select {
-	case s.flushReq <- struct{}{}:
-	default:
-	}
-}
-
-func (s *MemoryStore) chunkAbsPath(chunk ChunkRecord) string {
-	return filepath.Join(s.root, filepath.FromSlash(chunk.Path))
-}
-
-func (s *MemoryStore) compressionAbsPath(agentID string) string {
-	return filepath.Join(s.root, "sessions", agentID, "compress.jsonl")
-}
-
-func (s *MemoryStore) indexPath() string {
-	return filepath.Join(s.root, "memory.json")
+	return results, scanner.Err()
 }
 
 func validateID(id, name string) error {
@@ -544,74 +363,22 @@ func validateID(id, name string) error {
 	return nil
 }
 
-func cloneMessages(messages []*schema.Message) []*schema.Message {
-	result := make([]*schema.Message, len(messages))
-	for i, msg := range messages {
-		if msg == nil {
-			continue
-		}
-		cp := *msg
-		result[i] = &cp
-	}
-	return result
-}
+// Package-level helpers for LongTerm memory
 
-// Backward-compatible package helpers use the default store.
-func NewSessionFile(agentID string) (string, error) {
-	store, err := DefaultMemoryStore()
-	if err != nil {
-		return "", err
-	}
-	return store.NewSessionFile(agentID)
-}
-
-func PersistMessage(agentID string, msg *schema.Message) {
-	store, err := DefaultMemoryStore()
-	if err != nil {
-		slog.Error("failed to open memory store", "error", err)
-		return
-	}
-	if err := store.PersistMessage(agentID, msg); err != nil {
-		slog.Error("failed to persist message", "agent_id", agentID, "error", err)
-	}
-}
-
-// AgentMemoryPath returns the path to an agent's memory.md file.
-func AgentMemoryPath(agentID string) string {
-	return filepath.Join(GetWorkspacePath(), "memory", agentID, "memory.md")
-}
-
-// LoadAgentMemory reads the agent's memory.md content. Returns empty string if not found.
 func LoadAgentMemory(agentID string) string {
-	data, err := os.ReadFile(AgentMemoryPath(agentID))
+	res, err := Load(agentID, MemTypeLongTerm)
 	if err != nil {
 		return ""
 	}
-	return strings.TrimSpace(string(data))
+	return res.(string)
 }
 
-// SaveAgentMemory appends content to the agent's memory.md file.
 func SaveAgentMemory(agentID, content string) error {
-	path := AgentMemoryPath(agentID)
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-		return fmt.Errorf("create memory dir: %w", err)
-	}
-	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		return fmt.Errorf("open memory file: %w", err)
-	}
-	defer f.Close()
-	if _, err := f.WriteString(content); err != nil {
-		return fmt.Errorf("write memory: %w", err)
-	}
-	return nil
+	// Save for LongTerm is overwrite, so we need to load and append if we want to "save"
+	old := LoadAgentMemory(agentID)
+	return Save(agentID, MemTypeLongTerm, old+content)
 }
 
-// ReplaceAgentMemory overwrites the agent's memory.md with new content.
 func ReplaceAgentMemory(agentID, content string) error {
-	path := AgentMemoryPath(agentID)
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-		return fmt.Errorf("create memory dir: %w", err)
-	}
-	return os.WriteFile(path, []byte(content), 0644)
+	return Save(agentID, MemTypeLongTerm, content)
 }
