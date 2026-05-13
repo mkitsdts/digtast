@@ -77,6 +77,11 @@ func LoadAllAgentConfigs() (map[string]*model.DigitalAgentConfig, error) {
 		configs = make(map[string]*model.DigitalAgentConfig)
 	}
 
+	for i := range configs {
+		os.MkdirAll(AgentDir(configs[i].ID), 0755)
+		os.MkdirAll(AgentSkillsDir(configs[i].ID), 0755)
+	}
+
 	return configs, nil
 }
 

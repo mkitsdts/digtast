@@ -75,12 +75,6 @@ func InitWorkspace() {
 		return
 	}
 
-	skillPath := fmt.Sprintf("%s/skills", path)
-	if err := os.MkdirAll(skillPath, 0755); err != nil {
-		slog.Error("Failed to create skill directory", "path", skillPath, "err", err)
-		return
-	}
-
 	agentRootsPath := filepath.Join(path, "agents")
 	if err := os.MkdirAll(agentRootsPath, 0755); err != nil {
 		slog.Error("Failed to create agents directory", "path", agentRootsPath, "err", err)
