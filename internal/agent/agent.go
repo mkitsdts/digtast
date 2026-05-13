@@ -149,6 +149,16 @@ func (dga *DigitalAgent) Cancel() error {
 	return dga.stop()
 }
 
+func (dga *DigitalAgent) dream(ctx context.Context) error {
+	if !dga.runMu.TryLock() {
+		return nil
+	}
+	defer dga.runMu.Unlock()
+
+	// TODO: compress session memory
+	return nil
+}
+
 // Compress triggers manual memory compression for the agent's session.
 func (dga *DigitalAgent) Compress() error {
 	dga.runMu.Lock()
