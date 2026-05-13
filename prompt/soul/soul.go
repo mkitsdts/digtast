@@ -56,7 +56,6 @@ func (s *Soul) CreatePromptImpl() error {
 }
 
 func (s *Soul) GetPromptImpl() (string, error) {
-	//TODO:
 	workspacePath := workspace.GetWorkspacePath()
 	if workspacePath == "" {
 		return "", nil
