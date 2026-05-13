@@ -107,11 +107,32 @@ time=... level=INFO msg="server listening at" address=[::]:10086
 - [ X ] **状态查询接口**：实现 `GetTaskStatus`，允许用户实时查看 Agent 的行动轨迹（如：正在调用某工具、正在思考）。
 - [ X ] **任务控制增强**：完善 `StopTask` 功能。
 
+### 🔧 工具
+``` backend
+- read_file：可以读取文本/图片/PDF/DOCX/XLSX 文件，转换为自定义的 file 格式
+- write_file
+- edit_file
+- list_dir
+- glob：按 glob 模式匹配文件路径，按修改时间排序
+- grep │ 正则搜索文件内容，支持 content/files/count 模式
+- exec：执行 shell 命令，60s 超时，输出截断 10000 字符
+```
+- [ X ] **sandbox**：沙箱执行命令，在 Linux 下通过系统提供的 `Bubblewrap` 实现，MacOS 和 Windows 上没有对应实现（ MacOS 有 sandbox-exec 系统框架， Windows 可以利用 Windows Sandbox 或者 Sandboxie-Plus。 Windows Sandbox 是虚拟化的方案，比较重一些）
+- [ X ] **web_search**：搜索引擎查询，返回标题/URL/摘要
+- [ X ] **web_fetch**  │ 抓取 URL 并提取为 markdown/文本
+- [ X ] **message**：发送消息给用户，支持文件附件和按钮
+- [ X ] **ask_user**：暂停等待用户回答（独占执行）
+- [ X ] **spawn**：在后台派生子 agent 处理复杂任务
+- [ X ] **MCP 动态工具**：从 MCP 服务器自动包装的工具/资源/prompt
+- [ X ] **spawn**：接受传入 task 和可选的 label，创建子智能体完成。然后在著智能体的session里加入占位符，给子智能体异步写入调用结果
+- [ ] **cron**：定时提醒和周期性任务（add/list/remove）
+
+
 ### 🔌 技能与扩展性
 - [ X ] **动态工具加载**：实现 `CreateTool` 接口，支持动态为 Agent 挂载远程工具。
 - [ X ] **技能包 (Skill) 支持**：定义 Skill 规范，允许将一组 Prompt + Tools 封装为特定技能（如：翻译专家、代码审计员）。
 - [ X ] **MCP 协议对接**：实现 Model Context Protocol (MCP)，支持挂载标准化的外部上下文服务器。
 
-###    通道内容交互
+### ✈️ 通道内容交互
 - [ X ] **QQ**
 - [ X ] **Telegram**
