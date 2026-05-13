@@ -155,8 +155,13 @@ func (dga *DigitalAgent) dream(ctx context.Context) error {
 	}
 	defer dga.runMu.Unlock()
 
-	// TODO: compress session memory
-	return nil
+	session, err := dga.memory.GetOrCreate()
+	if err != nil {
+		return err
+	}
+	
+	vctx := ctxmanager.GetOrCreate(dga.ID)
+	return state.Compress(vctx, dga.cm, session, dga.state)
 }
 
 // Compress triggers manual memory compression for the agent's session.
