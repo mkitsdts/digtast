@@ -11,13 +11,17 @@ import (
 	skillmw "digital-labor/pkg/middleware/skill"
 	mmodel "digital-labor/pkg/model"
 	"digital-labor/pkg/registry"
+	"digital-labor/pkg/sandbox"
 	"digital-labor/pkg/state"
+	"digital-labor/pkg/workspace"
 	"errors"
 	"fmt"
 	"log/slog"
+	"path/filepath"
 	"sync"
 
 	"github.com/cloudwego/eino/adk"
+	"github.com/cloudwego/eino/adk/filesystem"
 	"github.com/cloudwego/eino/adk/prebuilt/deep"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/compose"
@@ -25,6 +29,20 @@ import (
 )
 
 const defaultModelDescription = "一位云端数字助理。核心目标是成为用户高效、可靠且易于沟通的智能伙伴。具备卓越的理解能力、严谨的逻辑思维和强大的信息整合能力，旨在帮助用户解决问题、获取知识、激发创意并提升效率。"
+
+// agentBackend combines filesystem.Backend and filesystem.StreamingShell.
+// Both *Local and *SandboxedBackend satisfy this interface.
+type agentBackend interface {
+	filesystem.Backend
+	filesystem.StreamingShell
+}
+
+type AgentMode string
+
+const (
+	ModeNormal  AgentMode = "normal"
+	ModeSandbox AgentMode = "sandbox"
+)
 
 type DigitalAgent struct {
 	ID       string
@@ -35,6 +53,8 @@ type DigitalAgent struct {
 	runMu    sync.Mutex
 	runStops context.CancelFunc
 	memory   *mem.Store
+	mode     AgentMode
+	sandbox  *sandbox.SandboxedBackend
 }
 
 func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
@@ -83,6 +103,7 @@ func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 		handlers = append(handlers, skillHandler)
 	}
 
+	dga.mode = ModeNormal
 	dga.agent, err = deep.New(ctx, &deep.Config{
 		Name:      cfg.Name,
 		ChatModel: cm,
@@ -149,6 +170,74 @@ func (dga *DigitalAgent) Cancel() error {
 	return dga.stop()
 }
 
+// Close stops the sandbox container and releases resources.
+func (dga *DigitalAgent) Close() error {
+	if dga.sandbox != nil {
+		return dga.sandbox.Close()
+	}
+	return nil
+}
+
+// RebuildAgent recreates the underlying adk agent with the given mode.
+func (dga *DigitalAgent) RebuildAgent(mode AgentMode) error {
+	handlers := registry.GetHandlers()
+	if skillHandler := skillmw.GetSkillMiddlewareForAgent(dga.ID); skillHandler != nil {
+		handlers = append(handlers, skillHandler)
+	}
+
+	ctx := ctxmanager.GetOrCreate(dga.ID)
+	var backend agentBackend
+
+	if mode == ModeSandbox {
+		hostWorkPath := filepath.Join(workspace.GetWorkspacePath(), "workspace")
+		sb, err := sandbox.WithSandbox(ctx, local.GetBackend(), hostWorkPath)
+		if err != nil {
+			return err
+		}
+		backend = sb
+		// Close old sandbox if exists
+		if dga.sandbox != nil {
+			dga.sandbox.Close()
+		}
+		dga.sandbox = sb
+	} else {
+		backend = local.GetBackend()
+		// Close old sandbox if switching away from sandbox mode
+		if dga.sandbox != nil {
+			dga.sandbox.Close()
+			dga.sandbox = nil
+		}
+	}
+
+	ag, err := deep.New(ctx, &deep.Config{
+		Name:      dga.Name,
+		ChatModel: dga.cm,
+		ToolsConfig: adk.ToolsConfig{
+			ToolsNodeConfig: compose.ToolsNodeConfig{
+				Tools: registry.GetTools(),
+				ToolCallMiddlewares: []compose.ToolMiddleware{
+					{Invokable: registry.InvokableTool},
+				},
+			},
+		},
+		Backend:           backend,
+		StreamingShell:    backend,
+		Description:       defaultModelDescription,
+		Handlers:          handlers,
+		ModelRetryConfig:  &adk.ModelRetryConfig{MaxRetries: 5},
+		WithoutWriteTodos: true,
+	})
+	if err != nil {
+		return err
+	}
+
+	dga.runMu.Lock()
+	dga.agent = ag
+	dga.mode = mode
+	dga.runMu.Unlock()
+	return nil
+}
+
 func (dga *DigitalAgent) dream(ctx context.Context) error {
 	if !dga.runMu.TryLock() {
 		return nil
@@ -159,7 +248,7 @@ func (dga *DigitalAgent) dream(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	
+
 	vctx := ctxmanager.GetOrCreate(dga.ID)
 	return state.Compress(vctx, dga.cm, session, dga.state)
 }
@@ -187,9 +276,11 @@ func (dga *DigitalAgent) UpdateTools() error {
 		handlers = append(handlers, skillHandler)
 	}
 
-	ag, err := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
-		Name:  dga.agent.Name(context.Background()),
-		Model: dga.cm,
+	dga.runMu.Lock()
+	var err error
+	dga.agent, err = deep.New(ctx, &deep.Config{
+		Name:      dga.Name,
+		ChatModel: dga.cm,
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
 				Tools: registry.GetTools(),
@@ -198,16 +289,17 @@ func (dga *DigitalAgent) UpdateTools() error {
 				},
 			},
 		},
-		Description: dga.agent.Description(ctx),
-		Handlers:    handlers,
+		Backend:           local.GetBackend(),
+		StreamingShell:    local.GetBackend(),
+		Description:       defaultModelDescription,
+		Handlers:          handlers,
+		ModelRetryConfig:  &adk.ModelRetryConfig{MaxRetries: 5},
+		WithoutWriteTodos: true,
 	})
+	dga.runMu.Unlock()
 	if err != nil {
 		return err
 	}
-
-	dga.runMu.Lock()
-	dga.agent = ag
-	dga.runMu.Unlock()
 
 	return nil
 }

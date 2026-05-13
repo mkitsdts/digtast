@@ -106,8 +106,12 @@ func (m *Manager) RemoveAgent(id string) error {
 
 	m.mux.Lock()
 	defer m.mux.Unlock()
-	if _, ok := m.agents[id]; !ok {
+	ag, ok := m.agents[id]
+	if !ok {
 		return errors.New("agent not found")
+	}
+	if err := ag.Close(); err != nil {
+		slog.Error("failed to close agent sandbox", "id", id, "error", err)
 	}
 	delete(m.agents, id)
 	return nil
