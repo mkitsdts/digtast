@@ -50,23 +50,32 @@ func (t *MemorySearchTool) InvokableRun(ctx context.Context, argumentsInJSON str
 	}
 
 	agentId, _ := ctx.Value("agent_id").(string)
+
+	da, err := center.AgentManager.GetAgent(agentId)
+	if err != nil {
+		da, _ = center.AgentManager.GetDefaultAgent()
+	}
+
+	if da != nil {
+		agentId = da.ID
+	}
+
 	if agentId == "" {
 		agentId = workspace.DefaultAgentID()
 	}
 
 	// 搜索短期记忆 (Session history & compressed records)
-	da, err := center.AgentManager.GetAgent(agentId)
 	var sessionResults []string
-	if err == nil {
+	if da != nil {
 		sess, err := da.GetSession()
 		if err == nil {
-			// 搜索压缩记录
+			// 搜索压缩记录 (短期记忆)
 			compressedMsgs, _ := sess.Search(args.Query)
 			for _, m := range compressedMsgs {
 				sessionResults = append(sessionResults, fmt.Sprintf("[%s]: %s", m.Role, m.Content))
 			}
 
-			// 搜索原始消息
+			// 搜索原始消息 (对话历史)
 			msgs := sess.GetMessages()
 			for _, m := range msgs {
 				if strings.Contains(strings.ToLower(m.Content), strings.ToLower(args.Query)) {
@@ -88,7 +97,7 @@ func (t *MemorySearchTool) InvokableRun(ctx context.Context, argumentsInJSON str
 				finalSessionResults = append(finalSessionResults, r)
 			}
 		}
-		output += "### Session History Results:\n" + strings.Join(finalSessionResults, "\n")
+		output += "### Session History & Short-term Memory Results:\n" + strings.Join(finalSessionResults, "\n")
 	}
 
 	if output == "" {
