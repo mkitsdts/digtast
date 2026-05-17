@@ -31,6 +31,7 @@
 ```bash
 ./digast --local # 本地启动
 ./digast --port 10086 # 在 10086 端口启动 grpc 服务器，与远程中心配合
+docker build -f deploy/Dockerfile -t digital-labor .
 ```
 
 启动成功后，控制台会输出如下日志，表示服务正在等待请求：
