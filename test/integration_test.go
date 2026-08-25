@@ -8,9 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"digital-labor/pkg/llm"
 	mem "digital-labor/pkg/memory"
-
-	"github.com/cloudwego/eino/schema"
 )
 
 // ============================================================
@@ -41,8 +40,8 @@ func TestMemory_CreateGetAppendListDelete(t *testing.T) {
 	}
 
 	// Append messages
-	sess.Append(&schema.Message{
-		Role:    schema.User,
+	sess.Append(&llm.Message{
+		Role:    llm.RoleUser,
 		Content: "integration test message",
 	})
 
@@ -85,7 +84,7 @@ func TestMemory_PersistenceAcrossStoreInstances(t *testing.T) {
 	}
 
 	// Append a message
-	msg := &schema.Message{Role: schema.User, Content: "persisted message"}
+	msg := &llm.Message{Role: llm.RoleUser, Content: "persisted message"}
 	msgBytes, _ := json.Marshal(msg)
 	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
@@ -182,7 +181,7 @@ func TestMemory_JSONLFormat(t *testing.T) {
 
 	// Parse messages
 	for i, line := range lines[1:] {
-		var msg schema.Message
+		var msg llm.Message
 		if err := json.Unmarshal([]byte(line), &msg); err != nil {
 			t.Fatalf("failed to parse message %d: %v", i, err)
 		}

@@ -3,13 +3,14 @@ package mem
 import (
 	"testing"
 
+	"digital-labor/pkg/conf"
+	"digital-labor/pkg/llm"
 	"digital-labor/pkg/workspace"
-
-	"github.com/cloudwego/eino/schema"
 )
 
 func newTestStore(t *testing.T) *Store {
 	t.Helper()
+	conf.Conf.WorkSpaceDir = t.TempDir()
 	// Tests will use the default workspace path, which might be messy.
 	// However, workspace.GetWorkspacePath() is hardcoded.
 	// For testing purposes, we should ideally be able to override it,
@@ -58,7 +59,7 @@ func TestGetOrCreate_LoadExisting(t *testing.T) {
 	// Clean up first
 	workspace.DeleteSession(agentID)
 
-	if err := workspace.Save(agentID, workspace.MemTypeChunk, &schema.Message{Role: schema.User, Content: "hello"}); err != nil {
+	if err := workspace.Save(agentID, workspace.MemTypeChunk, &llm.Message{Role: llm.RoleUser, Content: "hello"}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -87,7 +88,7 @@ func TestDelete(t *testing.T) {
 	if _, err := s.GetOrCreate(); err != nil {
 		t.Fatal(err)
 	}
-	if err := workspace.Save(agentID, workspace.MemTypeChunk, &schema.Message{Role: schema.User, Content: "hello"}); err != nil {
+	if err := workspace.Save(agentID, workspace.MemTypeChunk, &llm.Message{Role: llm.RoleUser, Content: "hello"}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -97,7 +98,7 @@ func TestDelete(t *testing.T) {
 
 	// After delete, loading should return empty
 	res, _ := workspace.Load(agentID, workspace.MemTypeChunk)
-	msgs := res.([]*schema.Message)
+	msgs := res.([]*llm.Message)
 	if len(msgs) != 0 {
 		t.Fatal("expected messages to be deleted")
 	}

@@ -1,6 +1,6 @@
 # Digtast - Digital Labor Agent
 
-Go 实现的智能体服务，基于 CloudWeGo eino ADK 框架，支持多种 LLM 后端。
+Go 实现的智能体服务，使用自研 AgentLoop，支持多种 LLM 后端。
 
 ## 项目结构
 

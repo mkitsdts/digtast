@@ -1,6 +1,7 @@
 package state
 
 import (
+	"context"
 	"crypto/sha256"
 	"digital-labor/pkg/workspace"
 	"fmt"
@@ -8,6 +9,10 @@ import (
 	"strings"
 	"sync"
 )
+
+func (sm *StateManager) LoadPrompt(context.Context) (string, error) {
+	return sm.Build(), nil
+}
 
 // StateManager manages the system prompt cache and per-agent memory for one agent.
 type StateManager struct {

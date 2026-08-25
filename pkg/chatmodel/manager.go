@@ -3,15 +3,14 @@ package chatmodel
 import (
 	"context"
 	"digital-labor/pkg/conf"
+	"digital-labor/pkg/llm"
 	"fmt"
-
-	"github.com/cloudwego/eino/components/model"
 )
 
 type Manager struct {
 }
 
-var ModelManager *Manager
+var ModelManager = &Manager{}
 
 func Init() {
 	ModelManager = &Manager{}
@@ -36,20 +35,20 @@ func (m *Manager) ListModels() map[string]conf.ModelConfig {
 	return conf.Conf.Models
 }
 
-func (m *Manager) GetChatModel(ctx context.Context, modelName string) (model.ToolCallingChatModel, error) {
+func (m *Manager) GetChatModel(ctx context.Context, modelName string) (llm.LLM, error) {
 	cfg, ok := conf.FindModelConfig(modelName)
 	if !ok {
 		return nil, fmt.Errorf("model config for %s not found", modelName)
 	}
 
-	return newChatModel(ctx, cfg.Provider, cfg.Key, cfg.URL, modelName)
+	return newChatModel(cfg.Provider, cfg.Key, cfg.URL, modelName)
 }
 
-func (m *Manager) GetChatModelByConfig(ctx context.Context, configName, modelName string) (model.ToolCallingChatModel, error) {
+func (m *Manager) GetChatModelByConfig(ctx context.Context, configName, modelName string) (llm.LLM, error) {
 	cfg, ok := conf.Conf.Models[configName]
 	if !ok {
 		return nil, fmt.Errorf("model config %s not found", configName)
 	}
 
-	return newChatModel(ctx, cfg.Provider, cfg.Key, cfg.URL, modelName)
+	return newChatModel(cfg.Provider, cfg.Key, cfg.URL, modelName)
 }

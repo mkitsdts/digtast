@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"compress/gzip"
 	"digital-labor/pkg/conf"
+	"digital-labor/pkg/llm"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,8 +15,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/cloudwego/eino/schema"
 )
 
 const defaultAgentID = "default"
@@ -37,11 +36,11 @@ const (
 // CompressionRecord describes one compressed summary segment and the original
 // JSONL line range it summarizes. Line numbers are 1-based over LoadSession order.
 type CompressionRecord struct {
-	ID              string            `json:"id"`
-	SourceStartLine int               `json:"source_start_line"`
-	SourceEndLine   int               `json:"source_end_line"`
-	Messages        []*schema.Message `json:"messages"`
-	Created         time.Time         `json:"created"`
+	ID              string         `json:"id"`
+	SourceStartLine int            `json:"source_start_line"`
+	SourceEndLine   int            `json:"source_end_line"`
+	Messages        []*llm.Message `json:"messages"`
+	Created         time.Time      `json:"created"`
 }
 
 var (
@@ -140,7 +139,7 @@ func Save(agentID string, typ MemoryType, data any) error {
 
 	switch typ {
 	case MemTypeChunk:
-		msg, ok := data.(*schema.Message)
+		msg, ok := data.(*llm.Message)
 		if !ok {
 			return fmt.Errorf("invalid data type for %s: %T", typ, data)
 		}
@@ -175,7 +174,7 @@ func Load(agentID string, typ MemoryType) (any, error) {
 	if len(paths) == 0 {
 		switch typ {
 		case MemTypeChunk:
-			return ([]*schema.Message)(nil), nil
+			return ([]*llm.Message)(nil), nil
 		case MemTypeCompress:
 			return ([]CompressionRecord)(nil), nil
 		case MemTypeLongTerm:
@@ -186,9 +185,9 @@ func Load(agentID string, typ MemoryType) (any, error) {
 
 	switch typ {
 	case MemTypeChunk:
-		var messages []*schema.Message
+		var messages []*llm.Message
 		for _, p := range paths {
-			msgs, err := loadJSONL[*schema.Message](p)
+			msgs, err := loadJSONL[*llm.Message](p)
 			if err != nil {
 				return nil, err
 			}

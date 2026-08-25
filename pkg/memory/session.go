@@ -1,12 +1,12 @@
 package mem
 
 import (
+	"digital-labor/pkg/llm"
 	"digital-labor/pkg/workspace"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/cloudwego/eino/schema"
 	"github.com/google/uuid"
 )
 
@@ -24,7 +24,7 @@ type Session struct {
 	CreatedAt time.Time
 
 	mu                 sync.Mutex
-	messages           []*schema.Message
+	messages           []*llm.Message
 	pendingInterruptID string
 	msgIdx             int
 }
@@ -58,7 +58,7 @@ func (s *Session) GetMsgIdx() int {
 }
 
 // Append adds a message to memory and persists it to disk.
-func (s *Session) Append(msg *schema.Message) error {
+func (s *Session) Append(msg *llm.Message) error {
 	if msg == nil {
 		return nil
 	}
@@ -72,11 +72,11 @@ func (s *Session) Append(msg *schema.Message) error {
 }
 
 // GetMessages returns a snapshot of all messages.
-func (s *Session) GetMessages() []*schema.Message {
+func (s *Session) GetMessages() []*llm.Message {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	result := make([]*schema.Message, len(s.messages))
+	result := make([]*llm.Message, len(s.messages))
 	for i, msg := range s.messages {
 		if msg == nil {
 			continue
@@ -89,7 +89,7 @@ func (s *Session) GetMessages() []*schema.Message {
 
 // GetCompressMessages returns the compacted view used as model context:
 // compressed summaries followed by original messages not yet summarized.
-func (s *Session) GetCompressMessages() []*schema.Message {
+func (s *Session) GetCompressMessages() []*llm.Message {
 	s.mu.Lock()
 	agentID := s.AgentID
 	fallback := cloneSchemaMessages(s.messages)
@@ -99,7 +99,7 @@ func (s *Session) GetCompressMessages() []*schema.Message {
 	if err != nil {
 		return fallback
 	}
-	messages := resMsgs.([]*schema.Message)
+	messages := resMsgs.([]*llm.Message)
 
 	resRecs, err := workspace.Load(agentID, workspace.MemTypeCompress)
 	if err != nil {
@@ -111,7 +111,7 @@ func (s *Session) GetCompressMessages() []*schema.Message {
 		return messages
 	}
 
-	var result []*schema.Message
+	var result []*llm.Message
 	compressedThrough := 0
 	for _, record := range records {
 		if record.SourceEndLine <= compressedThrough {
@@ -142,23 +142,9 @@ func (s *Session) Size() int {
 			continue
 		}
 		total += len(msg.Content)
-		for _, part := range msg.MultiContent {
+		for _, part := range msg.Parts {
 			total += len(part.Text)
-		}
-		for _, part := range msg.UserInputMultiContent {
-			total += len(part.Text)
-			if part.Image != nil && part.Image.Base64Data != nil {
-				total += len(*part.Image.Base64Data)
-			}
-			if part.Audio != nil && part.Audio.Base64Data != nil {
-				total += len(*part.Audio.Base64Data)
-			}
-			if part.Video != nil && part.Video.Base64Data != nil {
-				total += len(*part.Video.Base64Data)
-			}
-			if part.File != nil && part.File.Base64Data != nil {
-				total += len(*part.File.Base64Data)
-			}
+			total += len(part.Data)
 		}
 	}
 	return total / 4
@@ -174,7 +160,7 @@ func (s *Session) DeleteChunks() error {
 }
 
 // Search retrieves short-term memories (compressed records) that match the query.
-func (s *Session) Search(query string) ([]*schema.Message, error) {
+func (s *Session) Search(query string) ([]*llm.Message, error) {
 	s.mu.Lock()
 	agentID := s.AgentID
 	s.mu.Unlock()
@@ -185,7 +171,7 @@ func (s *Session) Search(query string) ([]*schema.Message, error) {
 	}
 	records := res.([]workspace.CompressionRecord)
 
-	var result []*schema.Message
+	var result []*llm.Message
 	for _, record := range records {
 		match := false
 		for _, msg := range record.Messages {
@@ -202,7 +188,7 @@ func (s *Session) Search(query string) ([]*schema.Message, error) {
 }
 
 // AppendCompression persists a compressed segment without mutating full history.
-func (s *Session) AppendCompression(startLine, endLine int, msgs []*schema.Message) error {
+func (s *Session) AppendCompression(startLine, endLine int, msgs []*llm.Message) error {
 	s.mu.Lock()
 	agentID := s.AgentID
 	s.mu.Unlock()
@@ -243,7 +229,7 @@ func (s *Session) Title() string {
 	defer s.mu.Unlock()
 
 	for _, msg := range s.messages {
-		if msg.Role == schema.User && msg.Content != "" {
+		if msg.Role == llm.RoleUser && msg.Content != "" {
 			title := msg.Content
 			if len([]rune(title)) > 60 {
 				title = string([]rune(title)[:60]) + "..."
@@ -254,8 +240,8 @@ func (s *Session) Title() string {
 	return "New Session"
 }
 
-func cloneSchemaMessages(messages []*schema.Message) []*schema.Message {
-	result := make([]*schema.Message, len(messages))
+func cloneSchemaMessages(messages []*llm.Message) []*llm.Message {
+	result := make([]*llm.Message, len(messages))
 	for i, msg := range messages {
 		if msg == nil {
 			continue

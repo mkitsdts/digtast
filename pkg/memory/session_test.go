@@ -4,13 +4,14 @@ import (
 	"testing"
 	"time"
 
+	"digital-labor/pkg/conf"
+	"digital-labor/pkg/llm"
 	"digital-labor/pkg/workspace"
-
-	"github.com/cloudwego/eino/schema"
 )
 
 func newTestSessionWithFile(t *testing.T) *Session {
 	t.Helper()
+	conf.Conf.WorkSpaceDir = t.TempDir()
 	store := &Store{
 		agentID: "test-agent",
 	}
@@ -18,7 +19,7 @@ func newTestSessionWithFile(t *testing.T) *Session {
 	sess := &Session{
 		AgentID:   "test-agent",
 		CreatedAt: time.Now(),
-		messages:  make([]*schema.Message, 0),
+		messages:  make([]*llm.Message, 0),
 	}
 	store.session = sess
 	return sess
@@ -28,8 +29,8 @@ func TestAppend(t *testing.T) {
 	sess := newTestSessionWithFile(t)
 	workspace.DeleteSession(sess.AgentID)
 
-	msg := &schema.Message{
-		Role:    schema.User,
+	msg := &llm.Message{
+		Role:    llm.RoleUser,
 		Content: "hello",
 	}
 	if err := sess.Append(msg); err != nil {
@@ -49,9 +50,9 @@ func TestAppend_Multiple(t *testing.T) {
 	sess := newTestSessionWithFile(t)
 	workspace.DeleteSession(sess.AgentID)
 
-	sess.Append(&schema.Message{Role: schema.User, Content: "msg1"})
-	sess.Append(&schema.Message{Role: schema.Assistant, Content: "reply1"})
-	sess.Append(&schema.Message{Role: schema.User, Content: "msg2"})
+	sess.Append(&llm.Message{Role: llm.RoleUser, Content: "msg1"})
+	sess.Append(&llm.Message{Role: llm.RoleAssistant, Content: "reply1"})
+	sess.Append(&llm.Message{Role: llm.RoleUser, Content: "msg2"})
 
 	msgs := sess.GetMessages()
 	if len(msgs) != 3 {
@@ -61,7 +62,7 @@ func TestAppend_Multiple(t *testing.T) {
 
 func TestGetMessages_ReturnsSnapshot(t *testing.T) {
 	sess := newTestSessionWithFile(t)
-	sess.Append(&schema.Message{Role: schema.User, Content: "original"})
+	sess.Append(&llm.Message{Role: llm.RoleUser, Content: "original"})
 
 	msgs1 := sess.GetMessages()
 	msgs1[0].Content = "modified"
@@ -78,8 +79,8 @@ func TestTitle(t *testing.T) {
 		t.Fatalf("expected 'New Session', got '%s'", title)
 	}
 
-	sess.Append(&schema.Message{Role: schema.Assistant, Content: "ignored"})
-	sess.Append(&schema.Message{Role: schema.User, Content: "first user msg"})
+	sess.Append(&llm.Message{Role: llm.RoleAssistant, Content: "ignored"})
+	sess.Append(&llm.Message{Role: llm.RoleUser, Content: "first user msg"})
 
 	if title := sess.Title(); title != "first user msg" {
 		t.Fatalf("expected 'first user msg', got '%s'", title)
@@ -92,7 +93,7 @@ func TestTitle_Truncation(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		longContent += "中"
 	}
-	sess.Append(&schema.Message{Role: schema.User, Content: longContent})
+	sess.Append(&llm.Message{Role: llm.RoleUser, Content: longContent})
 
 	title := sess.Title()
 	if len([]rune(title)) > 63 {
@@ -130,13 +131,13 @@ func TestAppend_PersistsToDisk(t *testing.T) {
 	sess := newTestSessionWithFile(t)
 	workspace.DeleteSession(sess.AgentID)
 
-	sess.Append(&schema.Message{Role: schema.User, Content: "persisted"})
+	sess.Append(&llm.Message{Role: llm.RoleUser, Content: "persisted"})
 
 	res, err := workspace.Load(sess.AgentID, workspace.MemTypeChunk)
 	if err != nil {
 		t.Fatal(err)
 	}
-	msgs := res.([]*schema.Message)
+	msgs := res.([]*llm.Message)
 	if len(msgs) != 1 {
 		t.Fatalf("expected 1 persisted message, got %d", len(msgs))
 	}

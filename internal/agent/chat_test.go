@@ -4,10 +4,14 @@ import (
 	"context"
 	"digital-labor/pkg/conf"
 	"digital-labor/pkg/model"
+	"os"
 	"testing"
 )
 
 func TestChat(t *testing.T) {
+	if os.Getenv("TEST_INTEGRATION") == "" {
+		t.Skip("set TEST_INTEGRATION=1 to run")
+	}
 	conf.Conf.Models = map[string]conf.ModelConfig{
 		"doubao": {
 			Provider:   "doubao",

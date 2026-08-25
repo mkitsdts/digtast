@@ -1,14 +1,13 @@
 package subagent
 
 import (
-	"github.com/cloudwego/eino/components/model"
-	"github.com/cloudwego/eino/schema"
+	"digital-labor/pkg/llm"
 )
 
 type Config struct {
 	ParentID        string
-	ChatModel       model.ToolCallingChatModel
-	Messages        []*schema.Message
+	ChatModel       llm.LLM
+	Messages        []llm.Message
 	TaskDescription string
 }
 

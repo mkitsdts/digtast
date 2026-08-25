@@ -3,39 +3,24 @@ package memory
 import (
 	"context"
 	"digital-labor/internal/center"
+	"digital-labor/pkg/llm"
+	toolpkg "digital-labor/pkg/tool"
 	"digital-labor/pkg/workspace"
 	"encoding/json"
 	"fmt"
 	"strings"
-
-	"github.com/cloudwego/eino/components/tool"
-	"github.com/cloudwego/eino/schema"
-	"github.com/eino-contrib/jsonschema"
-	orderedmap "github.com/wk8/go-ordered-map/v2"
 )
 
 type MemorySearchTool struct {
 }
 
-func (t *MemorySearchTool) Info(ctx context.Context) (*schema.ToolInfo, error) {
-	properties := orderedmap.New[string, *jsonschema.Schema]()
-	properties.Set("query", &jsonschema.Schema{
-		Type:        "string",
-		Description: "搜索关键词，用于在记忆（对话历史和长期记忆）中查找相关信息。",
-	})
-
-	jsonschema := &jsonschema.Schema{
-		Version:    "v0.1",
-		ID:         "memory_search",
-		Type:       "object",
-		Properties: properties,
-		Required:   []string{"query"},
-	}
-
-	return &schema.ToolInfo{
+func (t *MemorySearchTool) Definition(context.Context) (llm.ToolDefinition, error) {
+	return llm.ToolDefinition{
 		Name:        "memory_search",
-		Desc:        "search in agent's memory (history and long-term memory)",
-		ParamsOneOf: schema.NewParamsOneOfByJSONSchema(jsonschema),
+		Description: "Search the agent's conversation history and compressed memory.",
+		Parameters: toolpkg.ObjectSchema(map[string]any{
+			"query": map[string]any{"type": "string", "description": "Search query."},
+		}, "query"),
 	}, nil
 }
 
@@ -43,10 +28,10 @@ type MemorySearchArguments struct {
 	Query string `json:"query"`
 }
 
-func (t *MemorySearchTool) InvokableRun(ctx context.Context, argumentsInJSON string, opts ...tool.Option) (string, error) {
+func (t *MemorySearchTool) Execute(ctx context.Context, arguments json.RawMessage) (*toolpkg.Result, error) {
 	args := MemorySearchArguments{}
-	if err := json.Unmarshal([]byte(argumentsInJSON), &args); err != nil {
-		return "", err
+	if err := json.Unmarshal(arguments, &args); err != nil {
+		return nil, err
 	}
 
 	agentId, _ := ctx.Value("agent_id").(string)
@@ -101,8 +86,8 @@ func (t *MemorySearchTool) InvokableRun(ctx context.Context, argumentsInJSON str
 	}
 
 	if output == "" {
-		return "No relevant information found in memory.", nil
+		return &toolpkg.Result{Content: "No relevant information found in memory."}, nil
 	}
 
-	return output, nil
+	return &toolpkg.Result{Content: output}, nil
 }

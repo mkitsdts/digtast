@@ -2,12 +2,11 @@ package askuser
 
 import (
 	"digital-labor/pkg/registry"
+	"digital-labor/pkg/tool"
 	"log/slog"
-
-	"github.com/cloudwego/eino/components/tool"
 )
 
-func NewAskUserTool() tool.InvokableTool {
+func NewAskUserTool() tool.Tool {
 	return &AskUserTool{}
 }
 

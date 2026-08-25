@@ -1,6 +1,7 @@
 package workspace
 
 import (
+	"digital-labor/pkg/conf"
 	"fmt"
 	"log/slog"
 	"os"
@@ -9,6 +10,9 @@ import (
 )
 
 func GetWorkspacePath() string {
+	if conf.Conf.WorkSpaceDir != "" {
+		return filepath.Clean(conf.Conf.WorkSpaceDir)
+	}
 	workspacePath, err := os.UserHomeDir()
 	if err != nil {
 		return ""
@@ -38,7 +42,7 @@ func GetCurrentWorkspacePath() string {
 func InitWorkspace() {
 	path := GetWorkspacePath()
 	if err := os.MkdirAll(path, 0755); err != nil {
-		fmt.Println("Failed to create workspace", "path", path, "err", err)
+		slog.Error("failed to create workspace", "path", path, "error", err)
 		return
 	}
 

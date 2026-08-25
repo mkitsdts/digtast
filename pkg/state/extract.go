@@ -3,15 +3,13 @@ package state
 import (
 	"context"
 	"digital-labor/pkg/conf"
+	"digital-labor/pkg/llm"
 	mem "digital-labor/pkg/memory"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"strings"
 	"time"
-
-	"github.com/cloudwego/eino/components/model"
-	"github.com/cloudwego/eino/schema"
 )
 
 const extractPrompt = `你是一个对话提取专家。请从以下对话中提取关键信息，保留：
@@ -52,13 +50,13 @@ const cleanPrompt = `以下是一份长期记忆文件（memory.md），请去�
 输出格式：清理后的完整 memory.md 内容（markdown 格式）。直接输出内容，不要有其他说明。`
 
 // FilterUserAssistant filters out Tool messages, keeping only User and Assistant messages.
-func FilterUserAssistant(msgs []*schema.Message) []*schema.Message {
-	var result []*schema.Message
+func FilterUserAssistant(msgs []*llm.Message) []*llm.Message {
+	var result []*llm.Message
 	for _, msg := range msgs {
 		if msg == nil {
 			continue
 		}
-		if msg.Role == schema.User || msg.Role == schema.Assistant {
+		if msg.Role == llm.RoleUser || msg.Role == llm.RoleAssistant {
 			result = append(result, msg)
 		}
 	}
@@ -66,13 +64,13 @@ func FilterUserAssistant(msgs []*schema.Message) []*schema.Message {
 }
 
 // ShardMessages splits messages into chunks where each chunk's estimated tokens <= tokenLimit.
-func ShardMessages(msgs []*schema.Message, tokenLimit int) [][]*schema.Message {
+func ShardMessages(msgs []*llm.Message, tokenLimit int) [][]*llm.Message {
 	if tokenLimit <= 0 {
 		tokenLimit = 4000
 	}
 
-	var shards [][]*schema.Message
-	var currentShard []*schema.Message
+	var shards [][]*llm.Message
+	var currentShard []*llm.Message
 	currentTokens := 0
 
 	for _, msg := range msgs {
@@ -80,10 +78,7 @@ func ShardMessages(msgs []*schema.Message, tokenLimit int) [][]*schema.Message {
 			continue
 		}
 		msgTokens := estimateTokens(msg.Content)
-		for _, part := range msg.MultiContent {
-			msgTokens += estimateTokens(part.Text)
-		}
-		for _, part := range msg.UserInputMultiContent {
+		for _, part := range msg.Parts {
 			msgTokens += estimateTokens(part.Text)
 		}
 
@@ -106,7 +101,7 @@ func ShardMessages(msgs []*schema.Message, tokenLimit int) [][]*schema.Message {
 
 type indexedMessage struct {
 	line int
-	msg  *schema.Message
+	msg  *llm.Message
 }
 
 func shardIndexedMessages(msgs []indexedMessage, tokenLimit int) [][]indexedMessage {
@@ -140,22 +135,19 @@ func shardIndexedMessages(msgs []indexedMessage, tokenLimit int) [][]indexedMess
 	return shards
 }
 
-func messageTokens(msg *schema.Message) int {
+func messageTokens(msg *llm.Message) int {
 	if msg == nil {
 		return 0
 	}
 	msgTokens := estimateTokens(msg.Content)
-	for _, part := range msg.MultiContent {
-		msgTokens += estimateTokens(part.Text)
-	}
-	for _, part := range msg.UserInputMultiContent {
+	for _, part := range msg.Parts {
 		msgTokens += estimateTokens(part.Text)
 	}
 	return msgTokens
 }
 
 // ExtractChunk calls the LLM to extract key information from a conversation chunk.
-func ExtractChunk(ctx context.Context, m model.BaseChatModel, chunk []*schema.Message) ([]*schema.Message, error) {
+func ExtractChunk(ctx context.Context, m llm.LLM, chunk []*llm.Message) ([]*llm.Message, error) {
 	var conversation strings.Builder
 	for _, msg := range chunk {
 		if msg == nil {
@@ -165,23 +157,16 @@ func ExtractChunk(ctx context.Context, m model.BaseChatModel, chunk []*schema.Me
 		if msg.Content != "" {
 			conversation.WriteString(fmt.Sprintf("[%s] %s\n", role, msg.Content))
 		}
-		for _, part := range msg.MultiContent {
-			if part.Text != "" {
-				conversation.WriteString(fmt.Sprintf("[%s] %s\n", role, part.Text))
-			}
-		}
-		for _, part := range msg.UserInputMultiContent {
+		for _, part := range msg.Parts {
 			if part.Text != "" {
 				conversation.WriteString(fmt.Sprintf("[%s] %s\n", role, part.Text))
 			}
 		}
 	}
 
-	input := []*schema.Message{
-		{Role: schema.User, Content: extractPrompt + "\n\n对话内容：\n" + conversation.String()},
-	}
-
-	resp, err := m.Generate(ctx, input)
+	resp, err := m.Chat(ctx, &llm.ChatRequest{Messages: []llm.Message{
+		{Role: llm.RoleUser, Content: extractPrompt + "\n\n对话内容：\n" + conversation.String()},
+	}})
 	if err != nil {
 		return nil, fmt.Errorf("llm extract failed: %w", err)
 	}
@@ -190,29 +175,29 @@ func ExtractChunk(ctx context.Context, m model.BaseChatModel, chunk []*schema.Me
 		Role    string `json:"role"`
 		Content string `json:"content"`
 	}
-	if err := json.Unmarshal([]byte(resp.Content), &extracted); err != nil {
+	if err := json.Unmarshal([]byte(resp.Message.Content), &extracted); err != nil {
 		// If parsing fails, return the raw response as a single assistant message
-		return []*schema.Message{
-			{Role: schema.Assistant, Content: resp.Content},
+		return []*llm.Message{
+			{Role: llm.RoleAssistant, Content: resp.Message.Content},
 		}, nil
 	}
 
-	var result []*schema.Message
+	var result []*llm.Message
 	for _, item := range extracted {
 		if item.Content == "" {
 			continue
 		}
-		role := schema.Assistant
+		role := llm.RoleAssistant
 		if item.Role == "user" {
-			role = schema.User
+			role = llm.RoleUser
 		}
-		result = append(result, &schema.Message{Role: role, Content: item.Content})
+		result = append(result, &llm.Message{Role: role, Content: item.Content})
 	}
 	return result, nil
 }
 
 // Compress executes the full memory compression pipeline
-func Compress(ctx context.Context, m model.BaseChatModel, session *mem.Session, sm *StateManager) error {
+func Compress(ctx context.Context, m llm.LLM, session *mem.Session, sm *StateManager) error {
 	msgs := session.GetMessages()
 	if len(msgs) == 0 {
 		return nil
@@ -228,7 +213,7 @@ func Compress(ctx context.Context, m model.BaseChatModel, session *mem.Session, 
 		if msg == nil {
 			continue
 		}
-		if msg.Role == schema.User || msg.Role == schema.Assistant {
+		if msg.Role == llm.RoleUser || msg.Role == llm.RoleAssistant {
 			filtered = append(filtered, indexedMessage{
 				line: compressedThrough + idx + 1,
 				msg:  msg,
@@ -247,9 +232,9 @@ func Compress(ctx context.Context, m model.BaseChatModel, session *mem.Session, 
 	shards := shardIndexedMessages(filtered, chunkLimit)
 
 	//LLM extract each shard
-	var extracted []*schema.Message
+	var extracted []*llm.Message
 	for _, shard := range shards {
-		chunk := make([]*schema.Message, 0, len(shard))
+		chunk := make([]*llm.Message, 0, len(shard))
 		for _, item := range shard {
 			chunk = append(chunk, item.msg)
 		}
@@ -307,13 +292,13 @@ func shouldCleanMemory() bool {
 
 // PromoteToMemory analyzes short-term memory and existing memory.md,
 // promoting frequently mentioned or important items to long-term memory.
-func PromoteMessagesToMemory(ctx context.Context, m model.BaseChatModel, msgs []*schema.Message, sm *StateManager) error {
+func PromoteMessagesToMemory(ctx context.Context, m llm.LLM, msgs []*llm.Message, sm *StateManager) error {
 	existing := sm.LoadMemory()
 
 	// Build short-term memory context from session messages
 	var stmBuilder strings.Builder
 	for _, msg := range msgs {
-		if msg == nil || (msg.Role != schema.User && msg.Role != schema.Assistant) {
+		if msg == nil || (msg.Role != llm.RoleUser && msg.Role != llm.RoleAssistant) {
 			continue
 		}
 		if msg.Content != "" {
@@ -325,11 +310,9 @@ func PromoteMessagesToMemory(ctx context.Context, m model.BaseChatModel, msgs []
 		return nil
 	}
 
-	input := []*schema.Message{
-		{Role: schema.User, Content: fmt.Sprintf(promotePrompt, shortTermMemory, existing)},
-	}
-
-	resp, err := m.Generate(ctx, input)
+	resp, err := m.Chat(ctx, &llm.ChatRequest{Messages: []llm.Message{
+		{Role: llm.RoleUser, Content: fmt.Sprintf(promotePrompt, shortTermMemory, existing)},
+	}})
 	if err != nil {
 		return fmt.Errorf("llm promote failed: %w", err)
 	}
@@ -337,7 +320,7 @@ func PromoteMessagesToMemory(ctx context.Context, m model.BaseChatModel, msgs []
 	var items []struct {
 		Content string `json:"content"`
 	}
-	if err := json.Unmarshal([]byte(resp.Content), &items); err != nil {
+	if err := json.Unmarshal([]byte(resp.Message.Content), &items); err != nil {
 		return nil // No items to promote
 	}
 
@@ -355,22 +338,20 @@ func PromoteMessagesToMemory(ctx context.Context, m model.BaseChatModel, msgs []
 }
 
 // CleanMemory deduplicates and cleans memory.md using LLM.
-func CleanMemory(ctx context.Context, m model.BaseChatModel, sm *StateManager) error {
+func CleanMemory(ctx context.Context, m llm.LLM, sm *StateManager) error {
 	existing := sm.LoadMemory()
 	if existing == "" {
 		return nil
 	}
 
-	input := []*schema.Message{
-		{Role: schema.User, Content: fmt.Sprintf(cleanPrompt, 20, existing)},
-	}
-
-	resp, err := m.Generate(ctx, input)
+	resp, err := m.Chat(ctx, &llm.ChatRequest{Messages: []llm.Message{
+		{Role: llm.RoleUser, Content: fmt.Sprintf(cleanPrompt, 20, existing)},
+	}})
 	if err != nil {
 		return fmt.Errorf("llm clean failed: %w", err)
 	}
 
-	cleaned := strings.TrimSpace(resp.Content)
+	cleaned := strings.TrimSpace(resp.Message.Content)
 	if cleaned == "" || cleaned == existing {
 		return nil
 	}

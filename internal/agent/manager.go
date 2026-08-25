@@ -25,8 +25,11 @@ func NewManager() *Manager {
 
 // 智能体相关
 func (m *Manager) CreateAgent(name string, cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
+	if cfg == nil {
+		return nil, errors.New("agent config is required")
+	}
 	if cfg.Name == "" {
-		return nil, errors.New("name is empty")
+		return nil, errs.ErrAgentNameRequired
 	}
 	if cfg.Model == "" {
 		return nil, errors.New("model name is empty")

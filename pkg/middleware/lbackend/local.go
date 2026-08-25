@@ -19,6 +19,7 @@ package local
 import (
 	"bufio"
 	"context"
+	"digital-labor/pkg/filesystem"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -35,8 +36,6 @@ import (
 	"time"
 
 	"github.com/bmatcuk/doublestar/v4"
-	"github.com/cloudwego/eino/adk/filesystem"
-	"github.com/cloudwego/eino/schema"
 )
 
 type Config struct {
@@ -404,7 +403,7 @@ func (s *Local) Edit(ctx context.Context, req *filesystem.EditRequest) error {
 	return os.WriteFile(path, []byte(newText), 0644)
 }
 
-func (s *Local) ExecuteStreaming(ctx context.Context, input *filesystem.ExecuteRequest) (result *schema.StreamReader[*filesystem.ExecuteResponse], err error) {
+func (s *Local) ExecuteStreaming(ctx context.Context, input *filesystem.ExecuteRequest) (result *filesystem.StreamReader[*filesystem.ExecuteResponse], err error) {
 	if input.Command == "" {
 		return nil, fmt.Errorf("command is required")
 	}
@@ -419,7 +418,7 @@ func (s *Local) ExecuteStreaming(ctx context.Context, input *filesystem.ExecuteR
 		return nil, err
 	}
 
-	sr, w := schema.Pipe[*filesystem.ExecuteResponse](100)
+	sr, w := filesystem.Pipe[*filesystem.ExecuteResponse](100)
 
 	if err := cmd.Start(); err != nil {
 		_ = stdout.Close()
@@ -468,7 +467,7 @@ func (s *Local) getShellArgs(command string) (string, []string) {
 
 // runCmdInBackground executes command in background without waiting for completion.
 // The caller controls timeout/cancellation via ctx.Done().
-func (s *Local) runCmdInBackground(ctx context.Context, cmd *exec.Cmd, stdout, stderr io.ReadCloser, w *schema.StreamWriter[*filesystem.ExecuteResponse]) {
+func (s *Local) runCmdInBackground(ctx context.Context, cmd *exec.Cmd, stdout, stderr io.ReadCloser, w *filesystem.StreamWriter[*filesystem.ExecuteResponse]) {
 	go func() {
 		defer func() {
 			if pe := recover(); pe != nil {
@@ -514,7 +513,7 @@ func drainPipesConcurrently(stdout, stderr io.Reader) {
 }
 
 // streamCmdOutput handles streaming command output to the writer.
-func (s *Local) streamCmdOutput(ctx context.Context, cmd *exec.Cmd, stdout, stderr io.ReadCloser, w *schema.StreamWriter[*filesystem.ExecuteResponse]) {
+func (s *Local) streamCmdOutput(ctx context.Context, cmd *exec.Cmd, stdout, stderr io.ReadCloser, w *filesystem.StreamWriter[*filesystem.ExecuteResponse]) {
 	defer func() {
 		if pe := recover(); pe != nil {
 			w.Send(nil, newPanicErr(pe, debug.Stack()))
@@ -562,7 +561,7 @@ func (s *Local) readStderrAsync(stderr io.Reader) (*[]byte, <-chan error) {
 }
 
 // streamStdout streams stdout line by line to the writer.
-func (s *Local) streamStdout(ctx context.Context, cmd *exec.Cmd, stdout io.Reader, w *schema.StreamWriter[*filesystem.ExecuteResponse]) (bool, error) {
+func (s *Local) streamStdout(ctx context.Context, cmd *exec.Cmd, stdout io.Reader, w *filesystem.StreamWriter[*filesystem.ExecuteResponse]) (bool, error) {
 	scanner := bufio.NewScanner(stdout)
 	hasOutput := false
 
@@ -586,7 +585,7 @@ func (s *Local) streamStdout(ctx context.Context, cmd *exec.Cmd, stdout io.Reade
 }
 
 // handleCmdCompletion handles command completion and sends final response.
-func (s *Local) handleCmdCompletion(cmd *exec.Cmd, stderrData *[]byte, hasOutput bool, w *schema.StreamWriter[*filesystem.ExecuteResponse]) {
+func (s *Local) handleCmdCompletion(cmd *exec.Cmd, stderrData *[]byte, hasOutput bool, w *filesystem.StreamWriter[*filesystem.ExecuteResponse]) {
 	if err := cmd.Wait(); err != nil {
 		exitCode := 0
 		var exitError *exec.ExitError
@@ -607,7 +606,7 @@ func (s *Local) handleCmdCompletion(cmd *exec.Cmd, stderrData *[]byte, hasOutput
 }
 
 // sendErrorAndClose sends an error to the stream and closes it.
-func sendErrorAndClose(w *schema.StreamWriter[*filesystem.ExecuteResponse], err error) {
+func sendErrorAndClose(w *filesystem.StreamWriter[*filesystem.ExecuteResponse], err error) {
 	defer w.Close()
 	w.Send(nil, err)
 }

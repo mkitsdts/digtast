@@ -18,8 +18,13 @@ package browser_use
 
 import (
 	"context"
+	"digital-labor/pkg/llm"
+	toolpkg "digital-labor/pkg/tool"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -28,14 +33,6 @@ import (
 	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/cdproto/target"
 	"github.com/chromedp/chromedp"
-	"github.com/eino-contrib/jsonschema"
-	orderedmap "github.com/wk8/go-ordered-map/v2"
-
-	"github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2"
-	"github.com/cloudwego/eino/components/model"
-	"github.com/cloudwego/eino/components/prompt"
-	"github.com/cloudwego/eino/components/tool"
-	"github.com/cloudwego/eino/schema"
 )
 
 const (
@@ -75,8 +72,7 @@ type Config struct {
 	ChromeInstancePath string   `json:"chrome_instance_path"`
 	ProxyServer        string   `json:"proxy_server"`
 
-	DDGSearchTool    duckduckgo.Search
-	ExtractChatModel model.BaseChatModel
+	ExtractChatModel llm.LLM
 
 	Logf func(string, ...any)
 }
@@ -118,8 +114,6 @@ type ElementInfo struct {
 }
 
 type Tool struct {
-	info *schema.ToolInfo
-
 	mu              sync.Mutex
 	ctx             context.Context
 	allocatorCtx    context.Context
@@ -127,27 +121,42 @@ type Tool struct {
 	elements        []ElementInfo
 	currentTabID    int
 	tabs            []TabInfo
-	searchTool      duckduckgo.Search
-	cm              model.BaseChatModel
-	tpl             prompt.ChatTemplate
+	cm              llm.LLM
 }
 
-func (b *Tool) Info(_ context.Context) (*schema.ToolInfo, error) {
-	return b.info, nil
+func (b *Tool) Definition(context.Context) (llm.ToolDefinition, error) {
+	return llm.ToolDefinition{
+		Name: toolName, Description: toolDescription,
+		Parameters: toolpkg.ObjectSchema(map[string]any{
+			"action": map[string]any{"type": "string", "enum": []string{
+				string(ActionGoToURL), string(ActionClickElement), string(ActionInputText), string(ActionScrollDown),
+				string(ActionScrollUp), string(ActionWebSearch), string(ActionWait), string(ActionExtractContent),
+				string(ActionSwitchTab), string(ActionOpenTab), string(ActionCloseTab),
+			}},
+			"url": map[string]any{"type": "string"}, "index": map[string]any{"type": "integer"},
+			"text": map[string]any{"type": "string"}, "scroll_amount": map[string]any{"type": "integer"},
+			"tab_id": map[string]any{"type": "integer"}, "query": map[string]any{"type": "string"},
+			"goal": map[string]any{"type": "string"}, "keys": map[string]any{"type": "string"},
+			"seconds": map[string]any{"type": "integer"},
+		}, "action"),
+	}, nil
 }
 
-func (b *Tool) InvokableRun(ctx context.Context, argumentsInJSON string, opts ...tool.Option) (string, error) {
+func (b *Tool) Execute(ctx context.Context, arguments json.RawMessage) (*toolpkg.Result, error) {
 	param := &Param{}
-	err := sonic.UnmarshalString(argumentsInJSON, param)
-	result, err := b.Execute(param)
+	err := sonic.Unmarshal(arguments, param)
 	if err != nil {
-		return "", err
+		return nil, err
+	}
+	result, err := b.executeAction(param)
+	if err != nil {
+		return nil, err
 	}
 	content, err := sonic.MarshalString(result)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return content, nil
+	return &toolpkg.Result{Content: content, IsError: result.Error != ""}, nil
 }
 
 func NewBrowserUseTool(ctx context.Context, config *Config) (*Tool, error) {
@@ -155,107 +164,8 @@ func NewBrowserUseTool(ctx context.Context, config *Config) (*Tool, error) {
 		config = &Config{}
 	}
 	but := &Tool{
-		info: &schema.ToolInfo{
-			Name: toolName,
-			Desc: toolDescription,
-			ParamsOneOf: schema.NewParamsOneOfByJSONSchema(
-				&jsonschema.Schema{
-					Type: string(schema.Object),
-					Properties: orderedmap.New[string, *jsonschema.Schema](
-						orderedmap.WithInitialData[string, *jsonschema.Schema](
-							orderedmap.Pair[string, *jsonschema.Schema]{
-								Key: "action",
-								Value: &jsonschema.Schema{
-									Type: string(schema.String),
-									Enum: []any{
-										string(ActionGoToURL),
-										string(ActionClickElement),
-										string(ActionInputText),
-										string(ActionScrollDown),
-										string(ActionScrollUp),
-										//string(ActionSendKeys),
-										string(ActionWebSearch),
-										string(ActionWait),
-										string(ActionExtractContent),
-										string(ActionSwitchTab),
-										string(ActionOpenTab),
-										string(ActionCloseTab),
-									},
-									Description: "The browser action to perform",
-								},
-							},
-							orderedmap.Pair[string, *jsonschema.Schema]{
-								Key: "url",
-								Value: &jsonschema.Schema{
-									Type:        string(schema.String),
-									Description: "URL for 'go_to_url' or 'open_tab' actions",
-								},
-							},
-							orderedmap.Pair[string, *jsonschema.Schema]{
-								Key: "index",
-								Value: &jsonschema.Schema{
-									Type:        string(schema.Integer),
-									Description: "Element index for 'click_element', 'input_text' actions",
-								},
-							},
-							orderedmap.Pair[string, *jsonschema.Schema]{
-								Key: "text",
-								Value: &jsonschema.Schema{
-									Type:        string(schema.String),
-									Description: "Text for 'input_text' actions",
-								},
-							},
-							orderedmap.Pair[string, *jsonschema.Schema]{
-								Key: "scroll_amount",
-								Value: &jsonschema.Schema{
-									Type:        string(schema.Integer),
-									Description: "Pixels to scroll (positive for down, negative for up) for 'scroll_down' or 'scroll_up' actions",
-								},
-							},
-							orderedmap.Pair[string, *jsonschema.Schema]{
-								Key: "tab_id",
-								Value: &jsonschema.Schema{
-									Type:        string(schema.Integer),
-									Description: "Tab ID for 'switch_tab' action",
-								},
-							},
-							orderedmap.Pair[string, *jsonschema.Schema]{
-								Key: "query",
-								Value: &jsonschema.Schema{
-									Type:        string(schema.String),
-									Description: "Search query for 'web_search' action",
-								},
-							},
-							orderedmap.Pair[string, *jsonschema.Schema]{
-								Key: "goal",
-								Value: &jsonschema.Schema{
-									Type:        string(schema.String),
-									Description: "Extraction goal for 'extract_content' action",
-								},
-							},
-							orderedmap.Pair[string, *jsonschema.Schema]{
-								Key: "keys",
-								Value: &jsonschema.Schema{
-									Type:        string(schema.String),
-									Description: "Keys to send for 'send_keys' action",
-								},
-							},
-							orderedmap.Pair[string, *jsonschema.Schema]{
-								Key: "seconds",
-								Value: &jsonschema.Schema{
-									Type:        string(schema.Integer),
-									Description: "Seconds to wait for 'wait' action",
-								},
-							},
-						),
-					),
-				},
-			),
-		},
-		tabs:       make([]TabInfo, 0),
-		searchTool: config.DDGSearchTool,
-		cm:         config.ExtractChatModel,
-		tpl:        prompt.FromMessages(schema.FString, schema.UserMessage(extractContentPrompt)),
+		tabs: make([]TabInfo, 0),
+		cm:   config.ExtractChatModel,
 	}
 
 	err := but.initialize(ctx, config)
@@ -379,7 +289,7 @@ const (
 	ActionCloseTab       Action = "close_tab"
 )
 
-func (b *Tool) Execute(params *Param) (*ToolResult, error) {
+func (b *Tool) executeAction(params *Param) (*ToolResult, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -502,24 +412,13 @@ func (b *Tool) Execute(params *Param) (*ToolResult, error) {
 		result = &ToolResult{Output: fmt.Sprintf("successfully waited for %d seconds", seconds)}
 
 	case ActionWebSearch:
-		if b.searchTool == nil {
-			return nil, fmt.Errorf("web search fail, no search tool found")
-		}
 		if params.Query == nil {
 			return &ToolResult{Error: "query is required for 'web_search' action"}, nil
 		}
-		searchResults, err := b.searchTool.TextSearch(b.ctx, &duckduckgo.TextSearchRequest{
-			Query: *params.Query,
-		})
-		if err != nil {
-			return &ToolResult{Error: fmt.Sprintf("failed to search: %v", err)}, nil
-		}
-		if len(searchResults.Results) == 0 {
-			return &ToolResult{Error: "search result is empty"}, nil
-		}
+		searchURL := "https://duckduckgo.com/?q=" + url.QueryEscape(*params.Query)
 		newCtx, _ := chromedp.NewContext(b.ctx)
 		if err := chromedp.Run(newCtx,
-			chromedp.Navigate(searchResults.Results[0].URL),
+			chromedp.Navigate(searchURL),
 			chromedp.WaitReady("body", chromedp.ByQuery),
 		); err != nil {
 			return &ToolResult{Error: fmt.Sprintf("failed to open new tab: %v", err)}, nil
@@ -533,7 +432,7 @@ func (b *Tool) Execute(params *Param) (*ToolResult, error) {
 			return &ToolResult{Error: fmt.Sprintf("failed to update elements: %v", err)}, nil
 		}
 
-		result = &ToolResult{Output: "successfully search web and opened new tabL: " + searchResults.Results[0].URL}
+		result = &ToolResult{Output: "successfully searched web: " + searchURL}
 
 	case ActionExtractContent:
 		if params.Goal == nil {
@@ -553,20 +452,14 @@ func (b *Tool) Execute(params *Param) (*ToolResult, error) {
 		if b.cm == nil {
 			result = &ToolResult{Output: fmt.Sprintf("extract content: %s", html)}
 		} else {
-			message, err := b.tpl.Format(b.ctx, map[string]any{
-				"goal": *params.Goal,
-				"page": html,
-			})
-			if err != nil {
-				return &ToolResult{Error: fmt.Sprintf("format extract prompt fail: %v", err)}, nil
-			}
-
-			extractResult, err := b.cm.Generate(b.ctx, message)
+			prompt := strings.ReplaceAll(extractContentPrompt, "{goal}", *params.Goal)
+			prompt = strings.ReplaceAll(prompt, "{page}", html)
+			extractResult, err := b.cm.Chat(b.ctx, &llm.ChatRequest{Messages: []llm.Message{{Role: llm.RoleUser, Content: prompt}}})
 			if err != nil {
 				return &ToolResult{Error: fmt.Sprintf("generate extract content fail: %v", err)}, nil
 			}
 
-			result = &ToolResult{Output: fmt.Sprintf("extract content: %s", extractResult)}
+			result = &ToolResult{Output: "extract content: " + extractResult.Message.Content}
 		}
 
 	case ActionOpenTab:
@@ -803,7 +696,7 @@ func (b *Tool) GetCurrentState() (*BrowserState, error) {
 	err = chromedp.Run(b.ctx, chromedp.Evaluate(fmt.Sprintf(`
 		(() => {
 			// 移除之前可能存在的标记
-			const oldMarkers = document.querySelectorAll('.eino-element-marker, .eino-element-border');
+			const oldMarkers = document.querySelectorAll('.digtast-element-marker, .digtast-element-border');
 			oldMarkers.forEach(marker => marker.remove());
 
 			// 使用XPath查找元素并添加标记
@@ -818,7 +711,7 @@ func (b *Tool) GetCurrentState() (*BrowserState, error) {
 
 					// 创建序号标记
 					const marker = document.createElement('div');
-					marker.className = 'eino-element-marker';
+					marker.className = 'digtast-element-marker';
 					marker.textContent = elem.index;
 					marker.style.position = 'absolute';
 					marker.style.zIndex = '10000';
@@ -837,7 +730,7 @@ func (b *Tool) GetCurrentState() (*BrowserState, error) {
 
 					// 创建元素边框
 					const border = document.createElement('div');
-					border.className = 'eino-element-border';
+					border.className = 'digtast-element-border';
 					border.style.position = 'absolute';
 					border.style.zIndex = '9999';
 					border.style.border = '2px solid #f44336';

@@ -2,12 +2,11 @@ package memory
 
 import (
 	"digital-labor/pkg/registry"
+	"digital-labor/pkg/tool"
 	"log/slog"
-
-	"github.com/cloudwego/eino/components/tool"
 )
 
-func NewMemorySearchTool() tool.InvokableTool {
+func NewMemorySearchTool() tool.Tool {
 	return &MemorySearchTool{}
 }
 

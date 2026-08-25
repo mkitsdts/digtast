@@ -1,18 +1,17 @@
 package agent
 
 import (
+	"digital-labor/pkg/llm"
 	"digital-labor/pkg/state"
 	"testing"
-
-	"github.com/cloudwego/eino/schema"
 )
 
 func TestFilterUserAssistant(t *testing.T) {
-	msgs := []*schema.Message{
-		{Role: schema.User, Content: "hello"},
-		{Role: schema.Assistant, Content: "hi"},
-		{Role: schema.Tool, Content: "tool result", ToolName: "search"},
-		{Role: schema.User, Content: "thanks"},
+	msgs := []*llm.Message{
+		{Role: llm.RoleUser, Content: "hello"},
+		{Role: llm.RoleAssistant, Content: "hi"},
+		{Role: llm.RoleTool, Content: "tool result", Name: "search"},
+		{Role: llm.RoleUser, Content: "thanks"},
 	}
 
 	filtered := state.FilterUserAssistant(msgs)
@@ -25,10 +24,10 @@ func TestFilterUserAssistant(t *testing.T) {
 }
 
 func TestShardMessages(t *testing.T) {
-	msgs := []*schema.Message{
-		{Role: schema.User, Content: "hello world"},       // ~3 tokens
-		{Role: schema.Assistant, Content: "hi there"},     // ~2 tokens
-		{Role: schema.User, Content: "how are you doing"}, // ~4 tokens
+	msgs := []*llm.Message{
+		{Role: llm.RoleUser, Content: "hello world"},       // ~3 tokens
+		{Role: llm.RoleAssistant, Content: "hi there"},     // ~2 tokens
+		{Role: llm.RoleUser, Content: "how are you doing"}, // ~4 tokens
 	}
 
 	shards := state.ShardMessages(msgs, 5)

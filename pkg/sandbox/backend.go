@@ -3,15 +3,13 @@ package sandbox
 import (
 	"bufio"
 	"context"
+	"digital-labor/pkg/filesystem"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/cloudwego/eino/adk/filesystem"
-	"github.com/cloudwego/eino/schema"
 )
 
 // SandboxedBackend implements filesystem.Backend and filesystem.StreamingShell,
@@ -22,7 +20,7 @@ type SandboxedBackend struct {
 
 // WithSandbox creates a Docker sandbox and returns a backend that executes
 // all operations inside the container.
-func WithSandbox(ctx context.Context, _ filesystem.Backend, hostWorkPath string) (*SandboxedBackend, error) {
+func WithSandbox(ctx context.Context, hostWorkPath string) (*SandboxedBackend, error) {
 	if hostWorkPath == "" {
 		return nil, fmt.Errorf("hostWorkPath is required")
 	}
@@ -236,7 +234,7 @@ func (sb *SandboxedBackend) GlobInfo(ctx context.Context, req *filesystem.GlobIn
 
 // --- filesystem.StreamingShell ---
 
-func (sb *SandboxedBackend) ExecuteStreaming(ctx context.Context, input *filesystem.ExecuteRequest) (*schema.StreamReader[*filesystem.ExecuteResponse], error) {
+func (sb *SandboxedBackend) ExecuteStreaming(ctx context.Context, input *filesystem.ExecuteRequest) (*filesystem.StreamReader[*filesystem.ExecuteResponse], error) {
 	return sb.sandbox.Exec(ctx, input.Command)
 }
 

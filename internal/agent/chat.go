@@ -2,286 +2,137 @@ package agent
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"log/slog"
+
+	"digital-labor/pkg/agentloop"
 	"digital-labor/pkg/conf"
-	"digital-labor/pkg/ctxmanager"
+	"digital-labor/pkg/llm"
 	mmodel "digital-labor/pkg/model"
 	"digital-labor/pkg/state"
 	"digital-labor/pkg/task"
-	"errors"
-	"io"
-	"log/slog"
-
-	"github.com/cloudwego/eino/adk"
-	"github.com/cloudwego/eino/schema"
 )
 
 func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan string, error) {
+	dga.runMu.Lock()
 	session, err := dga.memory.GetOrCreate()
 	if err != nil {
+		dga.runMu.Unlock()
 		return nil, err
 	}
-
-	msg, err := buildUserMessage(req)
+	message, err := buildUserMessage(req)
 	if err != nil {
+		dga.runMu.Unlock()
+		return nil, err
+	}
+	if err := session.Append(&message); err != nil {
+		dga.runMu.Unlock()
 		return nil, err
 	}
 
-	if err := session.Append(msg); err != nil {
-		return nil, err
-	}
-
-	sysMsg := &schema.Message{Role: schema.System, Content: dga.state.Build()}
-	msgs := append([]*schema.Message{sysMsg}, session.GetCompressMessages()...)
-
-	t, err := task.CreateTask(dga.ID, task.Config{
-		AgentID: dga.ID,
-	})
+	createdTask, err := task.CreateTask(dga.ID, task.Config{AgentID: dga.ID})
 	if err != nil {
+		dga.runMu.Unlock()
 		return nil, err
 	}
-	flowID := t.TaskID
+	flowID := createdTask.TaskID
 	task.UpdateStatus(dga.ID, flowID, mmodel.TaskStatusRunning)
-
-	runCtx, cancel := context.WithCancel(ctxmanager.GetOrCreate(flowID))
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	runCtx, cancel := context.WithCancel(ctx)
 	runCtx = context.WithValue(runCtx, "task_id", flowID)
 	runCtx = context.WithValue(runCtx, "agent_id", dga.ID)
-	dga.runStops = cancel
+	dga.setStop(cancel)
 
-	dga.runMu.Lock()
-	events := dga.agent.Run(runCtx, &adk.AgentInput{
-		Messages:        msgs,
-		EnableStreaming: req.IsStream,
-	})
-
-	ch := make(chan string, 30)
-	go func() {
-		defer func() {
-			dga.runStops = nil
-			dga.runMu.Unlock()
-		}()
-		defer close(ch)
-		defer func() {
-			if err := session.CompleteTurn(); err != nil {
-				slog.Error("failed to complete memory turn", "agent_id", dga.ID, "err", err)
-			}
-		}()
-
-		if events == nil {
-			slog.Error("events stream is nil")
-			task.UpdateStatus(dga.ID, flowID, mmodel.TaskStatusFailed)
-			return
+	messages := session.GetCompressMessages()
+	inputMessages := make([]llm.Message, 0, len(messages))
+	for _, item := range messages {
+		if item != nil {
+			inputMessages = append(inputMessages, *item)
 		}
+	}
+	output := make(chan string, 30)
+	go func() {
+		defer close(output)
+		defer cancel()
+		defer dga.runMu.Unlock()
+		defer dga.setStop(nil)
 
-		runResult := ""
-		var runErr error
-
-		for {
-			if runCtx.Err() != nil {
-				slog.Warn("agent execution cancelled or timeout", "agent_id", dga.ID, "err", runCtx.Err())
-				task.UpdateStatus(dga.ID, flowID, mmodel.TaskStatusFailed)
-				return
-			}
-
-			select {
-			case <-runCtx.Done():
-				cancel()
-			default:
-			}
-
-			event, ok := events.Next()
-
-			if !ok {
-				if runResult != "" {
-					session.Append(&schema.Message{
-						Role:    schema.Assistant,
-						Content: runResult,
-					})
-				}
-
-				if runErr != nil {
-					task.UpdateTask(dga.ID, flowID, task.UpdateConfig{
-						Status: mmodel.TaskStatusFailed,
-						Error:  runErr.Error(),
-					})
-				} else {
-					task.UpdateStatus(dga.ID, flowID, mmodel.TaskStatusCompleted)
-				}
-
-				// Trigger memory compression if session exceeds token limit
-				tokenLimit := conf.Conf.Memory.TokenLimit
-				if tokenLimit <= 0 {
-					tokenLimit = 32000
-				}
-				if session.Size() > tokenLimit {
-					go func() {
-						if err := state.Compress(runCtx, dga.cm, session, dga.state); err != nil {
-							slog.Error("memory compression failed", "agent_id", dga.ID, "err", err)
-						}
-					}()
-				}
-
-				if !req.IsStream && runResult != "" {
-					ch <- runResult
-				}
-				return
-			}
-
-			// maybe need to handle tool calls fail result
-			if event.Err != nil {
-				slog.Error("execute agent failed", "agent_id", dga.ID, "err", event.Err)
-				runErr = event.Err
-				ch <- event.Err.Error()
-				continue
-			}
-
-			if event.Output == nil {
-				slog.Error("event output is nil", "agent_id", dga.ID, "event", event)
-				continue
-			}
-
-			mv := event.Output.MessageOutput
-			if mv == nil {
-				continue
-			}
-
-			if mv.Role == schema.Tool {
-				session.Append(mv.Message)
-				slog.Info("llm use tool", "tool", mv.ToolName)
-			}
-
-			if req.IsStream {
-				if mv.MessageStream != nil {
-					mv.MessageStream.SetAutomaticClose()
-					for {
-						frame, err := mv.MessageStream.Recv()
-						if errors.Is(err, io.EOF) {
-							break
-						}
-						if err != nil {
-							slog.Error("stream recv err", "err", err)
-							return
-						}
-						if frame != nil && frame.Content != "" {
-							runResult += frame.Content
-							ch <- frame.Content
-						}
+		result, runErr := dga.loop.Run(runCtx, agentloop.Input{
+			Messages: inputMessages,
+			Stream:   req.IsStream,
+			Emit: func(event agentloop.Event) error {
+				if event.Type == agentloop.EventTextDelta && event.Delta != "" {
+					select {
+					case output <- event.Delta:
+					case <-runCtx.Done():
+						return runCtx.Err()
 					}
 				}
-				continue
+				return nil
+			},
+		})
+		if runErr != nil {
+			task.UpdateTask(dga.ID, flowID, task.UpdateConfig{Status: mmodel.TaskStatusFailed, Error: runErr.Error()})
+			if !errors.Is(runErr, context.Canceled) {
+				output <- runErr.Error()
 			}
-
-			if mv.Message != nil && mv.Message.Content != "" {
-				runResult += mv.Message.Content
+			return
+		}
+		for index := range result.Generated {
+			msg := result.Generated[index]
+			if err := session.Append(&msg); err != nil {
+				slog.Error("failed to persist generated message", "agent_id", dga.ID, "error", err)
 			}
+		}
+		task.UpdateStatus(dga.ID, flowID, mmodel.TaskStatusCompleted)
+		if !req.IsStream && result.Response != nil && result.Response.Message.Content != "" {
+			output <- result.Response.Message.Content
+		}
+		tokenLimit := conf.Conf.Memory.TokenLimit
+		if tokenLimit <= 0 {
+			tokenLimit = 32000
+		}
+		if session.Size() > tokenLimit {
+			go func() {
+				if err := state.Compress(context.Background(), dga.cm, session, dga.state); err != nil {
+					slog.Error("memory compression failed", "agent_id", dga.ID, "error", err)
+				}
+			}()
 		}
 	}()
-
-	return ch, nil
+	return output, nil
 }
 
-func buildUserMessage(req mmodel.ChatRequest) (*schema.Message, error) {
-	msg := new(schema.Message)
-
-	msg.Role = schema.User
-	msg.Content = req.Content
-
-	arts, err := buildMessageInputParts(req.Content, req.MultiModalResources)
-	if err != nil {
-		return nil, err
-	}
-	msg.UserInputMultiContent = arts
-
-	return msg, nil
-}
-
-func buildMessageInputParts(content string, resources []mmodel.MultiModalResource) ([]schema.MessageInputPart, error) {
-	if len(resources) == 0 {
-		return nil, nil
-	}
-
-	parts := make([]schema.MessageInputPart, 0, len(resources)+1)
-	if content != "" {
-		parts = append(parts, schema.MessageInputPart{
-			Type: schema.ChatMessagePartTypeText,
-			Text: content,
-		})
-	}
-
-	for _, resource := range resources {
-		part, err := buildMessageInputPart(resource)
+func buildUserMessage(req mmodel.ChatRequest) (llm.Message, error) {
+	message := llm.Message{Role: llm.RoleUser, Content: req.Content}
+	for _, resource := range req.MultiModalResources {
+		part, err := buildContentPart(resource)
 		if err != nil {
-			return nil, err
+			return llm.Message{}, err
 		}
-		parts = append(parts, part)
+		message.Parts = append(message.Parts, part)
 	}
-
-	return parts, nil
+	return message, nil
 }
 
-func buildMessageInputPart(resource mmodel.MultiModalResource) (schema.MessageInputPart, error) {
+func buildContentPart(resource mmodel.MultiModalResource) (llm.ContentPart, error) {
+	part := llm.ContentPart{Text: resource.Text, URL: resource.URL, Data: resource.Base64Data, MIMEType: resource.MIMEType, Name: resource.Name, Detail: string(resource.Detail)}
 	switch resource.Type {
 	case mmodel.MultiModalResourceTypeText:
-		return schema.MessageInputPart{
-			Type:  schema.ChatMessagePartTypeText,
-			Text:  resource.Text,
-			Extra: resource.Extra,
-		}, nil
+		part.Type = llm.ContentText
 	case mmodel.MultiModalResourceTypeImage:
-		return schema.MessageInputPart{
-			Type: schema.ChatMessagePartTypeImageURL,
-			Image: &schema.MessageInputImage{
-				MessagePartCommon: messagePartCommon(resource),
-				Detail:            schema.ImageURLDetail(resource.Detail),
-			},
-			Extra: resource.Extra,
-		}, nil
+		part.Type = llm.ContentImageURL
 	case mmodel.MultiModalResourceTypeAudio:
-		return schema.MessageInputPart{
-			Type:  schema.ChatMessagePartTypeAudioURL,
-			Audio: &schema.MessageInputAudio{MessagePartCommon: messagePartCommon(resource)},
-			Extra: resource.Extra,
-		}, nil
-	case mmodel.MultiModalResourceTypeVideo:
-		return schema.MessageInputPart{
-			Type:  schema.ChatMessagePartTypeVideoURL,
-			Video: &schema.MessageInputVideo{MessagePartCommon: messagePartCommon(resource)},
-			Extra: resource.Extra,
-		}, nil
+		part.Type = llm.ContentInputAudio
 	case mmodel.MultiModalResourceTypeFile:
-		return schema.MessageInputPart{
-			Type: schema.ChatMessagePartTypeFileURL,
-			File: &schema.MessageInputFile{
-				MessagePartCommon: messagePartCommon(resource),
-				Name:              resource.Name,
-			},
-			Extra: resource.Extra,
-		}, nil
+		part.Type = llm.ContentFile
+	case mmodel.MultiModalResourceTypeVideo:
+		return llm.ContentPart{}, fmt.Errorf("chat completions does not support video input")
 	default:
-		return schema.MessageInputPart{}, errors.New("unsupported multimodal resource type")
+		return llm.ContentPart{}, fmt.Errorf("unsupported multimodal resource type %q", resource.Type)
 	}
-}
-
-func messagePartCommon(resource mmodel.MultiModalResource) schema.MessagePartCommon {
-	common := schema.MessagePartCommon{
-		MIMEType: resource.MIMEType,
-		Extra:    resource.Extra,
-	}
-
-	if resource.URL != "" {
-		common.URL = &resource.URL
-	}
-	if resource.Base64Data != "" {
-		common.Base64Data = &resource.Base64Data
-	}
-
-	return common
-}
-
-func (dga *DigitalAgent) stop() error {
-	if dga.runStops != nil {
-		dga.runStops()
-		dga.runStops = nil
-		return nil
-	}
-	return errors.New("task not exist")
+	return part, nil
 }

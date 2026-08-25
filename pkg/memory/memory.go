@@ -1,12 +1,11 @@
 package mem
 
 import (
+	"digital-labor/pkg/llm"
 	"digital-labor/pkg/workspace"
 	"fmt"
 	"sync"
 	"time"
-
-	"github.com/cloudwego/eino/schema"
 )
 
 // Store manages the runtime session for one agent and delegates persistence to pkg/workspace.
@@ -43,7 +42,7 @@ func (s *Store) GetOrCreate() (*Session, error) {
 	if err != nil {
 		return nil, err
 	}
-	messages, ok := res.([]*schema.Message)
+	messages, ok := res.([]*llm.Message)
 	if !ok {
 		return nil, fmt.Errorf("unexpected type from load: %T", res)
 	}
@@ -70,7 +69,7 @@ func (s *Store) Delete() error {
 }
 
 // AppendMessage adds a message to the agent's session.
-func (s *Store) AppendMessage(msg *schema.Message) {
+func (s *Store) AppendMessage(msg *llm.Message) {
 	if msg == nil {
 		return
 	}

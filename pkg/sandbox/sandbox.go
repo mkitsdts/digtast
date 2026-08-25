@@ -2,13 +2,12 @@ package sandbox
 
 import (
 	"context"
+	"digital-labor/pkg/filesystem"
 	"fmt"
 	"io"
 	"log/slog"
 	"sync"
 
-	"github.com/cloudwego/eino/adk/filesystem"
-	"github.com/cloudwego/eino/schema"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
@@ -103,7 +102,7 @@ func (s *Sandbox) installRipgrep(ctx context.Context) error {
 	return err
 }
 
-func (s *Sandbox) Exec(ctx context.Context, cmd string) (*schema.StreamReader[*filesystem.ExecuteResponse], error) {
+func (s *Sandbox) Exec(ctx context.Context, cmd string) (*filesystem.StreamReader[*filesystem.ExecuteResponse], error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -124,7 +123,7 @@ func (s *Sandbox) Exec(ctx context.Context, cmd string) (*schema.StreamReader[*f
 		return nil, fmt.Errorf("failed to attach exec: %w", err)
 	}
 
-	sr, w := schema.Pipe[*filesystem.ExecuteResponse](100)
+	sr, w := filesystem.Pipe[*filesystem.ExecuteResponse](100)
 
 	go func() {
 		defer func() {

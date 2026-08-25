@@ -3,7 +3,6 @@ package grpc
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"os"
 	"testing"
 	"time"
@@ -34,13 +33,16 @@ var (
 )
 
 func TestMain(m *testing.M) {
+	if os.Getenv("TEST_GRPC_INTEGRATION") == "" {
+		os.Exit(0)
+	}
 	// 读取配置
 	confData, err := os.ReadFile("config.json")
 	if err != nil {
-		log.Fatalf("failed to read config.json: %v", err)
+		panic("failed to read config.json: " + err.Error())
 	}
 	if err := json.Unmarshal(confData, &cfg); err != nil {
-		log.Fatalf("failed to unmarshal config.json: %v", err)
+		panic("failed to unmarshal config.json: " + err.Error())
 	}
 
 	// 启动服务器
@@ -52,7 +54,7 @@ func TestMain(m *testing.M) {
 	// 创建客户端连接
 	conn, err = grpc.NewClient(cfg.Addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		panic("did not connect: " + err.Error())
 	}
 	defer conn.Close()
 	client = pb.NewContainerServiceClient(conn)
@@ -62,6 +64,7 @@ func TestMain(m *testing.M) {
 }
 
 func getContext() context.Context {
-	ctx, _ := context.WithTimeout(context.Background(), 2*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	context.AfterFunc(ctx, cancel)
 	return ctx
 }
