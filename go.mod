@@ -10,16 +10,12 @@ require (
 	github.com/chromedp/chromedp v0.13.3
 	github.com/docker/docker v28.0.4+incompatible
 	github.com/docker/go-connections v0.5.0
-	github.com/fclairamb/ftpserverlib v0.30.0
 	github.com/go-telegram/bot v1.20.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/mark3labs/mcp-go v0.52.0
-	github.com/spf13/afero v1.15.0
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/net v0.52.0
-	google.golang.org/grpc v1.80.0
-	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -75,5 +71,7 @@ require (
 	golang.org/x/time v0.11.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260427160629-7cedc36a6bc4 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260427160629-7cedc36a6bc4 // indirect
+	google.golang.org/grpc v1.80.0 // indirect
+	google.golang.org/protobuf v1.36.11 // indirect
 	gotest.tools/v3 v3.5.2 // indirect
 )
