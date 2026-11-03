@@ -4,8 +4,8 @@ import (
 	"archive/tar"
 	"bufio"
 	"compress/gzip"
-	"digital-labor/pkg/conf"
-	"digital-labor/pkg/llm"
+	"digital-labor/config"
+	"digital-labor/pkg/chatmodel"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -16,13 +16,6 @@ import (
 	"sync"
 	"time"
 )
-
-const defaultAgentID = "default"
-
-// DefaultAgentID is used by callers that have not yet been wired to an agent identity.
-func DefaultAgentID() string {
-	return defaultAgentID
-}
 
 // MemoryType defines the layers of memory.
 type MemoryType string
@@ -36,11 +29,11 @@ const (
 // CompressionRecord describes one compressed summary segment and the original
 // JSONL line range it summarizes. Line numbers are 1-based over LoadSession order.
 type CompressionRecord struct {
-	ID              string         `json:"id"`
-	SourceStartLine int            `json:"source_start_line"`
-	SourceEndLine   int            `json:"source_end_line"`
-	Messages        []*llm.Message `json:"messages"`
-	Created         time.Time      `json:"created"`
+	ID              string               `json:"id"`
+	SourceStartLine int                  `json:"source_start_line"`
+	SourceEndLine   int                  `json:"source_end_line"`
+	Messages        []*chatmodel.Message `json:"messages"`
+	Created         time.Time            `json:"created"`
 }
 
 var (
@@ -51,12 +44,12 @@ func getMemoryRoot() string {
 	return filepath.Join(GetWorkspacePath(), "memory")
 }
 
-func getBaseName(agentID string, typ MemoryType) string {
+func getBaseName(typ MemoryType) string {
 	switch typ {
 	case MemTypeChunk:
-		return agentID
+		return "messages"
 	case MemTypeCompress:
-		return agentID + "-compress"
+		return "compress"
 	case MemTypeLongTerm:
 		return "memory"
 	default:
@@ -64,10 +57,9 @@ func getBaseName(agentID string, typ MemoryType) string {
 	}
 }
 
-func getPaths(agentID string, typ MemoryType) []string {
-	root := getMemoryRoot()
-	dir := filepath.Join(root, "sessions", agentID)
-	base := getBaseName(agentID, typ)
+func getPaths(typ MemoryType) []string {
+	dir := getMemoryRoot()
+	base := getBaseName(typ)
 	if base == "" {
 		return nil
 	}
@@ -92,10 +84,6 @@ func getPaths(agentID string, typ MemoryType) []string {
 		}
 		name := entry.Name()
 		if strings.HasPrefix(name, base) && strings.HasSuffix(name, ".jsonl") {
-			// Ensure it's not another type's prefix
-			if typ == MemTypeChunk && strings.Contains(name, "-compress") {
-				continue
-			}
 			files = append(files, filepath.Join(dir, name))
 		}
 	}
@@ -104,24 +92,19 @@ func getPaths(agentID string, typ MemoryType) []string {
 }
 
 // Save persists data for a given type. It appends for JSONL types and overwrites for md.
-func Save(agentID string, typ MemoryType, data any) error {
-	if err := validateID(agentID, "agent_id"); err != nil {
-		return err
-	}
-
+func Save(typ MemoryType, data any) error {
 	memoryMu.Lock()
 	defer memoryMu.Unlock()
 
-	root := getMemoryRoot()
-	dir := filepath.Join(root, "sessions", agentID)
+	dir := getMemoryRoot()
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
 
-	paths := getPaths(agentID, typ)
+	paths := getPaths(typ)
 	var path string
 	if len(paths) == 0 {
-		base := getBaseName(agentID, typ)
+		base := getBaseName(typ)
 		ext := ".jsonl"
 		if typ == MemTypeLongTerm {
 			ext = ".md"
@@ -130,8 +113,8 @@ func Save(agentID string, typ MemoryType, data any) error {
 	} else {
 		path = paths[len(paths)-1]
 		if typ != MemTypeLongTerm {
-			if info, err := os.Stat(path); err == nil && info.Size() > conf.Conf.Memory.MaxMessagesSize {
-				base := getBaseName(agentID, typ)
+			if info, err := os.Stat(path); err == nil && info.Size() > config.Conf.Memory.MaxMessagesSize {
+				base := getBaseName(typ)
 				path = filepath.Join(dir, fmt.Sprintf("%s.%d.jsonl", base, len(paths)))
 			}
 		}
@@ -139,7 +122,7 @@ func Save(agentID string, typ MemoryType, data any) error {
 
 	switch typ {
 	case MemTypeChunk:
-		msg, ok := data.(*llm.Message)
+		msg, ok := data.(*chatmodel.Message)
 		if !ok {
 			return fmt.Errorf("invalid data type for %s: %T", typ, data)
 		}
@@ -166,15 +149,15 @@ func Save(agentID string, typ MemoryType, data any) error {
 }
 
 // Load retrieves data for a given type.
-func Load(agentID string, typ MemoryType) (any, error) {
+func Load(typ MemoryType) (any, error) {
 	memoryMu.RLock()
 	defer memoryMu.RUnlock()
 
-	paths := getPaths(agentID, typ)
+	paths := getPaths(typ)
 	if len(paths) == 0 {
 		switch typ {
 		case MemTypeChunk:
-			return ([]*llm.Message)(nil), nil
+			return ([]*chatmodel.Message)(nil), nil
 		case MemTypeCompress:
 			return ([]CompressionRecord)(nil), nil
 		case MemTypeLongTerm:
@@ -185,9 +168,9 @@ func Load(agentID string, typ MemoryType) (any, error) {
 
 	switch typ {
 	case MemTypeChunk:
-		var messages []*llm.Message
+		var messages []*chatmodel.Message
 		for _, p := range paths {
-			msgs, err := loadJSONL[*llm.Message](p)
+			msgs, err := loadJSONL[*chatmodel.Message](p)
 			if err != nil {
 				return nil, err
 			}
@@ -216,11 +199,11 @@ func Load(agentID string, typ MemoryType) (any, error) {
 }
 
 // Delete removes all files for a given type.
-func Delete(agentID string, typ MemoryType) error {
+func Delete(typ MemoryType) error {
 	memoryMu.Lock()
 	defer memoryMu.Unlock()
 
-	paths := getPaths(agentID, typ)
+	paths := getPaths(typ)
 	for _, p := range paths {
 		if err := os.Remove(p); err != nil && !os.IsNotExist(err) {
 			return err
@@ -229,29 +212,26 @@ func Delete(agentID string, typ MemoryType) error {
 	return nil
 }
 
-// DeleteSession removes all files for an agent.
-func DeleteSession(agentID string) error {
+// DeleteSession removes the singleton Agent's conversation files.
+func DeleteSession() error {
 	memoryMu.Lock()
 	defer memoryMu.Unlock()
 
-	root := getMemoryRoot()
-	dir := filepath.Join(root, "sessions", agentID)
-	return os.RemoveAll(dir)
+	return os.RemoveAll(getMemoryRoot())
 }
 
 // Archive compresses files of a given type into a tar.gz archive and deletes the originals.
-func Archive(agentID string, typ MemoryType) error {
+func Archive(typ MemoryType) error {
 	memoryMu.Lock()
 	defer memoryMu.Unlock()
 
-	paths := getPaths(agentID, typ)
+	paths := getPaths(typ)
 	if len(paths) == 0 {
 		return nil
 	}
 
-	root := getMemoryRoot()
-	dir := filepath.Join(root, "sessions", agentID)
-	archivePath := filepath.Join(dir, fmt.Sprintf("%s-%s.tar.gz", agentID, string(typ)))
+	dir := getMemoryRoot()
+	archivePath := filepath.Join(dir, string(typ)+".tar.gz")
 
 	f, err := os.Create(archivePath)
 	if err != nil {
@@ -352,32 +332,19 @@ func loadJSONL[T any](path string) ([]T, error) {
 	return results, scanner.Err()
 }
 
-func validateID(id, name string) error {
-	if id == "" {
-		return fmt.Errorf("%s is empty", name)
-	}
-	if strings.ContainsAny(id, `/\`) {
-		return fmt.Errorf("%s contains path separator", name)
-	}
-	return nil
-}
-
-// Package-level helpers for LongTerm memory
-
-func LoadAgentMemory(agentID string) string {
-	res, err := Load(agentID, MemTypeLongTerm)
+func LoadMemory() string {
+	res, err := Load(MemTypeLongTerm)
 	if err != nil {
 		return ""
 	}
 	return res.(string)
 }
 
-func SaveAgentMemory(agentID, content string) error {
-	// Save for LongTerm is overwrite, so we need to load and append if we want to "save"
-	old := LoadAgentMemory(agentID)
-	return Save(agentID, MemTypeLongTerm, old+content)
+func AppendMemory(content string) error {
+	old := LoadMemory()
+	return Save(MemTypeLongTerm, old+content)
 }
 
-func ReplaceAgentMemory(agentID, content string) error {
-	return Save(agentID, MemTypeLongTerm, content)
+func ReplaceMemory(content string) error {
+	return Save(MemTypeLongTerm, content)
 }

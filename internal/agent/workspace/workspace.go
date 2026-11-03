@@ -1,7 +1,7 @@
 package workspace
 
 import (
-	"digital-labor/pkg/conf"
+	"digital-labor/config"
 	"fmt"
 	"log/slog"
 	"os"
@@ -10,8 +10,8 @@ import (
 )
 
 func GetWorkspacePath() string {
-	if conf.Conf.WorkSpaceDir != "" {
-		return filepath.Clean(conf.Conf.WorkSpaceDir)
+	if config.Conf.WorkSpaceDir != "" {
+		return filepath.Clean(config.Conf.WorkSpaceDir)
 	}
 	workspacePath, err := os.UserHomeDir()
 	if err != nil {
@@ -46,13 +46,6 @@ func InitWorkspace() {
 		return
 	}
 
-	agentsPath := fmt.Sprintf("%s/agents.json", path)
-	_, err := os.OpenFile(agentsPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
-		slog.Error("Failed to init agent file", "path", agentsPath, "err", err)
-		return
-	}
-
 	logPath := fmt.Sprintf("%s/app.log", path)
 	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
@@ -79,9 +72,9 @@ func InitWorkspace() {
 		return
 	}
 
-	agentRootsPath := filepath.Join(path, "agents")
-	if err := os.MkdirAll(agentRootsPath, 0755); err != nil {
-		slog.Error("Failed to create agents directory", "path", agentRootsPath, "err", err)
+	skillsPath := filepath.Join(path, "skills")
+	if err := os.MkdirAll(skillsPath, 0755); err != nil {
+		slog.Error("Failed to create skills directory", "path", skillsPath, "err", err)
 		return
 	}
 
@@ -92,3 +85,5 @@ func InitWorkspace() {
 		}
 	}
 }
+
+func SkillsDir() string { return filepath.Join(GetWorkspacePath(), "skills") }

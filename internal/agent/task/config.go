@@ -5,7 +5,6 @@ import "time"
 type Config struct {
 	ParentFlowID string
 	ParentTaskID string
-	AgentID      string
 	NotifyPolicy string
 	Title        string
 	Description  string
