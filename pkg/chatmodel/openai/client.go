@@ -15,7 +15,7 @@ import (
 	"sync"
 	"time"
 
-	"digital-labor/pkg/llm"
+	"digital-labor/pkg/chatmodel"
 )
 
 const defaultBaseURL = "https://api.openai.com/v1"
@@ -36,7 +36,7 @@ type Client struct {
 	headers http.Header
 
 	usageMu sync.RWMutex
-	usage   llm.Usage
+	usage   chatmodel.Usage
 }
 
 func New(cfg Config) (*Client, error) {
@@ -71,7 +71,7 @@ func New(cfg Config) (*Client, error) {
 	}, nil
 }
 
-func (c *Client) Chat(ctx context.Context, req *llm.ChatRequest) (*llm.ChatResponse, error) {
+func (c *Client) Chat(ctx context.Context, req *chatmodel.ChatRequest) (*chatmodel.ChatResponse, error) {
 	body, err := c.requestBody(req, false)
 	if err != nil {
 		return nil, err
@@ -97,7 +97,7 @@ func (c *Client) Chat(ctx context.Context, req *llm.ChatRequest) (*llm.ChatRespo
 	return result, nil
 }
 
-func (c *Client) ChatStream(ctx context.Context, req *llm.ChatRequest) (llm.Stream, error) {
+func (c *Client) ChatStream(ctx context.Context, req *chatmodel.ChatRequest) (chatmodel.Stream, error) {
 	body, err := c.requestBody(req, true)
 	if err != nil {
 		return nil, err
@@ -113,13 +113,13 @@ func (c *Client) ChatStream(ctx context.Context, req *llm.ChatRequest) (llm.Stre
 	return newStream(resp.Body, c.addUsage), nil
 }
 
-func (c *Client) GetUsage() llm.Usage {
+func (c *Client) GetUsage() chatmodel.Usage {
 	c.usageMu.RLock()
 	defer c.usageMu.RUnlock()
 	return c.usage
 }
 
-func (c *Client) CheckStatus(ctx context.Context) (*llm.Status, error) {
+func (c *Client) CheckStatus(ctx context.Context) (*chatmodel.Status, error) {
 	started := time.Now()
 	checkedAt := time.Now().UTC()
 	modelURL := c.endpoint("models/" + url.PathEscape(c.model))
@@ -127,7 +127,7 @@ func (c *Client) CheckStatus(ctx context.Context) (*llm.Status, error) {
 	if err == nil {
 		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 			resp.Body.Close()
-			return &llm.Status{Available: true, Model: c.model, Latency: time.Since(started), CheckedAt: checkedAt}, nil
+			return &chatmodel.Status{Available: true, Model: c.model, Latency: time.Since(started), CheckedAt: checkedAt}, nil
 		}
 		resp.Body.Close()
 	}
@@ -143,10 +143,10 @@ func (c *Client) CheckStatus(ctx context.Context) (*llm.Status, error) {
 	if statusErr := checkResponse(resp); statusErr != nil {
 		return nil, statusErr
 	}
-	return &llm.Status{Available: true, Model: c.model, Latency: time.Since(started), CheckedAt: checkedAt}, nil
+	return &chatmodel.Status{Available: true, Model: c.model, Latency: time.Since(started), CheckedAt: checkedAt}, nil
 }
 
-func (c *Client) requestBody(req *llm.ChatRequest, stream bool) ([]byte, error) {
+func (c *Client) requestBody(req *chatmodel.ChatRequest, stream bool) ([]byte, error) {
 	if req == nil {
 		return nil, errors.New("chat request is required")
 	}
@@ -218,7 +218,7 @@ func (c *Client) do(ctx context.Context, method, endpoint string, body []byte) (
 	return c.http.Do(req)
 }
 
-func (c *Client) addUsage(usage llm.Usage) {
+func (c *Client) addUsage(usage chatmodel.Usage) {
 	c.usageMu.Lock()
 	c.usage.Add(usage)
 	c.usageMu.Unlock()
@@ -247,10 +247,10 @@ func checkResponse(resp *http.Response) error {
 type stream struct {
 	body       io.ReadCloser
 	scanner    *bufio.Scanner
-	queue      []*llm.StreamEvent
-	response   llm.ChatResponse
+	queue      []*chatmodel.StreamEvent
+	response   chatmodel.ChatResponse
 	toolCalls  map[int]*toolCallBuilder
-	addUsage   func(llm.Usage)
+	addUsage   func(chatmodel.Usage)
 	usageAdded bool
 	done       bool
 }
@@ -262,13 +262,13 @@ type toolCallBuilder struct {
 	arguments strings.Builder
 }
 
-func newStream(body io.ReadCloser, addUsage func(llm.Usage)) *stream {
+func newStream(body io.ReadCloser, addUsage func(chatmodel.Usage)) *stream {
 	scanner := bufio.NewScanner(body)
 	scanner.Buffer(make([]byte, 64*1024), 4*1024*1024)
 	return &stream{body: body, scanner: scanner, toolCalls: make(map[int]*toolCallBuilder), addUsage: addUsage}
 }
 
-func (s *stream) Recv() (*llm.StreamEvent, error) {
+func (s *stream) Recv() (*chatmodel.StreamEvent, error) {
 	if len(s.queue) > 0 {
 		event := s.queue[0]
 		s.queue = s.queue[1:]
@@ -310,17 +310,17 @@ func (s *stream) consume(chunk chatChunk) {
 		if chunk.Created > 0 {
 			s.response.CreatedAt = time.Unix(chunk.Created, 0).UTC()
 		}
-		s.response.Message.Role = llm.RoleAssistant
+		s.response.Message.Role = chatmodel.RoleAssistant
 	}
 	if chunk.Usage != nil {
 		usage := chunk.Usage.toUsage()
 		s.response.Usage = usage
-		s.queue = append(s.queue, &llm.StreamEvent{Type: llm.StreamEventUsage, Usage: &usage})
+		s.queue = append(s.queue, &chatmodel.StreamEvent{Type: chatmodel.StreamEventUsage, Usage: &usage})
 	}
 	for _, choice := range chunk.Choices {
 		if choice.Delta.Content != "" {
 			s.response.Message.Content += choice.Delta.Content
-			s.queue = append(s.queue, &llm.StreamEvent{Type: llm.StreamEventTextDelta, Delta: choice.Delta.Content})
+			s.queue = append(s.queue, &chatmodel.StreamEvent{Type: chatmodel.StreamEventTextDelta, Delta: choice.Delta.Content})
 		}
 		for _, delta := range choice.Delta.ToolCalls {
 			builder := s.toolCalls[delta.Index]
@@ -338,12 +338,12 @@ func (s *stream) consume(chunk chatChunk) {
 				builder.name += delta.Function.Name
 			}
 			builder.arguments.WriteString(delta.Function.Arguments)
-			s.queue = append(s.queue, &llm.StreamEvent{Type: llm.StreamEventToolCallDelta, ToolCall: &llm.ToolCallDelta{
+			s.queue = append(s.queue, &chatmodel.StreamEvent{Type: chatmodel.StreamEventToolCallDelta, ToolCall: &chatmodel.ToolCallDelta{
 				Index: delta.Index, ID: delta.ID, Type: delta.Type, Name: delta.Function.Name, Arguments: delta.Function.Arguments,
 			}})
 		}
 		if choice.FinishReason != "" {
-			s.response.FinishReason = llm.FinishReason(choice.FinishReason)
+			s.response.FinishReason = chatmodel.FinishReason(choice.FinishReason)
 		}
 	}
 }
@@ -362,15 +362,15 @@ func (s *stream) finish() {
 		if len(arguments) == 0 {
 			arguments = json.RawMessage(`{}`)
 		}
-		s.response.Message.ToolCalls = append(s.response.Message.ToolCalls, llm.ToolCall{
-			ID: builder.id, Type: builder.typ, Function: llm.FunctionCall{Name: builder.name, Arguments: arguments},
+		s.response.Message.ToolCalls = append(s.response.Message.ToolCalls, chatmodel.ToolCall{
+			ID: builder.id, Type: builder.typ, Function: chatmodel.FunctionCall{Name: builder.name, Arguments: arguments},
 		})
 	}
 	if !s.usageAdded {
 		s.addUsage(s.response.Usage)
 		s.usageAdded = true
 	}
-	s.queue = append(s.queue, &llm.StreamEvent{Type: llm.StreamEventDone, Response: &s.response})
+	s.queue = append(s.queue, &chatmodel.StreamEvent{Type: chatmodel.StreamEventDone, Response: &s.response})
 }
 
 func (s *stream) Close() error { return s.body.Close() }

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"digital-labor/pkg/llm"
+	"digital-labor/pkg/chatmodel"
 )
 
 type chatRequest struct {
@@ -122,14 +122,14 @@ type tokenUsage struct {
 	} `json:"completion_tokens_details"`
 }
 
-func (u tokenUsage) toUsage() llm.Usage {
-	return llm.Usage{
+func (u tokenUsage) toUsage() chatmodel.Usage {
+	return chatmodel.Usage{
 		InputTokens: u.PromptTokens, OutputTokens: u.CompletionTokens, TotalTokens: u.TotalTokens,
 		CachedTokens: u.PromptDetails.CachedTokens, ReasoningTokens: u.CompletionDetails.ReasoningTokens,
 	}
 }
 
-func (c chatCompletion) toResponse() (*llm.ChatResponse, error) {
+func (c chatCompletion) toResponse() (*chatmodel.ChatResponse, error) {
 	if len(c.Choices) == 0 {
 		return nil, errors.New("openai response contains no choices")
 	}
@@ -137,13 +137,13 @@ func (c chatCompletion) toResponse() (*llm.ChatResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &llm.ChatResponse{
-		ID: c.ID, Model: c.Model, Message: message, FinishReason: llm.FinishReason(c.Choices[0].FinishReason),
+	return &chatmodel.ChatResponse{
+		ID: c.ID, Model: c.Model, Message: message, FinishReason: chatmodel.FinishReason(c.Choices[0].FinishReason),
 		Usage: c.Usage.toUsage(), CreatedAt: time.Unix(c.Created, 0).UTC(),
 	}, nil
 }
 
-func toChatMessage(message llm.Message) (chatMessage, error) {
+func toChatMessage(message chatmodel.Message) (chatMessage, error) {
 	result := chatMessage{
 		Role: string(message.Role), Name: message.Name, ToolCallID: message.ToolCallID,
 	}
@@ -156,15 +156,15 @@ func toChatMessage(message llm.Message) (chatMessage, error) {
 		}
 		for _, part := range message.Parts {
 			switch part.Type {
-			case llm.ContentText:
+			case chatmodel.ContentText:
 				parts = append(parts, chatContentPart{Type: "text", Text: part.Text})
-			case llm.ContentImageURL:
+			case chatmodel.ContentImageURL:
 				imageURL := part.URL
 				if imageURL == "" && part.Data != "" {
 					imageURL = "data:" + part.MIMEType + ";base64," + part.Data
 				}
 				parts = append(parts, chatContentPart{Type: "image_url", ImageURL: &chatImageURL{URL: imageURL, Detail: part.Detail}})
-			case llm.ContentInputAudio:
+			case chatmodel.ContentInputAudio:
 				format := part.MIMEType
 				if format == "audio/wav" {
 					format = "wav"
@@ -180,7 +180,7 @@ func toChatMessage(message llm.Message) (chatMessage, error) {
 					return chatMessage{}, fmt.Errorf("invalid audio base64 data: %w", err)
 				}
 				parts = append(parts, chatContentPart{Type: "input_audio", InputAudio: &chatInputAudio{Data: data, Format: format}})
-			case llm.ContentFile:
+			case chatmodel.ContentFile:
 				fileData := part.URL
 				if fileData == "" && part.Data != "" {
 					fileData = "data:" + part.MIMEType + ";base64," + part.Data
@@ -204,8 +204,8 @@ func toChatMessage(message llm.Message) (chatMessage, error) {
 	return result, nil
 }
 
-func fromChatMessage(message chatMessage) (llm.Message, error) {
-	result := llm.Message{Role: llm.Role(message.Role), Name: message.Name, ToolCallID: message.ToolCallID}
+func fromChatMessage(message chatMessage) (chatmodel.Message, error) {
+	result := chatmodel.Message{Role: chatmodel.Role(message.Role), Name: message.Name, ToolCallID: message.ToolCallID}
 	switch content := message.Content.(type) {
 	case string:
 		result.Content = content
@@ -213,19 +213,19 @@ func fromChatMessage(message chatMessage) (llm.Message, error) {
 	case map[string]any, []any:
 		encoded, err := json.Marshal(content)
 		if err != nil {
-			return llm.Message{}, err
+			return chatmodel.Message{}, err
 		}
 		result.Content = string(encoded)
 	default:
-		return llm.Message{}, fmt.Errorf("unsupported openai message content type %T", content)
+		return chatmodel.Message{}, fmt.Errorf("unsupported openai message content type %T", content)
 	}
 	for _, call := range message.ToolCalls {
 		arguments := json.RawMessage(call.Function.Arguments)
 		if len(arguments) == 0 {
 			arguments = json.RawMessage(`{}`)
 		}
-		result.ToolCalls = append(result.ToolCalls, llm.ToolCall{
-			ID: call.ID, Type: call.Type, Function: llm.FunctionCall{Name: call.Function.Name, Arguments: arguments},
+		result.ToolCalls = append(result.ToolCalls, chatmodel.ToolCall{
+			ID: call.ID, Type: call.Type, Function: chatmodel.FunctionCall{Name: call.Function.Name, Arguments: arguments},
 		})
 	}
 	return result, nil

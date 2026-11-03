@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"digital-labor/pkg/llm"
+	"digital-labor/pkg/chatmodel"
 )
 
 type roundTripFunc func(*http.Request) (*http.Response, error)
@@ -47,7 +47,7 @@ func TestClientChatAndUsage(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	response, err := client.Chat(context.Background(), &llm.ChatRequest{Messages: []llm.Message{{Role: llm.RoleUser, Content: "hi"}}})
+	response, err := client.Chat(context.Background(), &chatmodel.ChatRequest{Messages: []chatmodel.Message{{Role: chatmodel.RoleUser, Content: "hi"}}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,18 +78,18 @@ func TestClientChatStreamToolCall(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	stream, err := client.ChatStream(context.Background(), &llm.ChatRequest{Messages: []llm.Message{{Role: llm.RoleUser, Content: "weather"}}})
+	stream, err := client.ChatStream(context.Background(), &chatmodel.ChatRequest{Messages: []chatmodel.Message{{Role: chatmodel.RoleUser, Content: "weather"}}})
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer stream.Close()
-	var response *llm.ChatResponse
+	var response *chatmodel.ChatResponse
 	for response == nil {
 		event, err := stream.Recv()
 		if err != nil {
 			t.Fatal(err)
 		}
-		if event.Type == llm.StreamEventDone {
+		if event.Type == chatmodel.StreamEventDone {
 			response = event.Response
 		}
 	}
