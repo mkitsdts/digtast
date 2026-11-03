@@ -18,7 +18,7 @@ package browser_use
 
 import (
 	"context"
-	"digital-labor/pkg/llm"
+	"digital-labor/pkg/chatmodel"
 	toolpkg "digital-labor/pkg/tool"
 	"encoding/base64"
 	"encoding/json"
@@ -72,7 +72,7 @@ type Config struct {
 	ChromeInstancePath string   `json:"chrome_instance_path"`
 	ProxyServer        string   `json:"proxy_server"`
 
-	ExtractChatModel llm.LLM
+	ExtractChatModel chatmodel.ChatModel
 
 	Logf func(string, ...any)
 }
@@ -121,11 +121,11 @@ type Tool struct {
 	elements        []ElementInfo
 	currentTabID    int
 	tabs            []TabInfo
-	cm              llm.LLM
+	cm              chatmodel.ChatModel
 }
 
-func (b *Tool) Definition(context.Context) (llm.ToolDefinition, error) {
-	return llm.ToolDefinition{
+func (b *Tool) Definition(context.Context) (chatmodel.ToolDefinition, error) {
+	return chatmodel.ToolDefinition{
 		Name: toolName, Description: toolDescription,
 		Parameters: toolpkg.ObjectSchema(map[string]any{
 			"action": map[string]any{"type": "string", "enum": []string{
@@ -454,7 +454,7 @@ func (b *Tool) executeAction(params *Param) (*ToolResult, error) {
 		} else {
 			prompt := strings.ReplaceAll(extractContentPrompt, "{goal}", *params.Goal)
 			prompt = strings.ReplaceAll(prompt, "{page}", html)
-			extractResult, err := b.cm.Chat(b.ctx, &llm.ChatRequest{Messages: []llm.Message{{Role: llm.RoleUser, Content: prompt}}})
+			extractResult, err := b.cm.Chat(b.ctx, &chatmodel.ChatRequest{Messages: []chatmodel.Message{{Role: chatmodel.RoleUser, Content: prompt}}})
 			if err != nil {
 				return &ToolResult{Error: fmt.Sprintf("generate extract content fail: %v", err)}, nil
 			}

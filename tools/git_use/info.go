@@ -2,7 +2,7 @@ package git_use
 
 import (
 	"context"
-	"digital-labor/pkg/llm"
+	"digital-labor/pkg/chatmodel"
 	toolpkg "digital-labor/pkg/tool"
 	"encoding/json"
 	"fmt"
@@ -12,8 +12,8 @@ import (
 type GitTool struct {
 }
 
-func (t *GitTool) Definition(context.Context) (llm.ToolDefinition, error) {
-	return llm.ToolDefinition{
+func (t *GitTool) Definition(context.Context) (chatmodel.ToolDefinition, error) {
+	return chatmodel.ToolDefinition{
 		Name: "git_use", Description: "Request confirmation or a choice before a Git operation.",
 		Parameters: toolpkg.ObjectSchema(map[string]any{
 			"question": map[string]any{"type": "string"},

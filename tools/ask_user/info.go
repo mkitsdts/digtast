@@ -2,7 +2,7 @@ package askuser
 
 import (
 	"context"
-	"digital-labor/pkg/llm"
+	"digital-labor/pkg/chatmodel"
 	toolpkg "digital-labor/pkg/tool"
 	"encoding/json"
 	"fmt"
@@ -12,8 +12,8 @@ import (
 type AskUserTool struct {
 }
 
-func (t *AskUserTool) Definition(context.Context) (llm.ToolDefinition, error) {
-	return llm.ToolDefinition{
+func (t *AskUserTool) Definition(context.Context) (chatmodel.ToolDefinition, error) {
+	return chatmodel.ToolDefinition{
 		Name:        "ask_user",
 		Description: "Ask the user for missing information or approval.",
 		Parameters: toolpkg.ObjectSchema(map[string]any{

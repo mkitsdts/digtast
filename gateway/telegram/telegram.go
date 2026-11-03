@@ -4,8 +4,6 @@ import (
 	"context"
 	gw "digital-labor/internal/gateway"
 	"digital-labor/pkg/gateway"
-	"digital-labor/pkg/model"
-	"digital-labor/pkg/workspace"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -15,9 +13,8 @@ import (
 )
 
 type TelegramChannel struct {
-	Token   string `json:"token"`
-	Bot     *bot.Bot
-	AgentID string `json:"agent_id"`
+	Token string `json:"token"`
+	Bot   *bot.Bot
 }
 
 func init() {
@@ -36,18 +33,16 @@ func (tg *TelegramChannel) Init(params map[string]any) error {
 	} else {
 		return errors.New("invaild token which register channel telegram")
 	}
-	if agentID, ok := params["agent_id"]; ok {
-		tg.AgentID = agentID.(string)
-	} else {
-		tg.AgentID = workspace.DefaultAgentID()
-	}
 	return nil
 }
 
-func (tg *TelegramChannel) Send(result model.Result, params map[string]any) error {
-	chatid, ok := params["chatid"]
+func (tg *TelegramChannel) Send(result gateway.Result, params map[string]any) error {
+	chatid, ok := params["chat_id"]
 	if !ok {
-		return errors.New("chatid not found")
+		return errors.New("chat_id not found")
+	}
+	if tg.Bot == nil {
+		return errors.New("telegram bot is not initialized")
 	}
 	ctx := context.Background()
 	tg.Bot.SendMessage(ctx, &bot.SendMessageParams{
@@ -59,8 +54,7 @@ func (tg *TelegramChannel) Send(result model.Result, params map[string]any) erro
 
 func (tg *TelegramChannel) GetConfig() map[string]any {
 	return map[string]any{
-		"Token":   tg.Token,
-		"AgentID": tg.AgentID,
+		"token": tg.Token,
 	}
 }
 
@@ -69,10 +63,6 @@ func (c *TelegramChannel) Register() error {
 	fmt.Println("请输入Telegram机器人的Token:")
 	fmt.Print("Token: ")
 	_, err := fmt.Scan(&c.Token)
-	fmt.Println("请输入Telegram机器人的AgentID:")
-	fmt.Print("AgentID: ")
-	_, err = fmt.Scan(&c.AgentID)
-
 	if err != nil {
 		return err
 	}
@@ -83,8 +73,8 @@ func (tg *TelegramChannel) Serve(ctx context.Context) error {
 	opts := []bot.Option{
 		// 这个默认处理器会接收到所有消息
 		bot.WithDefaultHandler(func(ctx context.Context, b *bot.Bot, update *models.Update) {
-			slog.Info("received message", "text", update.Message.Text)
 			if update.Message != nil && update.Message.Text != "" {
+				slog.Info("received message", "text", update.Message.Text)
 				userText := update.Message.Text
 				// 异步处理
 				gw.PushUserMessage(&gw.UserMessage{

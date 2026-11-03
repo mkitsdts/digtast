@@ -2,10 +2,9 @@ package memory
 
 import (
 	"context"
-	"digital-labor/internal/center"
-	"digital-labor/pkg/llm"
+	"digital-labor/internal/agent"
+	"digital-labor/pkg/chatmodel"
 	toolpkg "digital-labor/pkg/tool"
-	"digital-labor/pkg/workspace"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -14,8 +13,8 @@ import (
 type MemorySearchTool struct {
 }
 
-func (t *MemorySearchTool) Definition(context.Context) (llm.ToolDefinition, error) {
-	return llm.ToolDefinition{
+func (t *MemorySearchTool) Definition(context.Context) (chatmodel.ToolDefinition, error) {
+	return chatmodel.ToolDefinition{
 		Name:        "memory_search",
 		Description: "Search the agent's conversation history and compressed memory.",
 		Parameters: toolpkg.ObjectSchema(map[string]any{
@@ -34,20 +33,7 @@ func (t *MemorySearchTool) Execute(ctx context.Context, arguments json.RawMessag
 		return nil, err
 	}
 
-	agentId, _ := ctx.Value("agent_id").(string)
-
-	da, err := center.AgentManager.GetAgent(agentId)
-	if err != nil {
-		da, _ = center.AgentManager.GetDefaultAgent()
-	}
-
-	if da != nil {
-		agentId = da.ID
-	}
-
-	if agentId == "" {
-		agentId = workspace.DefaultAgentID()
-	}
+	da, _ := agent.Instance()
 
 	// 搜索短期记忆 (Session history & compressed records)
 	var sessionResults []string

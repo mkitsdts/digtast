@@ -1,7 +1,7 @@
 package webfetch
 
 import (
-	"digital-labor/pkg/registry"
+	"digital-labor/internal/agent/registry"
 	"net/http"
 	"sync"
 )

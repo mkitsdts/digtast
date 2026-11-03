@@ -2,9 +2,8 @@ package gateway
 
 import (
 	"context"
-	"digital-labor/internal/center"
+	"digital-labor/internal/agent"
 	"digital-labor/pkg/gateway"
-	"digital-labor/pkg/model"
 	"digital-labor/pkg/queue"
 	"encoding/base64"
 	"log/slog"
@@ -26,7 +25,7 @@ func Start() {
 func ConsumeMessage() {
 	for {
 		msg, ok := que.Pop()
-		var result model.Result
+		var result gateway.Result
 		if !ok {
 			continue
 		}
@@ -37,7 +36,7 @@ func ConsumeMessage() {
 			continue
 		}
 
-		agent, err := center.AgentManager.GetDefaultAgent()
+		ag, err := agent.Instance()
 		if err != nil {
 			slog.Error("failed to get agent", "error", err)
 			result.Success = false
@@ -46,10 +45,10 @@ func ConsumeMessage() {
 				slog.Error("failed to send message", "error", err)
 			}
 			slog.Info("agent notify success", "content", msg.Content)
-			return
+			continue
 		}
 
-		sm, err := agent.Run(context.Background(), msg.Content, multiContentToResources(msg.MultiContent), false)
+		sm, err := ag.Run(context.Background(), msg.Content, multiContentToResources(msg.MultiContent), false)
 		if err != nil {
 			result.Success = false
 			result.Error = err
@@ -70,18 +69,18 @@ func ConsumeMessage() {
 	}
 }
 
-func multiContentToResources(content map[string][]byte) []model.MultiModalResource {
+func multiContentToResources(content map[string][]byte) []agent.MultiModalResource {
 	if len(content) == 0 {
 		return nil
 	}
 
-	resources := make([]model.MultiModalResource, 0, len(content))
+	resources := make([]agent.MultiModalResource, 0, len(content))
 	for name, data := range content {
 		mimeType := mime.TypeByExtension(filepath.Ext(name))
 		if mimeType == "" {
 			mimeType = "application/octet-stream"
 		}
-		resources = append(resources, model.MultiModalResource{
+		resources = append(resources, agent.MultiModalResource{
 			Type:       resourceTypeFromMIME(mimeType),
 			Base64Data: base64.StdEncoding.EncodeToString(data),
 			MIMEType:   mimeType,
@@ -91,15 +90,15 @@ func multiContentToResources(content map[string][]byte) []model.MultiModalResour
 	return resources
 }
 
-func resourceTypeFromMIME(mimeType string) model.MultiModalResourceType {
+func resourceTypeFromMIME(mimeType string) agent.MultiModalResourceType {
 	switch {
 	case strings.HasPrefix(mimeType, "image/"):
-		return model.MultiModalResourceTypeImage
+		return agent.MultiModalResourceTypeImage
 	case strings.HasPrefix(mimeType, "audio/"):
-		return model.MultiModalResourceTypeAudio
+		return agent.MultiModalResourceTypeAudio
 	case strings.HasPrefix(mimeType, "video/"):
-		return model.MultiModalResourceTypeVideo
+		return agent.MultiModalResourceTypeVideo
 	default:
-		return model.MultiModalResourceTypeFile
+		return agent.MultiModalResourceTypeFile
 	}
 }

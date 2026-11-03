@@ -2,7 +2,7 @@ package webfetch
 
 import (
 	"context"
-	"digital-labor/pkg/llm"
+	"digital-labor/pkg/chatmodel"
 	toolpkg "digital-labor/pkg/tool"
 	"encoding/json"
 	"io"
@@ -16,8 +16,8 @@ type FetchTool struct {
 	mux    *sync.Mutex
 }
 
-func (t *FetchTool) Definition(context.Context) (llm.ToolDefinition, error) {
-	return llm.ToolDefinition{
+func (t *FetchTool) Definition(context.Context) (chatmodel.ToolDefinition, error) {
+	return chatmodel.ToolDefinition{
 		Name:        "web_fetch",
 		Description: "Fetch an HTTP URL and return its response body.",
 		Parameters: toolpkg.ObjectSchema(map[string]any{

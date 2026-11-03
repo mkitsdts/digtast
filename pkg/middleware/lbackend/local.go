@@ -78,7 +78,7 @@ func NewBackend(_ context.Context, cfg *Config) (*Local, error) {
 }
 
 func (s *Local) LsInfo(ctx context.Context, req *filesystem.LsInfoRequest) ([]filesystem.FileInfo, error) {
-	path, err := checkSecurity(ctx, "list", req.Path)
+	path, err := checkSecurity(ctx, s.workPath, "list", req.Path)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func (s *Local) LsInfo(ctx context.Context, req *filesystem.LsInfoRequest) ([]fi
 }
 
 func (s *Local) Read(ctx context.Context, req *filesystem.ReadRequest) (*filesystem.FileContent, error) {
-	path, err := checkSecurity(ctx, "read", req.FilePath)
+	path, err := checkSecurity(ctx, s.workPath, "read", req.FilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +199,7 @@ func (s *Local) GrepRaw(ctx context.Context, req *filesystem.GrepRequest) ([]fil
 	if req.Pattern == "" {
 		return nil, fmt.Errorf("pattern is required")
 	}
-	path, err := checkSecurity(ctx, "read", req.Path)
+	path, err := checkSecurity(ctx, s.workPath, "read", req.Path)
 	if err != nil {
 		return nil, err
 	}
@@ -276,7 +276,7 @@ func (s *Local) GrepRaw(ctx context.Context, req *filesystem.GrepRequest) ([]fil
 }
 
 func (s *Local) GlobInfo(ctx context.Context, req *filesystem.GlobInfoRequest) ([]filesystem.FileInfo, error) {
-	path, err := checkSecurity(ctx, "list", req.Path)
+	path, err := checkSecurity(ctx, s.workPath, "list", req.Path)
 	if err != nil {
 		return nil, err
 	}
@@ -340,7 +340,7 @@ func (s *Local) GlobInfo(ctx context.Context, req *filesystem.GlobInfoRequest) (
 }
 
 func (s *Local) Write(ctx context.Context, req *filesystem.WriteRequest) error {
-	path, err := checkSecurity(ctx, "write", req.FilePath)
+	path, err := checkSecurity(ctx, s.workPath, "write", req.FilePath)
 	if err != nil {
 		return err
 	}
@@ -365,7 +365,7 @@ func (s *Local) Write(ctx context.Context, req *filesystem.WriteRequest) error {
 }
 
 func (s *Local) Edit(ctx context.Context, req *filesystem.EditRequest) error {
-	path, err := checkSecurity(ctx, "edit", req.FilePath)
+	path, err := checkSecurity(ctx, s.workPath, "edit", req.FilePath)
 	if err != nil {
 		return err
 	}
@@ -408,7 +408,7 @@ func (s *Local) ExecuteStreaming(ctx context.Context, input *filesystem.ExecuteR
 		return nil, fmt.Errorf("command is required")
 	}
 
-	cmdStr, err := checkSecurity(ctx, "execute", input.Command)
+	cmdStr, err := checkSecurity(ctx, s.workPath, "execute", input.Command)
 	if err != nil {
 		return nil, err
 	}

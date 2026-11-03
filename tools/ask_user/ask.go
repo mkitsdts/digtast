@@ -1,7 +1,7 @@
 package askuser
 
 import (
-	"digital-labor/pkg/registry"
+	"digital-labor/internal/agent/registry"
 	"digital-labor/pkg/tool"
 	"log/slog"
 )

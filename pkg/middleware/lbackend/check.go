@@ -2,7 +2,6 @@ package local
 
 import (
 	"context"
-	"digital-labor/pkg/workspace"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -10,7 +9,7 @@ import (
 
 // checkSecurity implements multi-level security strategy.
 // Returns the resolved absolute path and any error (including security denials).
-func checkSecurity(ctx context.Context, op string, target string) (string, error) {
+func checkSecurity(ctx context.Context, workPath, op, target string) (string, error) {
 	if op == "execute" {
 		if dangerousKeywords.MatchString(target) {
 			msg := fmt.Sprintf("Dangerous command detected: %s", target)
@@ -26,7 +25,7 @@ func checkSecurity(ctx context.Context, op string, target string) (string, error
 	if filepath.IsAbs(target) {
 		fullPath = filepath.Clean(target)
 	} else {
-		fullPath = filepath.Join(workspace.GetWorkspacePath(), target)
+		fullPath = filepath.Join(workPath, target)
 	}
 
 	// Evaluate symlinks to check for workspace escape
@@ -36,7 +35,7 @@ func checkSecurity(ctx context.Context, op string, target string) (string, error
 		realPath = fullPath
 	}
 
-	if isOutside(realPath) {
+	if isOutside(workPath, realPath) {
 		msg := fmt.Sprintf("Accessing path outside workspace: %s (operation: %s)", realPath, op)
 		fmt.Println("ACTION: ", msg)
 	}
@@ -44,8 +43,8 @@ func checkSecurity(ctx context.Context, op string, target string) (string, error
 	return fullPath, nil
 }
 
-func isOutside(path string) bool {
-	rel, err := filepath.Rel(workspace.GetWorkspacePath(), path)
+func isOutside(workPath, path string) bool {
+	rel, err := filepath.Rel(workPath, path)
 	if err != nil {
 		return true
 	}

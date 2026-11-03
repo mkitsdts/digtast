@@ -8,7 +8,7 @@ import (
 	"io"
 	"strings"
 
-	"digital-labor/pkg/llm"
+	"digital-labor/pkg/chatmodel"
 	toolpkg "digital-labor/pkg/tool"
 )
 
@@ -45,7 +45,7 @@ type backendTool struct {
 	backend     Backend
 }
 
-func (t *backendTool) Definition(context.Context) (llm.ToolDefinition, error) {
+func (t *backendTool) Definition(context.Context) (chatmodel.ToolDefinition, error) {
 	properties := map[string]any{}
 	required := []string{}
 	switch t.name {
@@ -73,7 +73,7 @@ func (t *backendTool) Definition(context.Context) (llm.ToolDefinition, error) {
 		properties["case_insensitive"] = map[string]any{"type": "boolean"}
 		required = append(required, "pattern")
 	}
-	return llm.ToolDefinition{Name: t.name, Description: t.description, Parameters: toolpkg.ObjectSchema(properties, required...)}, nil
+	return chatmodel.ToolDefinition{Name: t.name, Description: t.description, Parameters: toolpkg.ObjectSchema(properties, required...)}, nil
 }
 
 func (t *backendTool) Execute(ctx context.Context, arguments json.RawMessage) (*toolpkg.Result, error) {
@@ -133,8 +133,8 @@ func (t *backendTool) Execute(ctx context.Context, arguments json.RawMessage) (*
 
 type shellTool struct{ shell StreamingShell }
 
-func (t *shellTool) Definition(context.Context) (llm.ToolDefinition, error) {
-	return llm.ToolDefinition{
+func (t *shellTool) Definition(context.Context) (chatmodel.ToolDefinition, error) {
+	return chatmodel.ToolDefinition{
 		Name: "execute", Description: "Execute a shell command in the configured workspace and return combined output.",
 		Parameters: toolpkg.ObjectSchema(map[string]any{
 			"command":    map[string]any{"type": "string"},

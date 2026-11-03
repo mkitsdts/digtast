@@ -1,7 +1,7 @@
 package rule
 
 import (
-	"digital-labor/pkg/workspace"
+	"digital-labor/internal/agent/workspace"
 	"fmt"
 	"os"
 )

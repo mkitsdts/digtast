@@ -1,7 +1,7 @@
 package gateway
 
 import (
-	"digital-labor/pkg/conf"
+	"digital-labor/config"
 	"digital-labor/pkg/ctxmanager"
 	"fmt"
 	"log/slog"
@@ -30,11 +30,11 @@ func RegisterChannel(kind string, f func(kind string) MessageChannel) {
 }
 
 func LoadChannels() {
-	if conf.Conf.Channels == nil {
+	if config.Conf.Channels == nil {
 		slog.Info("channels is nil")
 		return
 	}
-	for kind := range conf.Conf.Channels {
+	for kind := range config.Conf.Channels {
 		EnableChannel(kind)
 	}
 }
@@ -48,21 +48,21 @@ func GetAllChannels() []string {
 }
 
 func CreateChannel(kind string, params map[string]any) error {
-	if conf.Conf.Channels == nil {
-		conf.Conf.Channels = make(map[string]map[string]any)
+	if config.Conf.Channels == nil {
+		config.Conf.Channels = make(map[string]map[string]any)
 	}
-	conf.Conf.Channels[kind] = params
-	return conf.SaveConfig()
+	config.Conf.Channels[kind] = params
+	return config.SaveConfig()
 }
 
 func RemoveChannel(kind string) error {
 	DisableChannel(kind)
-	delete(conf.Conf.Channels, kind)
-	return conf.SaveConfig()
+	delete(config.Conf.Channels, kind)
+	return config.SaveConfig()
 }
 
 func EnableChannel(kind string) error {
-	params, ok := conf.Conf.Channels[kind]
+	params, ok := config.Conf.Channels[kind]
 	if !ok {
 		return fmt.Errorf("channel config not found: %s", kind)
 	}

@@ -1,8 +1,8 @@
 package browser_use
 
 import (
+	"digital-labor/internal/agent/registry"
 	"digital-labor/pkg/ctxmanager"
-	"digital-labor/pkg/registry"
 	"log/slog"
 )
 

@@ -3,8 +3,6 @@ package qq
 import (
 	"context"
 	"digital-labor/pkg/gateway"
-	"digital-labor/pkg/model"
-	"digital-labor/pkg/workspace"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -16,7 +14,6 @@ type QQChannel struct {
 	AppID     string
 	AppSecret string
 	Port      int
-	AgentID   string // 存储机器人与AgentID的映射关系
 
 	mu           sync.Mutex
 	sessionID    string
@@ -52,15 +49,10 @@ func (c *QQChannel) Init(params map[string]any) error {
 	} else {
 		return errors.New("invaild port which register channel qq")
 	}
-	if agentID, ok := params["agentid"]; ok {
-		c.AgentID = agentID.(string)
-	} else {
-		c.AgentID = workspace.DefaultAgentID()
-	}
 	return nil
 }
 
-func (c *QQChannel) Send(result model.Result, params map[string]any) error {
+func (c *QQChannel) Send(result gateway.Result, params map[string]any) error {
 	userid, ok := params["user_id"]
 	if !ok {
 		slog.Error("user_id not found", "params", params)
@@ -81,7 +73,6 @@ func (c *QQChannel) GetConfig() map[string]any {
 		"appid":     c.AppID,
 		"appsecret": c.AppSecret,
 		"port":      c.Port,
-		"agentid":   c.AgentID,
 	}
 }
 
