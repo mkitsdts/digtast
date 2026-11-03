@@ -15,7 +15,7 @@ internal/agent/ 唯一 Agent 的实现
   registry/     工具和 Hook 注册
   workspace/    Agent 工作区持久化
 
-cmd/digtast/    CLI 和程序入口
+cmd/    CLI 和程序入口
 config/         配置文件解析与保存
 gateway/        外部消息渠道实现
 pkg/chatmodel/  ChatModel 抽象及模型适配器
@@ -27,7 +27,14 @@ tools/          内置工具
 ## 构建
 
 ```bash
-go build ./cmd/digtast
+make build        # 编译到 bin/digtast
+make test         # go test ./...
+```
+
+等价的手动命令：
+
+```bash
+go build -o bin/digtast ./cmd
 go test ./...
 ```
 
@@ -41,7 +48,7 @@ Go 版本：`1.26.1`（见 `go.mod`）。
 - Agent 私有实现放入 `internal/agent/`，不要放入顶层目录或 `pkg/`。
 - `pkg/chatmodel` 只负责模型抽象和适配器；其他 `pkg` 包必须可复用且不依赖具体 Agent 生命周期。
 - 配置定义和 JSON 解析统一放在顶层 `config/`。
-- 可执行入口和 CLI 命令统一放在 `cmd/digtast/`。
+- 可执行入口和 CLI 命令统一放在 `cmd/`。
 
 ## 代码规范
 
