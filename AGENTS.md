@@ -1,69 +1,61 @@
 # Digtast - Digital Labor Agent
 
-Go 实现的智能体服务，使用自研 AgentLoop，支持多种 LLM 后端。
+Go 实现的单实例智能体程序，使用自研 AgentLoop，支持多种 LLM 后端。
 
 ## 项目结构
 
-```
-internal/
-  agent/       智能体核心：创建、对话、会话管理、提示词组装
-  center/      活跃智能体注册中心
-  cli/         CLI 入口
-  gateway/     外部服务集成（飞书、Telegram 等）
-  server/      gRPC 服务端
+```text
+internal/agent/ 唯一 Agent 的实现
+  loop/         AgentLoop
+  memory/       会话内存
+  state/        提示词状态和长期记忆
+  task/         单 Agent 任务追踪
+  skill/        Skill 加载
+  mcp/          MCP 工具加载
+  registry/     工具和 Hook 注册
+  workspace/    Agent 工作区持久化
 
-pkg/
-  chatmodel/   LLM 模型管理
-  conf/        配置加载
-  ctxmanager/  上下文管理
-  memory/      会话持久化
-  middleware/
-    lbackend/  本地文件系统后端（filesystem.Backend 实现）
-    safetool/  工具调用错误兜底
-    skill/     技能中间件
-  model/       数据模型定义
-  registry/    工具和处理器全局注册
-  sandbox/     Docker 沙箱隔离
-  state/       状态管理与压缩
-  workspace/   工作区初始化与持久化
-
-tools/         内置工具（ask_user, browser_use, subagent, web_search, web_fetch, memory）
-prompt/        提示词模板
-proto/         gRPC 生成代码（*.pb.go, *_grpc.pb.go，勿手动编辑）
-labor/v1/      Proto 源文件
+cmd/digtast/    CLI 和程序入口
+config/         配置文件解析与保存
+gateway/        外部消息渠道实现
+pkg/chatmodel/  ChatModel 抽象及模型适配器
+pkg/            可复用功能包
+prompt/         提示词组件
+tools/          内置工具
 ```
 
 ## 构建
 
 ```bash
-go build ./...
+go build ./cmd/digtast
+go test ./...
 ```
 
-Go 版本：`1.26.1`（见 go.mod）
+Go 版本：`1.26.1`（见 `go.mod`）。
+
+## 架构约束
+
+- 进程内只允许一个 Agent，通过 `agent.Initialize` 初始化、`agent.Instance` 获取。
+- 不要引入 Agent Manager、Agent ID、Agent 列表或多 Agent 路由。
+- 不提供 gRPC Server、Proto/Labor API、Center 或 FTP 服务。
+- Agent 私有实现放入 `internal/agent/`，不要放入顶层目录或 `pkg/`。
+- `pkg/chatmodel` 只负责模型抽象和适配器；其他 `pkg` 包必须可复用且不依赖具体 Agent 生命周期。
+- 配置定义和 JSON 解析统一放在顶层 `config/`。
+- 可执行入口和 CLI 命令统一放在 `cmd/digtast/`。
 
 ## 代码规范
 
-- 写简洁地道的 Go，小函数、显式数据流、清晰校验
-- 导出名 `CamelCase`，包内 `camelCase`，包名简短
-- 日志统一用 `log/slog`，禁止 `fmt.Println` / `log` / `logrus`
-- API 和 manager 边界必须返回显式 error，禁止 nil panic 和硬编码凭据
-- 注释只写不明显的行为或约束，不写显而易见的内容
-
-## Proto 变更
-
-修改 `labor/v1/container.proto` 后用 `buf generate` 重新生成。未实现的 RPC 返回 `codes.Unimplemented`，不要返回假的成功响应。
+- 写简洁地道的 Go，小函数、显式数据流、清晰校验。
+- 导出名使用 `CamelCase`，包内名称使用 `camelCase`，包名保持简短。
+- 日志统一使用 `log/slog`，禁止使用 `fmt.Println` 或旧 `log` 包记录运行日志；CLI 输出除外。
+- API 边界返回显式 error，禁止 nil panic 和硬编码凭据。
+- 注释只说明不明显的行为或约束。
 
 ## 沙箱机制
 
 `pkg/sandbox` 提供 Docker 沙箱隔离：
-- `sandbox.New()` 创建容器，bind mount 工作区
-- `sandbox.WithSandbox()` 包装 `filesystem.Backend`，所有操作（文件读写、命令执行）都在容器内完成
-- 通过 `RebuildAgent(ModeSandbox)` 切换到沙箱模式，`RebuildAgent(ModeNormal)` 切回普通模式
-- 容器生命周期跟随智能体，`Close()` 时销毁
 
-## 当前状态
-
-早期开发阶段，接口频繁变更。主要已知问题：
-- Proto 生成路径和包名不完全一致，提交前需检查
-- 部分外部集成（飞书、Telegram）仍是 TODO 占位
-- 会话生命周期管理分散在 ctxmanager 和 DigitalAgent 之间，待收敛
+- `sandbox.WithSandbox()` 创建容器并 bind mount 工作区。
+- `Agent.Rebuild(ModeSandbox)` 切换到沙箱模式。
+- `Agent.Rebuild(ModeNormal)` 切回普通模式。
+- 容器生命周期跟随唯一 Agent，`Close()` 时销毁。
