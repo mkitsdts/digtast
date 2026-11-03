@@ -7,24 +7,19 @@ import (
 	"path/filepath"
 	"sync"
 
-	"digital-labor/pkg/agentloop"
+	"digital-labor/config"
+	agentloop "digital-labor/internal/agent/loop"
+	"digital-labor/internal/agent/mcp"
+	mem "digital-labor/internal/agent/memory"
+	"digital-labor/internal/agent/registry"
+	"digital-labor/internal/agent/skill"
+	"digital-labor/internal/agent/state"
+	"digital-labor/internal/agent/workspace"
 	"digital-labor/pkg/chatmodel"
-	"digital-labor/pkg/conf"
-	"digital-labor/pkg/errs"
 	"digital-labor/pkg/filesystem"
-	"digital-labor/pkg/llm"
-	"digital-labor/pkg/mcp"
-	mem "digital-labor/pkg/memory"
 	local "digital-labor/pkg/middleware/lbackend"
-	mmodel "digital-labor/pkg/model"
-	"digital-labor/pkg/registry"
 	"digital-labor/pkg/sandbox"
-	"digital-labor/pkg/skill"
-	"digital-labor/pkg/state"
 	"digital-labor/pkg/tool"
-	"digital-labor/pkg/workspace"
-
-	"github.com/google/uuid"
 )
 
 const defaultModelDescription = "一位云端数字助理。核心目标是成为用户高效、可靠且易于沟通的智能伙伴。具备卓越的理解能力、严谨的逻辑思维和强大的信息整合能力，旨在帮助用户解决问题、获取知识、激发创意并提升效率。"
@@ -36,11 +31,10 @@ const (
 	ModeSandbox AgentMode = "sandbox"
 )
 
-type DigitalAgent struct {
-	ID          string
+type Agent struct {
 	Name        string
 	Description string
-	cm          llm.LLM
+	cm          chatmodel.ChatModel
 	loop        *agentloop.Loop
 	state       *state.StateManager
 	runMu       sync.Mutex
@@ -52,24 +46,54 @@ type DigitalAgent struct {
 	files       filesystem.ToolLoader
 }
 
-func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
+var (
+	instanceMu sync.RWMutex
+	instance   *Agent
+)
+
+// Initialize creates the process-wide Agent. Repeated calls return the same instance.
+func Initialize(cfg *config.AgentConfig) (*Agent, error) {
+	instanceMu.Lock()
+	defer instanceMu.Unlock()
+	if instance != nil {
+		return instance, nil
+	}
+	ag, err := newAgent(cfg)
+	if err != nil {
+		return nil, err
+	}
+	instance = ag
+	return instance, nil
+}
+
+// Instance returns the process-wide Agent.
+func Instance() (*Agent, error) {
+	instanceMu.RLock()
+	defer instanceMu.RUnlock()
+	if instance == nil {
+		return nil, errors.New("agent is not initialized")
+	}
+	return instance, nil
+}
+
+func newAgent(cfg *config.AgentConfig) (*Agent, error) {
 	if cfg == nil {
 		return nil, errors.New("agent config is required")
 	}
 	if cfg.Name == "" {
-		return nil, errs.ErrAgentNameRequired
+		return nil, errors.New("agent name is required")
+	}
+	if cfg.Model == "" {
+		return nil, errors.New("agent model is required")
 	}
 	if cfg.Description == "" {
 		cfg.Description = defaultModelDescription
 	}
-	if cfg.ID == "" {
-		cfg.ID = uuid.New().String()
-	}
-	store, err := mem.NewStore(cfg.ID)
+	store, err := mem.NewStore()
 	if err != nil {
 		return nil, fmt.Errorf("create memory store: %w", err)
 	}
-	mCfg, ok := conf.FindModelConfig(cfg.Model)
+	mCfg, ok := config.FindModelConfig(cfg.Model)
 	if !ok {
 		return nil, fmt.Errorf("model config not found for: %s", cfg.Model)
 	}
@@ -79,13 +103,17 @@ func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 		}
 		cfg.ModelKind = mCfg.ModelNames[0]
 	}
-	cm, err := chatmodel.ModelManager.GetChatModelByConfig(context.Background(), cfg.Model, cfg.ModelKind)
+	cm, err := newChatModel(mCfg, cfg.ModelKind)
 	if err != nil {
 		return nil, err
 	}
-	dga := &DigitalAgent{
-		ID: cfg.ID, Name: cfg.Name, Description: cfg.Description, cm: cm, state: state.NewStateManager(cfg.ID), memory: store, mode: ModeNormal,
-		files: filesystem.ToolLoader{Backend: local.GetBackend(), Shell: local.GetBackend()},
+	files, err := newLocalFiles()
+	if err != nil {
+		return nil, err
+	}
+	dga := &Agent{
+		Name: cfg.Name, Description: cfg.Description, cm: cm, state: state.NewStateManager(), memory: store, mode: ModeNormal,
+		files: files,
 	}
 	if err := dga.rebuildLoop(); err != nil {
 		return nil, err
@@ -93,8 +121,8 @@ func newDigitalAgent(cfg *mmodel.DigitalAgentConfig) (*DigitalAgent, error) {
 	return dga, nil
 }
 
-func (dga *DigitalAgent) rebuildLoop() error {
-	skillManager := skill.NewManagerForAgent(dga.ID)
+func (dga *Agent) rebuildLoop() error {
+	skillManager := skill.NewManager()
 	loadSkill, err := skill.NewLoadSkillTool(skillManager, nil)
 	if err != nil {
 		return err
@@ -124,39 +152,39 @@ func (dga *DigitalAgent) rebuildLoop() error {
 	return nil
 }
 
-func (dga *DigitalAgent) GetModel() llm.LLM { return dga.cm }
+func (dga *Agent) GetModel() chatmodel.ChatModel { return dga.cm }
 
-func (dga *DigitalAgent) Run(ctx context.Context, content string, resources []mmodel.MultiModalResource, isStream bool) (chan string, error) {
+func (dga *Agent) Run(ctx context.Context, content string, resources []MultiModalResource, isStream bool) (chan string, error) {
 	if content == "" && len(resources) == 0 {
 		return nil, errors.New("content is empty")
 	}
-	return dga.run(ctx, mmodel.ChatRequest{Content: content, MultiModalResources: resources, IsStream: isStream})
+	return dga.run(ctx, ChatRequest{Content: content, MultiModalResources: resources, IsStream: isStream})
 }
 
-func (dga *DigitalAgent) GetSession() (*mem.Session, error) {
+func (dga *Agent) GetSession() (*mem.Session, error) {
 	if dga.memory == nil {
 		return nil, errors.New("memory store is not initialized")
 	}
 	return dga.memory.GetOrCreate()
 }
 
-func (dga *DigitalAgent) ClearHistory() error {
+func (dga *Agent) ClearHistory() error {
 	if dga.memory == nil {
 		return errors.New("memory store is not initialized")
 	}
 	return dga.memory.Delete()
 }
 
-func (dga *DigitalAgent) Cancel() error { return dga.stop() }
+func (dga *Agent) Cancel() error { return dga.stop() }
 
-func (dga *DigitalAgent) Close() error {
+func (dga *Agent) Close() error {
 	if dga.sandbox != nil {
 		return dga.sandbox.Close()
 	}
 	return nil
 }
 
-func (dga *DigitalAgent) RebuildAgent(mode AgentMode) error {
+func (dga *Agent) Rebuild(mode AgentMode) error {
 	dga.runMu.Lock()
 	defer dga.runMu.Unlock()
 	if mode != ModeNormal && mode != ModeSandbox {
@@ -176,13 +204,27 @@ func (dga *DigitalAgent) RebuildAgent(mode AgentMode) error {
 			return err
 		}
 		dga.sandbox = nil
-		dga.files = filesystem.ToolLoader{Backend: local.GetBackend(), Shell: local.GetBackend()}
+		files, err := newLocalFiles()
+		if err != nil {
+			return err
+		}
+		dga.files = files
 	}
 	dga.mode = mode
 	return dga.rebuildLoop()
 }
 
-func (dga *DigitalAgent) dream(ctx context.Context) error {
+func newLocalFiles() (filesystem.ToolLoader, error) {
+	backend, err := local.NewBackend(context.Background(), &local.Config{
+		WorkPath: filepath.Join(workspace.GetWorkspacePath(), "workspace"),
+	})
+	if err != nil {
+		return filesystem.ToolLoader{}, fmt.Errorf("create local backend: %w", err)
+	}
+	return filesystem.ToolLoader{Backend: backend, Shell: backend}, nil
+}
+
+func (dga *Agent) dream(ctx context.Context) error {
 	if !dga.runMu.TryLock() {
 		return nil
 	}
@@ -194,7 +236,7 @@ func (dga *DigitalAgent) dream(ctx context.Context) error {
 	return state.Compress(ctx, dga.cm, session, dga.state)
 }
 
-func (dga *DigitalAgent) Compress() error {
+func (dga *Agent) Compress() error {
 	dga.runMu.Lock()
 	defer dga.runMu.Unlock()
 	session, err := dga.memory.GetOrCreate()
@@ -204,13 +246,13 @@ func (dga *DigitalAgent) Compress() error {
 	return state.Compress(context.Background(), dga.cm, session, dga.state)
 }
 
-func (dga *DigitalAgent) UpdateTools() error {
+func (dga *Agent) UpdateTools() error {
 	dga.runMu.Lock()
 	defer dga.runMu.Unlock()
 	return dga.rebuildLoop()
 }
 
-func (dga *DigitalAgent) stop() error {
+func (dga *Agent) stop() error {
 	dga.stopMu.Lock()
 	defer dga.stopMu.Unlock()
 	if dga.runStop == nil {
@@ -221,7 +263,7 @@ func (dga *DigitalAgent) stop() error {
 	return nil
 }
 
-func (dga *DigitalAgent) setStop(cancel context.CancelFunc) {
+func (dga *Agent) setStop(cancel context.CancelFunc) {
 	dga.stopMu.Lock()
 	dga.runStop = cancel
 	dga.stopMu.Unlock()

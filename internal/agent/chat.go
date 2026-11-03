@@ -6,15 +6,14 @@ import (
 	"fmt"
 	"log/slog"
 
-	"digital-labor/pkg/agentloop"
-	"digital-labor/pkg/conf"
-	"digital-labor/pkg/llm"
-	mmodel "digital-labor/pkg/model"
-	"digital-labor/pkg/state"
-	"digital-labor/pkg/task"
+	"digital-labor/config"
+	agentloop "digital-labor/internal/agent/loop"
+	"digital-labor/internal/agent/state"
+	"digital-labor/internal/agent/task"
+	"digital-labor/pkg/chatmodel"
 )
 
-func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan string, error) {
+func (dga *Agent) run(ctx context.Context, req ChatRequest) (chan string, error) {
 	dga.runMu.Lock()
 	session, err := dga.memory.GetOrCreate()
 	if err != nil {
@@ -31,23 +30,18 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 		return nil, err
 	}
 
-	createdTask, err := task.CreateTask(dga.ID, task.Config{AgentID: dga.ID})
-	if err != nil {
-		dga.runMu.Unlock()
-		return nil, err
-	}
+	createdTask := task.Create(task.Config{})
 	flowID := createdTask.TaskID
-	task.UpdateStatus(dga.ID, flowID, mmodel.TaskStatusRunning)
+	task.UpdateStatus(flowID, task.StatusRunning)
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	runCtx, cancel := context.WithCancel(ctx)
-	runCtx = context.WithValue(runCtx, "task_id", flowID)
-	runCtx = context.WithValue(runCtx, "agent_id", dga.ID)
+	runCtx = task.WithContext(runCtx, flowID)
 	dga.setStop(cancel)
 
 	messages := session.GetCompressMessages()
-	inputMessages := make([]llm.Message, 0, len(messages))
+	inputMessages := make([]chatmodel.Message, 0, len(messages))
 	for _, item := range messages {
 		if item != nil {
 			inputMessages = append(inputMessages, *item)
@@ -75,7 +69,7 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 			},
 		})
 		if runErr != nil {
-			task.UpdateTask(dga.ID, flowID, task.UpdateConfig{Status: mmodel.TaskStatusFailed, Error: runErr.Error()})
+			task.Update(flowID, task.UpdateConfig{Status: task.StatusFailed, Error: runErr.Error()})
 			if !errors.Is(runErr, context.Canceled) {
 				output <- runErr.Error()
 			}
@@ -84,21 +78,21 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 		for index := range result.Generated {
 			msg := result.Generated[index]
 			if err := session.Append(&msg); err != nil {
-				slog.Error("failed to persist generated message", "agent_id", dga.ID, "error", err)
+				slog.Error("failed to persist generated message", "error", err)
 			}
 		}
-		task.UpdateStatus(dga.ID, flowID, mmodel.TaskStatusCompleted)
+		task.UpdateStatus(flowID, task.StatusCompleted)
 		if !req.IsStream && result.Response != nil && result.Response.Message.Content != "" {
 			output <- result.Response.Message.Content
 		}
-		tokenLimit := conf.Conf.Memory.TokenLimit
+		tokenLimit := config.Conf.Memory.TokenLimit
 		if tokenLimit <= 0 {
 			tokenLimit = 32000
 		}
 		if session.Size() > tokenLimit {
 			go func() {
 				if err := state.Compress(context.Background(), dga.cm, session, dga.state); err != nil {
-					slog.Error("memory compression failed", "agent_id", dga.ID, "error", err)
+					slog.Error("memory compression failed", "error", err)
 				}
 			}()
 		}
@@ -106,33 +100,33 @@ func (dga *DigitalAgent) run(ctx context.Context, req mmodel.ChatRequest) (chan 
 	return output, nil
 }
 
-func buildUserMessage(req mmodel.ChatRequest) (llm.Message, error) {
-	message := llm.Message{Role: llm.RoleUser, Content: req.Content}
+func buildUserMessage(req ChatRequest) (chatmodel.Message, error) {
+	message := chatmodel.Message{Role: chatmodel.RoleUser, Content: req.Content}
 	for _, resource := range req.MultiModalResources {
 		part, err := buildContentPart(resource)
 		if err != nil {
-			return llm.Message{}, err
+			return chatmodel.Message{}, err
 		}
 		message.Parts = append(message.Parts, part)
 	}
 	return message, nil
 }
 
-func buildContentPart(resource mmodel.MultiModalResource) (llm.ContentPart, error) {
-	part := llm.ContentPart{Text: resource.Text, URL: resource.URL, Data: resource.Base64Data, MIMEType: resource.MIMEType, Name: resource.Name, Detail: string(resource.Detail)}
+func buildContentPart(resource MultiModalResource) (chatmodel.ContentPart, error) {
+	part := chatmodel.ContentPart{Text: resource.Text, URL: resource.URL, Data: resource.Base64Data, MIMEType: resource.MIMEType, Name: resource.Name, Detail: string(resource.Detail)}
 	switch resource.Type {
-	case mmodel.MultiModalResourceTypeText:
-		part.Type = llm.ContentText
-	case mmodel.MultiModalResourceTypeImage:
-		part.Type = llm.ContentImageURL
-	case mmodel.MultiModalResourceTypeAudio:
-		part.Type = llm.ContentInputAudio
-	case mmodel.MultiModalResourceTypeFile:
-		part.Type = llm.ContentFile
-	case mmodel.MultiModalResourceTypeVideo:
-		return llm.ContentPart{}, fmt.Errorf("chat completions does not support video input")
+	case MultiModalResourceTypeText:
+		part.Type = chatmodel.ContentText
+	case MultiModalResourceTypeImage:
+		part.Type = chatmodel.ContentImageURL
+	case MultiModalResourceTypeAudio:
+		part.Type = chatmodel.ContentInputAudio
+	case MultiModalResourceTypeFile:
+		part.Type = chatmodel.ContentFile
+	case MultiModalResourceTypeVideo:
+		return chatmodel.ContentPart{}, fmt.Errorf("chat completions does not support video input")
 	default:
-		return llm.ContentPart{}, fmt.Errorf("unsupported multimodal resource type %q", resource.Type)
+		return chatmodel.ContentPart{}, fmt.Errorf("unsupported multimodal resource type %q", resource.Type)
 	}
 	return part, nil
 }

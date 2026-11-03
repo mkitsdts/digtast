@@ -1,17 +1,54 @@
 package agent
 
 import (
-	"digital-labor/pkg/llm"
-	"digital-labor/pkg/state"
 	"testing"
+
+	"digital-labor/config"
+	"digital-labor/internal/agent/state"
+	"digital-labor/pkg/chatmodel"
 )
 
+func TestInitializeReturnsSingleton(t *testing.T) {
+	instanceMu.Lock()
+	previous := instance
+	instance = nil
+	instanceMu.Unlock()
+	t.Cleanup(func() {
+		instanceMu.Lock()
+		instance = previous
+		instanceMu.Unlock()
+	})
+
+	config.Conf.WorkSpaceDir = t.TempDir()
+	config.Conf.Models = map[string]config.ModelConfig{
+		"test": {Provider: "openai", Key: "test-key", ModelNames: []string{"test-model"}},
+	}
+	first, err := Initialize(&config.AgentConfig{Name: "first", Model: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := Initialize(&config.AgentConfig{Name: "second", Model: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first != second {
+		t.Fatal("expected Initialize to return the same Agent instance")
+	}
+	got, err := Instance()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != first || got.Name != "first" {
+		t.Fatalf("unexpected singleton: %#v", got)
+	}
+}
+
 func TestFilterUserAssistant(t *testing.T) {
-	msgs := []*llm.Message{
-		{Role: llm.RoleUser, Content: "hello"},
-		{Role: llm.RoleAssistant, Content: "hi"},
-		{Role: llm.RoleTool, Content: "tool result", Name: "search"},
-		{Role: llm.RoleUser, Content: "thanks"},
+	msgs := []*chatmodel.Message{
+		{Role: chatmodel.RoleUser, Content: "hello"},
+		{Role: chatmodel.RoleAssistant, Content: "hi"},
+		{Role: chatmodel.RoleTool, Content: "tool result", Name: "search"},
+		{Role: chatmodel.RoleUser, Content: "thanks"},
 	}
 
 	filtered := state.FilterUserAssistant(msgs)
@@ -24,10 +61,10 @@ func TestFilterUserAssistant(t *testing.T) {
 }
 
 func TestShardMessages(t *testing.T) {
-	msgs := []*llm.Message{
-		{Role: llm.RoleUser, Content: "hello world"},       // ~3 tokens
-		{Role: llm.RoleAssistant, Content: "hi there"},     // ~2 tokens
-		{Role: llm.RoleUser, Content: "how are you doing"}, // ~4 tokens
+	msgs := []*chatmodel.Message{
+		{Role: chatmodel.RoleUser, Content: "hello world"},       // ~3 tokens
+		{Role: chatmodel.RoleAssistant, Content: "hi there"},     // ~2 tokens
+		{Role: chatmodel.RoleUser, Content: "how are you doing"}, // ~4 tokens
 	}
 
 	shards := state.ShardMessages(msgs, 5)

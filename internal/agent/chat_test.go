@@ -2,8 +2,7 @@ package agent
 
 import (
 	"context"
-	"digital-labor/pkg/conf"
-	"digital-labor/pkg/model"
+	"digital-labor/config"
 	"os"
 	"testing"
 )
@@ -12,7 +11,7 @@ func TestChat(t *testing.T) {
 	if os.Getenv("TEST_INTEGRATION") == "" {
 		t.Skip("set TEST_INTEGRATION=1 to run")
 	}
-	conf.Conf.Models = map[string]conf.ModelConfig{
+	config.Conf.Models = map[string]config.ModelConfig{
 		"doubao": {
 			Provider:   "doubao",
 			Key:        "ark-api-key",
@@ -21,7 +20,7 @@ func TestChat(t *testing.T) {
 		},
 	}
 
-	agent, err := newDigitalAgent(&model.DigitalAgentConfig{
+	agent, err := newAgent(&config.AgentConfig{
 		Name:        "test-agent",
 		Model:       "doubao",
 		Description: "test agent",
