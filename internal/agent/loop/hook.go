@@ -3,7 +3,7 @@ package agentloop
 import (
 	"context"
 
-	"digital-labor/pkg/llm"
+	"digital-labor/pkg/chatmodel"
 	"digital-labor/pkg/tool"
 )
 
@@ -16,21 +16,21 @@ type RunContext struct {
 type StepContext struct {
 	Run      *RunContext
 	Index    int
-	Request  *llm.ChatRequest
-	Response *llm.ChatResponse
+	Request  *chatmodel.ChatRequest
+	Response *chatmodel.ChatResponse
 	Error    error
 }
 
 type ModelContext struct {
 	Step     *StepContext
-	Request  *llm.ChatRequest
-	Response *llm.ChatResponse
+	Request  *chatmodel.ChatRequest
+	Response *chatmodel.ChatResponse
 	Error    error
 }
 
 type ToolContext struct {
 	Step      *StepContext
-	Call      llm.ToolCall
+	Call      chatmodel.ToolCall
 	Tool      tool.Tool
 	Arguments []byte
 	Result    *tool.Result

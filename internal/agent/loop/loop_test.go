@@ -7,17 +7,17 @@ import (
 	"sync"
 	"testing"
 
-	"digital-labor/pkg/llm"
+	"digital-labor/pkg/chatmodel"
 	"digital-labor/pkg/tool"
 )
 
 type scriptedLLM struct {
 	mu        sync.Mutex
-	responses []*llm.ChatResponse
-	requests  []*llm.ChatRequest
+	responses []*chatmodel.ChatResponse
+	requests  []*chatmodel.ChatRequest
 }
 
-func (m *scriptedLLM) Chat(_ context.Context, request *llm.ChatRequest) (*llm.ChatResponse, error) {
+func (m *scriptedLLM) Chat(_ context.Context, request *chatmodel.ChatRequest) (*chatmodel.ChatResponse, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.requests = append(m.requests, request)
@@ -29,18 +29,18 @@ func (m *scriptedLLM) Chat(_ context.Context, request *llm.ChatRequest) (*llm.Ch
 	return response, nil
 }
 
-func (m *scriptedLLM) ChatStream(context.Context, *llm.ChatRequest) (llm.Stream, error) {
+func (m *scriptedLLM) ChatStream(context.Context, *chatmodel.ChatRequest) (chatmodel.Stream, error) {
 	return nil, errors.New("not implemented")
 }
-func (m *scriptedLLM) GetUsage() llm.Usage { return llm.Usage{} }
-func (m *scriptedLLM) CheckStatus(context.Context) (*llm.Status, error) {
-	return &llm.Status{Available: true}, nil
+func (m *scriptedLLM) GetUsage() chatmodel.Usage { return chatmodel.Usage{} }
+func (m *scriptedLLM) CheckStatus(context.Context) (*chatmodel.Status, error) {
+	return &chatmodel.Status{Available: true}, nil
 }
 
 type echoTool struct{}
 
-func (echoTool) Definition(context.Context) (llm.ToolDefinition, error) {
-	return llm.ToolDefinition{Name: "echo", Parameters: tool.ObjectSchema(map[string]any{"value": map[string]any{"type": "string"}}, "value")}, nil
+func (echoTool) Definition(context.Context) (chatmodel.ToolDefinition, error) {
+	return chatmodel.ToolDefinition{Name: "echo", Parameters: tool.ObjectSchema(map[string]any{"value": map[string]any{"type": "string"}}, "value")}, nil
 }
 func (echoTool) Execute(_ context.Context, arguments json.RawMessage) (*tool.Result, error) {
 	var input struct {
@@ -89,9 +89,9 @@ func (h *recordingHook) AfterTool(context.Context, *ToolContext) error {
 }
 
 func TestLoopExecutesToolAndHooks(t *testing.T) {
-	model := &scriptedLLM{responses: []*llm.ChatResponse{
-		{Message: llm.Message{Role: llm.RoleAssistant, ToolCalls: []llm.ToolCall{{ID: "call-1", Type: "function", Function: llm.FunctionCall{Name: "echo", Arguments: json.RawMessage(`{"value":"ok"}`)}}}}, FinishReason: llm.FinishToolCalls, Usage: llm.Usage{TotalTokens: 2}},
-		{Message: llm.Message{Role: llm.RoleAssistant, Content: "done"}, FinishReason: llm.FinishStop, Usage: llm.Usage{TotalTokens: 3}},
+	model := &scriptedLLM{responses: []*chatmodel.ChatResponse{
+		{Message: chatmodel.Message{Role: chatmodel.RoleAssistant, ToolCalls: []chatmodel.ToolCall{{ID: "call-1", Type: "function", Function: chatmodel.FunctionCall{Name: "echo", Arguments: json.RawMessage(`{"value":"ok"}`)}}}}, FinishReason: chatmodel.FinishToolCalls, Usage: chatmodel.Usage{TotalTokens: 2}},
+		{Message: chatmodel.Message{Role: chatmodel.RoleAssistant, Content: "done"}, FinishReason: chatmodel.FinishStop, Usage: chatmodel.Usage{TotalTokens: 3}},
 	}}
 	hook := &recordingHook{}
 	loop, err := New(Config{
@@ -101,18 +101,18 @@ func TestLoopExecutesToolAndHooks(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	result, err := loop.Run(context.Background(), Input{Messages: []llm.Message{{Role: llm.RoleUser, Content: "start"}}})
+	result, err := loop.Run(context.Background(), Input{Messages: []chatmodel.Message{{Role: chatmodel.RoleUser, Content: "start"}}})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if result.Response.Message.Content != "done" || result.Steps != 2 || result.Usage.TotalTokens != 5 {
 		t.Fatalf("unexpected result %#v", result)
 	}
-	if len(model.requests) != 2 || model.requests[0].Messages[0].Role != llm.RoleSystem {
+	if len(model.requests) != 2 || model.requests[0].Messages[0].Role != chatmodel.RoleSystem {
 		t.Fatalf("prompt was not loaded into model request")
 	}
 	secondMessages := model.requests[1].Messages
-	if secondMessages[len(secondMessages)-1].Role != llm.RoleTool || secondMessages[len(secondMessages)-1].Content != "ok" {
+	if secondMessages[len(secondMessages)-1].Role != chatmodel.RoleTool || secondMessages[len(secondMessages)-1].Content != "ok" {
 		t.Fatalf("tool result was not appended: %#v", secondMessages)
 	}
 	want := []string{"before_step", "before_model", "after_model", "before_tool", "after_tool", "after_step", "before_step", "before_model", "after_model", "after_step"}

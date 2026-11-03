@@ -1,8 +1,8 @@
 package mem
 
 import (
-	"digital-labor/pkg/llm"
-	"digital-labor/pkg/workspace"
+	"digital-labor/internal/agent/workspace"
+	"digital-labor/pkg/chatmodel"
 	"strings"
 	"sync"
 	"time"
@@ -17,14 +17,12 @@ type SessionMeta struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-// Session holds the in-memory state for a single conversation.
-// Each agent owns exactly one session; Session.AgentID == owning agent's ID.
+// Session holds the in-memory state for the singleton Agent's conversation.
 type Session struct {
-	AgentID   string
 	CreatedAt time.Time
 
 	mu                 sync.Mutex
-	messages           []*llm.Message
+	messages           []*chatmodel.Message
 	pendingInterruptID string
 	msgIdx             int
 }
@@ -58,25 +56,24 @@ func (s *Session) GetMsgIdx() int {
 }
 
 // Append adds a message to memory and persists it to disk.
-func (s *Session) Append(msg *llm.Message) error {
+func (s *Session) Append(msg *chatmodel.Message) error {
 	if msg == nil {
 		return nil
 	}
 
 	s.mu.Lock()
 	s.messages = append(s.messages, msg)
-	agentID := s.AgentID
 	s.mu.Unlock()
 
-	return workspace.Save(agentID, workspace.MemTypeChunk, msg)
+	return workspace.Save(workspace.MemTypeChunk, msg)
 }
 
 // GetMessages returns a snapshot of all messages.
-func (s *Session) GetMessages() []*llm.Message {
+func (s *Session) GetMessages() []*chatmodel.Message {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	result := make([]*llm.Message, len(s.messages))
+	result := make([]*chatmodel.Message, len(s.messages))
 	for i, msg := range s.messages {
 		if msg == nil {
 			continue
@@ -89,19 +86,18 @@ func (s *Session) GetMessages() []*llm.Message {
 
 // GetCompressMessages returns the compacted view used as model context:
 // compressed summaries followed by original messages not yet summarized.
-func (s *Session) GetCompressMessages() []*llm.Message {
+func (s *Session) GetCompressMessages() []*chatmodel.Message {
 	s.mu.Lock()
-	agentID := s.AgentID
 	fallback := cloneSchemaMessages(s.messages)
 	s.mu.Unlock()
 
-	resMsgs, err := workspace.Load(agentID, workspace.MemTypeChunk)
+	resMsgs, err := workspace.Load(workspace.MemTypeChunk)
 	if err != nil {
 		return fallback
 	}
-	messages := resMsgs.([]*llm.Message)
+	messages := resMsgs.([]*chatmodel.Message)
 
-	resRecs, err := workspace.Load(agentID, workspace.MemTypeCompress)
+	resRecs, err := workspace.Load(workspace.MemTypeCompress)
 	if err != nil {
 		return messages
 	}
@@ -111,7 +107,7 @@ func (s *Session) GetCompressMessages() []*llm.Message {
 		return messages
 	}
 
-	var result []*llm.Message
+	var result []*chatmodel.Message
 	compressedThrough := 0
 	for _, record := range records {
 		if record.SourceEndLine <= compressedThrough {
@@ -152,26 +148,18 @@ func (s *Session) Size() int {
 
 // DeleteChunks archives JSONL chunk files for this session to tar.gz and deletes originals.
 func (s *Session) DeleteChunks() error {
-	s.mu.Lock()
-	agentID := s.AgentID
-	s.mu.Unlock()
-
-	return workspace.Archive(agentID, workspace.MemTypeChunk)
+	return workspace.Archive(workspace.MemTypeChunk)
 }
 
 // Search retrieves short-term memories (compressed records) that match the query.
-func (s *Session) Search(query string) ([]*llm.Message, error) {
-	s.mu.Lock()
-	agentID := s.AgentID
-	s.mu.Unlock()
-
-	res, err := workspace.Load(agentID, workspace.MemTypeCompress)
+func (s *Session) Search(query string) ([]*chatmodel.Message, error) {
+	res, err := workspace.Load(workspace.MemTypeCompress)
 	if err != nil {
 		return nil, err
 	}
 	records := res.([]workspace.CompressionRecord)
 
-	var result []*llm.Message
+	var result []*chatmodel.Message
 	for _, record := range records {
 		match := false
 		for _, msg := range record.Messages {
@@ -188,11 +176,7 @@ func (s *Session) Search(query string) ([]*llm.Message, error) {
 }
 
 // AppendCompression persists a compressed segment without mutating full history.
-func (s *Session) AppendCompression(startLine, endLine int, msgs []*llm.Message) error {
-	s.mu.Lock()
-	agentID := s.AgentID
-	s.mu.Unlock()
-
+func (s *Session) AppendCompression(startLine, endLine int, msgs []*chatmodel.Message) error {
 	record := workspace.CompressionRecord{
 		ID:              uuid.New().String(),
 		SourceStartLine: startLine,
@@ -200,16 +184,12 @@ func (s *Session) AppendCompression(startLine, endLine int, msgs []*llm.Message)
 		Messages:        cloneSchemaMessages(msgs),
 		Created:         time.Now().UTC(),
 	}
-	return workspace.Save(agentID, workspace.MemTypeCompress, record)
+	return workspace.Save(workspace.MemTypeCompress, record)
 }
 
 // CompressedThrough returns the highest original line number covered by compression.
 func (s *Session) CompressedThrough() int {
-	s.mu.Lock()
-	agentID := s.AgentID
-	s.mu.Unlock()
-
-	res, err := workspace.Load(agentID, workspace.MemTypeCompress)
+	res, err := workspace.Load(workspace.MemTypeCompress)
 	if err != nil {
 		return 0
 	}
@@ -229,7 +209,7 @@ func (s *Session) Title() string {
 	defer s.mu.Unlock()
 
 	for _, msg := range s.messages {
-		if msg.Role == llm.RoleUser && msg.Content != "" {
+		if msg.Role == chatmodel.RoleUser && msg.Content != "" {
 			title := msg.Content
 			if len([]rune(title)) > 60 {
 				title = string([]rune(title)[:60]) + "..."
@@ -240,8 +220,8 @@ func (s *Session) Title() string {
 	return "New Session"
 }
 
-func cloneSchemaMessages(messages []*llm.Message) []*llm.Message {
-	result := make([]*llm.Message, len(messages))
+func cloneSchemaMessages(messages []*chatmodel.Message) []*chatmodel.Message {
+	result := make([]*chatmodel.Message, len(messages))
 	for i, msg := range messages {
 		if msg == nil {
 			continue

@@ -1,31 +1,21 @@
 package mem
 
 import (
-	"digital-labor/pkg/llm"
-	"digital-labor/pkg/workspace"
+	"digital-labor/internal/agent/workspace"
+	"digital-labor/pkg/chatmodel"
 	"fmt"
 	"sync"
 	"time"
 )
 
-// Store manages the runtime session for one agent and delegates persistence to pkg/workspace.
-// Each agent owns exactly one session; the session ID equals the agent ID.
+// Store manages the singleton Agent's conversation session.
 type Store struct {
-	agentID string
-
 	mu      sync.Mutex
 	session *Session
 }
 
-// NewStore creates an in-memory session store backed by the workspace memory functions.
-func NewStore(agentID string) (*Store, error) {
-	if agentID == "" {
-		agentID = workspace.DefaultAgentID()
-	}
-
-	return &Store{
-		agentID: agentID,
-	}, nil
+func NewStore() (*Store, error) {
+	return &Store{}, nil
 }
 
 // GetOrCreate returns the agent's session, creating it if it does not exist.
@@ -38,17 +28,16 @@ func (s *Store) GetOrCreate() (*Session, error) {
 		return s.session, nil
 	}
 
-	res, err := workspace.Load(s.agentID, workspace.MemTypeChunk)
+	res, err := workspace.Load(workspace.MemTypeChunk)
 	if err != nil {
 		return nil, err
 	}
-	messages, ok := res.([]*llm.Message)
+	messages, ok := res.([]*chatmodel.Message)
 	if !ok {
 		return nil, fmt.Errorf("unexpected type from load: %T", res)
 	}
 
 	sess := &Session{
-		AgentID:   s.agentID,
 		CreatedAt: time.Now().UTC(),
 		messages:  messages,
 	}
@@ -61,7 +50,7 @@ func (s *Store) Delete() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if err := workspace.DeleteSession(s.agentID); err != nil {
+	if err := workspace.DeleteSession(); err != nil {
 		return err
 	}
 	s.session = nil
@@ -69,7 +58,7 @@ func (s *Store) Delete() error {
 }
 
 // AppendMessage adds a message to the agent's session.
-func (s *Store) AppendMessage(msg *llm.Message) {
+func (s *Store) AppendMessage(msg *chatmodel.Message) {
 	if msg == nil {
 		return
 	}

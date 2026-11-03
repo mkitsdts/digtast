@@ -3,7 +3,7 @@ package state
 import (
 	"context"
 	"crypto/sha256"
-	"digital-labor/pkg/workspace"
+	"digital-labor/internal/agent/workspace"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -14,19 +14,14 @@ func (sm *StateManager) LoadPrompt(context.Context) (string, error) {
 	return sm.Build(), nil
 }
 
-// StateManager manages the system prompt cache and per-agent memory for one agent.
 type StateManager struct {
-	agentID      string
 	mu           sync.RWMutex
 	cachedPrompt string
 	promptHash   [32]byte
 }
 
-// NewStateManager creates a StateManager for the given agent.
-func NewStateManager(agentID string) *StateManager {
-	return &StateManager{
-		agentID: agentID,
-	}
+func NewStateManager() *StateManager {
+	return &StateManager{}
 }
 
 // Build returns the full system prompt, using cache if the source files have not changed.
@@ -49,8 +44,7 @@ func (sm *StateManager) Build() string {
 		}
 	}
 
-	// Append per-agent memory
-	if memory := workspace.LoadAgentMemory(sm.agentID); memory != "" {
+	if memory := workspace.LoadMemory(); memory != "" {
 		parts = append(parts, "### memory.md\n"+memory)
 	}
 
@@ -76,7 +70,7 @@ func (sm *StateManager) Invalidate() {
 
 // SaveMemory appends content to the agent's memory.md via the workspace layer.
 func (sm *StateManager) SaveMemory(content string) error {
-	if err := workspace.SaveAgentMemory(sm.agentID, content); err != nil {
+	if err := workspace.AppendMemory(content); err != nil {
 		return err
 	}
 	sm.Invalidate()
@@ -85,7 +79,7 @@ func (sm *StateManager) SaveMemory(content string) error {
 
 // ReplaceMemory replaces the entire memory.md content.
 func (sm *StateManager) ReplaceMemory(content string) error {
-	if err := workspace.ReplaceAgentMemory(sm.agentID, content); err != nil {
+	if err := workspace.ReplaceMemory(content); err != nil {
 		return err
 	}
 	sm.Invalidate()
@@ -94,5 +88,5 @@ func (sm *StateManager) ReplaceMemory(content string) error {
 
 // LoadMemory reads the agent's memory.md content.
 func (sm *StateManager) LoadMemory() string {
-	return workspace.LoadAgentMemory(sm.agentID)
+	return workspace.LoadMemory()
 }
