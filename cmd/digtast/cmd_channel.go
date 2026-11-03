@@ -1,7 +1,7 @@
-package cli
+package main
 
 import (
-	"digital-labor/pkg/conf"
+	"digital-labor/config"
 	"digital-labor/pkg/ctxmanager"
 	"digital-labor/pkg/gateway"
 
@@ -25,11 +25,11 @@ var channelCmd = &cobra.Command{
 		ctx := ctxmanager.GetOrCreate(kind)
 		go c.Serve(ctx)
 
-		if conf.Conf.Channels == nil {
-			conf.Conf.Channels = make(map[string]map[string]any)
+		if config.Conf.Channels == nil {
+			config.Conf.Channels = make(map[string]map[string]any)
 		}
-		conf.Conf.Channels[kind] = c.GetConfig()
-		conf.SaveConfig()
+		config.Conf.Channels[kind] = c.GetConfig()
+		config.SaveConfig()
 
 		successMsg("Channel '%s' started.", kind)
 	},

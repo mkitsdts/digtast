@@ -1,4 +1,4 @@
-package cli
+package main
 
 import (
 	"bufio"
@@ -7,16 +7,15 @@ import (
 )
 
 type replState struct {
-	scanner     *bufio.Scanner
-	agentID     string
-	agent       *agent.DigitalAgent
-	agentName   string
+	scanner   *bufio.Scanner
+	agent     *agent.Agent
+	agentName string
 }
 
 var activeState *replState
 
 func (s *replState) prompt() string {
-	if s.agentID != "" {
+	if s.agent != nil {
 		return colorBlue + "[" + s.agentName + "]" + colorReset + " >>> "
 	}
 	return ">>> "

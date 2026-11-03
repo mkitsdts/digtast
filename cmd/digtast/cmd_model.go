@@ -1,4 +1,4 @@
-package cli
+package main
 
 import (
 	"fmt"
@@ -6,8 +6,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"digital-labor/pkg/chatmodel"
-	"digital-labor/pkg/conf"
+	"digital-labor/config"
 
 	"github.com/spf13/cobra"
 )
@@ -21,7 +20,7 @@ var modelLsCmd = &cobra.Command{
 	Use:   "ls",
 	Short: "List configured model providers",
 	Run: func(cmd *cobra.Command, args []string) {
-		models := chatmodel.ModelManager.ListModels()
+		models := config.Conf.Models
 		if len(models) == 0 {
 			infoMsg("No model providers configured.")
 			return
@@ -58,7 +57,7 @@ var modelAddCmd = &cobra.Command{
 			modelNames[i] = strings.TrimSpace(modelNames[i])
 		}
 
-		err := chatmodel.ModelManager.CreateModel(provider, conf.ModelConfig{
+		err := config.SetModel(provider, config.ModelConfig{
 			Provider:   provider,
 			Key:        key,
 			ModelNames: modelNames,

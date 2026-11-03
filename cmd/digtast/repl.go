@@ -1,4 +1,4 @@
-package cli
+package main
 
 import (
 	"bufio"
@@ -7,8 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"digital-labor/internal/center"
-	"digital-labor/pkg/conf"
+	"digital-labor/internal/agent"
 )
 
 func RunLocalREPL() {
@@ -61,35 +60,25 @@ func RunLocalREPL() {
 }
 
 func (s *replState) initAgent() {
-	s.agentID = conf.Conf.State.LastUsedAgent
-
-	ag, err := center.AgentManager.GetAgent(s.agentID)
+	ag, err := agent.Instance()
 	if err != nil {
-		ags := center.AgentManager.GetAgents()
-		if len(ags) == 0 {
-			warnMsg("[System] No agents found. Create one via /new or config first.")
-			return
-		}
-		ag = ags[0]
+		warnMsg("[System] Agent is not configured. Create it via /new.")
+		return
 	}
-
-	s.agentID = ag.ID
 	s.agent = ag
 	s.agentName = ag.Name
-	conf.Conf.State.LastUsedAgent = ag.ID
-	conf.SaveConfig()
 }
 
 func (s *replState) printStatus() {
 	if s.agent != nil {
-		successMsg("[System] Using Agent: %s (%s)", s.agentName, s.agentID)
+		successMsg("[System] Using Agent: %s", s.agentName)
 		s.showHistory()
 	}
 }
 
 func (s *replState) runChat(input string) {
 	if s.agent == nil {
-		errorMsg("No agent selected. Use /ls and /use <id> first.")
+		errorMsg("Agent is not configured. Use /new first.")
 		return
 	}
 

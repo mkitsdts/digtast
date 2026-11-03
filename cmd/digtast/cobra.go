@@ -1,4 +1,4 @@
-package cli
+package main
 
 import (
 	"github.com/spf13/cobra"
@@ -21,8 +21,6 @@ func init() {
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
 
 	// Add subcommands
-	rootCmd.AddCommand(lsCmd)
-	rootCmd.AddCommand(useCmd)
 	rootCmd.AddCommand(newCmd)
 	rootCmd.AddCommand(resetCmd)
 	rootCmd.AddCommand(modelCmd)
