@@ -35,7 +35,13 @@ func LoadChannels() {
 		return
 	}
 	for kind := range config.Conf.Channels {
-		EnableChannel(kind)
+		if !config.IsChannelEnabled(kind) {
+			slog.Info("channel disabled, skip", "kind", kind)
+			continue
+		}
+		if err := EnableChannel(kind); err != nil {
+			slog.Error("failed to enable channel", "kind", kind, "error", err)
+		}
 	}
 }
 
@@ -48,17 +54,12 @@ func GetAllChannels() []string {
 }
 
 func CreateChannel(kind string, params map[string]any) error {
-	if config.Conf.Channels == nil {
-		config.Conf.Channels = make(map[string]map[string]any)
-	}
-	config.Conf.Channels[kind] = params
-	return config.SaveConfig()
+	return config.SetChannel(kind, params)
 }
 
 func RemoveChannel(kind string) error {
 	DisableChannel(kind)
-	delete(config.Conf.Channels, kind)
-	return config.SaveConfig()
+	return config.RemoveChannel(kind)
 }
 
 func EnableChannel(kind string) error {

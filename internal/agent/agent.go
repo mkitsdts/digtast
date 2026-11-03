@@ -20,6 +20,8 @@ import (
 	local "digital-labor/pkg/middleware/lbackend"
 	"digital-labor/pkg/sandbox"
 	"digital-labor/pkg/tool"
+
+	"github.com/google/uuid"
 )
 
 const defaultModelDescription = "一位云端数字助理。核心目标是成为用户高效、可靠且易于沟通的智能伙伴。具备卓越的理解能力、严谨的逻辑思维和强大的信息整合能力，旨在帮助用户解决问题、获取知识、激发创意并提升效率。"
@@ -76,12 +78,28 @@ func Instance() (*Agent, error) {
 	return instance, nil
 }
 
+// Reconfigure replaces the process-wide Agent with one built from cfg. Used
+// when the user picks a different model at runtime.
+func Reconfigure(cfg *config.AgentConfig) (*Agent, error) {
+	instanceMu.Lock()
+	defer instanceMu.Unlock()
+	ag, err := newAgent(cfg)
+	if err != nil {
+		return nil, err
+	}
+	if instance != nil {
+		_ = instance.Close()
+	}
+	instance = ag
+	return instance, nil
+}
+
 func newAgent(cfg *config.AgentConfig) (*Agent, error) {
 	if cfg == nil {
 		return nil, errors.New("agent config is required")
 	}
 	if cfg.Name == "" {
-		return nil, errors.New("agent name is required")
+		cfg.Name = uuid.NewString()
 	}
 	if cfg.Model == "" {
 		return nil, errors.New("agent model is required")

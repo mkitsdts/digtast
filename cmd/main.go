@@ -1,46 +1,49 @@
 package main
 
 import (
+	"context"
+	"fmt"
+	"os"
+
 	"digital-labor/config"
 	_ "digital-labor/gateway"
-	"digital-labor/internal/agent"
 	"digital-labor/internal/agent/workspace"
-	gw "digital-labor/internal/gateway"
-	"digital-labor/pkg/gateway"
 	_ "digital-labor/prompt"
 	_ "digital-labor/tools"
-	"flag"
-	"fmt"
-	"path/filepath"
+
+	"github.com/spf13/cobra"
 )
 
 func main() {
-	browserMode := flag.Bool("browser", false, "Run in browser mode")
-	flag.Parse()
-
-	// Get workspace path and load config
-	wp := workspace.GetWorkspacePath()
-	configPath := filepath.Join(wp, "config.json")
+	workspace.InitWorkspace()
 	if err := config.LoadConfig(); err != nil {
-		panic(fmt.Sprintf("Failed to load config from %s: %v", configPath, err))
+		fmt.Fprintf(os.Stderr, "digtast: load config: %v\n", err)
+		os.Exit(1)
 	}
-	if *browserMode {
-		config.Conf.Browser.Enabled = true
+
+	if err := GetRootCmd().ExecuteContext(context.Background()); err != nil {
+		os.Exit(1)
 	}
-	if err := Init(); err != nil {
-		panic(err)
-	}
-	RunLocalREPL()
 }
 
-func Init() error {
-	workspace.InitWorkspace()
-	if config.Conf.Agent != nil {
-		if _, err := agent.Initialize(config.Conf.Agent); err != nil {
-			return fmt.Errorf("initialize agent: %w", err)
-		}
+func GetRootCmd() *cobra.Command {
+	var browser bool
+	cmd := &cobra.Command{
+		Use:   "digtast",
+		Short: "Single-instance digital labor agent",
+		Long:  "Digtast 是单实例数字劳动智能体。直接运行会打开终端对话框。",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if browser {
+				config.Conf.Browser.Enabled = true
+			}
+			return RunTUI(cmd.Context())
+		},
+		SilenceUsage: true,
+		CompletionOptions: cobra.CompletionOptions{
+			DisableDefaultCmd: true,
+		},
 	}
-	gateway.LoadChannels()
-	gw.Start()
-	return nil
+	cmd.Flags().BoolVar(&browser, "browser", false, "enable browser mode")
+	return cmd
 }

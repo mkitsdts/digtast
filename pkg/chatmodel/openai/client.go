@@ -46,17 +46,9 @@ func New(cfg Config) (*Client, error) {
 	if strings.TrimSpace(cfg.Model) == "" {
 		return nil, errors.New("openai model is required")
 	}
-	baseURL := strings.TrimRight(strings.TrimSpace(cfg.BaseURL), "/")
-	if baseURL == "" {
-		baseURL = defaultBaseURL
-	}
-	parsedBase, err := url.ParseRequestURI(baseURL)
+	baseURL, err := resolveBaseURL(cfg.BaseURL)
 	if err != nil {
-		return nil, fmt.Errorf("invalid openai base url: %w", err)
-	}
-	if strings.HasSuffix(parsedBase.Path, "/chat/completions") {
-		parsedBase.Path = strings.TrimSuffix(parsedBase.Path, "/chat/completions")
-		baseURL = strings.TrimRight(parsedBase.String(), "/")
+		return nil, err
 	}
 	httpClient := cfg.HTTPClient
 	if httpClient == nil {

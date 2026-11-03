@@ -2,9 +2,14 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
+
+	"github.com/google/uuid"
 )
 
 type Config struct {
@@ -56,16 +61,109 @@ func FindModelConfig(modelName string) (ModelConfig, bool) {
 	return ModelConfig{}, false
 }
 
-func SetModel(name string, model ModelConfig) error {
+// AddModel stores a new model configuration under a generated identifier and
+// returns that identifier.
+func AddModel(model ModelConfig) (string, error) {
 	if Conf.Models == nil {
 		Conf.Models = make(map[string]ModelConfig)
 	}
-	Conf.Models[name] = model
+	id := uuid.NewString()
+	Conf.Models[id] = model
+	return id, SaveConfig()
+}
+
+func UpdateModel(id string, model ModelConfig) error {
+	if _, ok := Conf.Models[id]; !ok {
+		return fmt.Errorf("model config not found: %s", id)
+	}
+	Conf.Models[id] = model
 	return SaveConfig()
 }
 
-func RemoveModel(name string) error {
-	delete(Conf.Models, name)
+func RemoveModel(id string) error {
+	delete(Conf.Models, id)
+	return SaveConfig()
+}
+
+// FindModelByProvider returns a stored model config for a provider, preferring
+// the lexicographically smallest key so the result is deterministic.
+func FindModelByProvider(provider string) (ModelConfig, bool) {
+	ids := make([]string, 0, len(Conf.Models))
+	for id := range Conf.Models {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	for _, id := range ids {
+		cfg := Conf.Models[id]
+		if normalizeProvider(cfg.Provider) == normalizeProvider(provider) {
+			return cfg, true
+		}
+	}
+	return ModelConfig{}, false
+}
+
+func normalizeProvider(provider string) string {
+	provider = strings.ToLower(strings.TrimSpace(provider))
+	if provider == "ark" {
+		return "doubao"
+	}
+	return provider
+}
+
+// SetAgent stores the selected model as the singleton agent configuration.
+func SetAgent(cfg AgentConfig) error {
+	Conf.Agent = &cfg
+	return SaveConfig()
+}
+
+// ChannelEnabledKey is the channel parameter that controls whether a channel
+// is started when the agent runs.
+const ChannelEnabledKey = "enabled"
+
+// SetChannel stores channel parameters, normalizing their value types through
+// JSON so in-memory and reloaded configs behave the same (numbers become
+// float64).
+func SetChannel(kind string, params map[string]any) error {
+	if Conf.Channels == nil {
+		Conf.Channels = make(map[string]map[string]any)
+	}
+	data, err := json.Marshal(params)
+	if err != nil {
+		return fmt.Errorf("marshal channel config: %w", err)
+	}
+	var normalized map[string]any
+	if err := json.Unmarshal(data, &normalized); err != nil {
+		return fmt.Errorf("normalize channel config: %w", err)
+	}
+	Conf.Channels[kind] = normalized
+	return SaveConfig()
+}
+
+func RemoveChannel(kind string) error {
+	delete(Conf.Channels, kind)
+	return SaveConfig()
+}
+
+// IsChannelEnabled reports whether a configured channel should be started.
+// Channels configured before the enabled flag existed default to enabled.
+func IsChannelEnabled(kind string) bool {
+	params, ok := Conf.Channels[kind]
+	if !ok {
+		return false
+	}
+	enabled, ok := params[ChannelEnabledKey].(bool)
+	if !ok {
+		return true
+	}
+	return enabled
+}
+
+func SetChannelEnabled(kind string, enabled bool) error {
+	params, ok := Conf.Channels[kind]
+	if !ok {
+		return fmt.Errorf("channel config not found: %s", kind)
+	}
+	params[ChannelEnabledKey] = enabled
 	return SaveConfig()
 }
 
