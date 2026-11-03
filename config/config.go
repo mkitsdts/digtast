@@ -1,4 +1,4 @@
-package conf
+package config
 
 import (
 	"encoding/json"
@@ -7,17 +7,11 @@ import (
 	"path/filepath"
 )
 
-const (
-	IS_DEBUG = true
-)
-
 type Config struct {
 	WorkSpaceDir string                    `json:"workspace_dir"`
-	Mode         string                    `json:"-"` // 本地运行还是云端运行
+	Agent        *AgentConfig              `json:"agent,omitempty"`
 	Memory       MemoryConfig              `json:"memory"`
-	FTP          FTPConfig                 `json:"ftp"`
 	Models       map[string]ModelConfig    `json:"model"`
-	State        LocalRunningStateConfig   `json:"state"`
 	Channels     map[string]map[string]any `json:"channels"`
 	Browser      BrowserConfig             `json:"browser"`
 }
@@ -27,8 +21,10 @@ type BrowserConfig struct {
 }
 
 type AgentConfig struct {
-	Name      string `json:"name"`
-	ModelName string `json:"model_name"`
+	Name        string `json:"name"`
+	Model       string `json:"model"`
+	ModelKind   string `json:"model_kind,omitempty"`
+	Description string `json:"description,omitempty"`
 }
 
 type MemoryConfig struct {
@@ -38,12 +34,6 @@ type MemoryConfig struct {
 	CleanInterval   int   `json:"clean_interval"`    // memory.md 清理间隔（轮次）
 }
 
-type FTPConfig struct {
-	Port    int    `json:"port"`
-	RootDir string `json:"root_dir"`
-	Enabled bool   `json:"enabled"`
-}
-
 type ModelConfig struct {
 	ModelNames []string `json:"model_names"` // 具体的模型名称列表，如 ["gpt-3.5-turbo", "gpt-4"]
 	Provider   string   `json:"provider"`
@@ -51,14 +41,11 @@ type ModelConfig struct {
 	Key        string   `json:"key"`
 }
 
-// FindModelConfig searches all configured models for the given model name.
 func FindModelConfig(modelName string) (ModelConfig, bool) {
-	// 1. Try exact match on map key
 	if mCfg, ok := Conf.Models[modelName]; ok {
 		return mCfg, true
 	}
 
-	// 2. Try match within ModelNames list
 	for _, mCfg := range Conf.Models {
 		for _, name := range mCfg.ModelNames {
 			if name == modelName {
@@ -69,8 +56,17 @@ func FindModelConfig(modelName string) (ModelConfig, bool) {
 	return ModelConfig{}, false
 }
 
-type LocalRunningStateConfig struct {
-	LastUsedAgent string `json:"last_used_agent"` // 上次使用的 AgentID
+func SetModel(name string, model ModelConfig) error {
+	if Conf.Models == nil {
+		Conf.Models = make(map[string]ModelConfig)
+	}
+	Conf.Models[name] = model
+	return SaveConfig()
+}
+
+func RemoveModel(name string) error {
+	delete(Conf.Models, name)
+	return SaveConfig()
 }
 
 var Conf Config
@@ -98,7 +94,7 @@ func LoadConfig() error {
 		Conf = DefaultConfig()
 		return SaveConfig()
 	}
-	slog.Debug("config loaded", "config", Conf)
+	slog.Debug("config loaded", "path", path)
 	return nil
 }
 
