@@ -6,27 +6,19 @@ import (
 	"sort"
 	"sync"
 
-	"digital-labor/pkg/agentloop"
+	"digital-labor/internal/agent/loop"
 	"digital-labor/pkg/tool"
 )
 
 var (
 	toolMu      sync.RWMutex
 	toolsByName = make(map[string]tool.Tool)
-	baseNames   = make(map[string]struct{})
 	hookMu      sync.RWMutex
 	hooks       []agentloop.Hook
 )
 
 func RegisterBaseTool(t tool.Tool) {
-	name, ok := toolName(t)
-	if !ok {
-		return
-	}
-	toolMu.Lock()
-	toolsByName[name] = t
-	baseNames[name] = struct{}{}
-	toolMu.Unlock()
+	RegisterTool(t)
 }
 
 func RegisterTool(t tool.Tool) {
@@ -71,25 +63,6 @@ func LoadTools(context.Context) ([]tool.Tool, error) { return GetTools(), nil }
 type Loader struct{}
 
 func (Loader) LoadTools(ctx context.Context) ([]tool.Tool, error) { return LoadTools(ctx) }
-
-func GetToolsByType(typ string) []tool.Tool {
-	toolMu.RLock()
-	defer toolMu.RUnlock()
-	var result []tool.Tool
-	for name, t := range toolsByName {
-		switch typ {
-		case "research", "researcher":
-			if name == "duckduckgo_search" || name == "browser_use" || name == "web_fetch" {
-				result = append(result, t)
-			}
-		case "execution", "executer":
-			if name != "fork_subagent" {
-				result = append(result, t)
-			}
-		}
-	}
-	return result
-}
 
 func RegisterHandler(hook agentloop.Hook) {
 	if hook == nil {

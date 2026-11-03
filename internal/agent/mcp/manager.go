@@ -7,8 +7,8 @@ import (
 	"sort"
 	"sync"
 
+	"digital-labor/internal/agent/workspace"
 	toolpkg "digital-labor/pkg/tool"
-	"digital-labor/pkg/workspace"
 )
 
 type ClientInfo struct {

@@ -6,7 +6,7 @@ import (
 	"errors"
 	"strings"
 
-	"digital-labor/pkg/llm"
+	"digital-labor/pkg/chatmodel"
 	"digital-labor/pkg/tool"
 )
 
@@ -22,8 +22,8 @@ func NewLoadSkillTool(manager *Manager, authorizer Authorizer) (*LoadSkillTool, 
 	return &LoadSkillTool{manager: manager, authorizer: authorizer}, nil
 }
 
-func (t *LoadSkillTool) Definition(context.Context) (llm.ToolDefinition, error) {
-	return llm.ToolDefinition{
+func (t *LoadSkillTool) Definition(context.Context) (chatmodel.ToolDefinition, error) {
+	return chatmodel.ToolDefinition{
 		Name:        "load_skill",
 		Description: "Load the complete instructions for one enabled skill. Use the exact name from the available-skills section before applying that skill.",
 		Parameters: tool.ObjectSchema(map[string]any{

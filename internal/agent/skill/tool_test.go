@@ -8,12 +8,12 @@ import (
 	"strings"
 	"testing"
 
-	"digital-labor/pkg/conf"
+	"digital-labor/config"
 )
 
 func TestSkillPromptAndControlledLoad(t *testing.T) {
-	conf.Conf.WorkSpaceDir = t.TempDir()
-	manager := NewManagerForAgent("agent-1")
+	config.Conf.WorkSpaceDir = t.TempDir()
+	manager := NewManager()
 	if err := manager.AddSkill("review", "Review code carefully"); err != nil {
 		t.Fatal(err)
 	}
@@ -32,17 +32,13 @@ func TestSkillPromptAndControlledLoad(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx := context.WithValue(context.Background(), "agent_id", "agent-1")
+	ctx := context.Background()
 	result, err := loadTool.Execute(ctx, json.RawMessage(`{"name":"review"}`))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(result.Content, "SECRET INSTRUCTIONS") {
 		t.Fatalf("skill body was not loaded")
-	}
-	wrongAgent := context.WithValue(context.Background(), "agent_id", "agent-2")
-	if _, err := loadTool.Execute(wrongAgent, json.RawMessage(`{"name":"review"}`)); err == nil {
-		t.Fatal("expected cross-agent load to be denied")
 	}
 	if err := manager.DisableSkill("review"); err != nil {
 		t.Fatal(err)

@@ -2,7 +2,7 @@ package skill
 
 import (
 	"context"
-	"digital-labor/pkg/workspace"
+	"digital-labor/internal/agent/workspace"
 	"errors"
 	"fmt"
 	"os"
@@ -22,22 +22,11 @@ type SkillInfo struct {
 type Authorizer func(ctx context.Context, skill SkillInfo) error
 
 type Manager struct {
-	agentID string
 	baseDir string
 }
 
 func NewManager() *Manager {
-	return NewManagerForAgent(workspace.DefaultAgentID())
-}
-
-func NewManagerForAgent(agentID string) *Manager {
-	if agentID == "" {
-		agentID = workspace.DefaultAgentID()
-	}
-	return &Manager{
-		agentID: agentID,
-		baseDir: workspace.AgentSkillsDir(agentID),
-	}
+	return &Manager{baseDir: workspace.SkillsDir()}
 }
 
 func (m *Manager) GetAllSkills() ([]SkillInfo, error) {
@@ -74,9 +63,6 @@ func (m *Manager) GetAllSkills() ([]SkillInfo, error) {
 func (m *Manager) LoadSkill(ctx context.Context, name string, authorize Authorizer) (string, error) {
 	if err := validateSkillName(name); err != nil {
 		return "", err
-	}
-	if agentID, _ := ctx.Value("agent_id").(string); agentID != "" && agentID != m.agentID {
-		return "", fmt.Errorf("skill %q does not belong to agent %q", name, agentID)
 	}
 	path := filepath.Join(m.baseDir, name)
 	if info, err := os.Stat(path); err != nil || !info.IsDir() {

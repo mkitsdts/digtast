@@ -5,9 +5,8 @@ import (
 	"errors"
 	"sync"
 
-	"digital-labor/pkg/agentloop"
-	"digital-labor/pkg/model"
-	"digital-labor/pkg/task"
+	"digital-labor/internal/agent/loop"
+	"digital-labor/internal/agent/task"
 )
 
 type TaskHook struct {
@@ -16,12 +15,11 @@ type TaskHook struct {
 }
 
 func (h *TaskHook) BeforeTool(ctx context.Context, tc *agentloop.ToolContext) error {
-	taskID, _ := ctx.Value("task_id").(string)
-	agentID, _ := ctx.Value("agent_id").(string)
-	if taskID == "" || agentID == "" {
+	taskID := task.IDFromContext(ctx)
+	if taskID == "" {
 		return nil
 	}
-	step := task.CreateStep(taskID, agentID, task.StepConfig{Status: model.StatusRunning, Input: tc.Call})
+	step := task.CreateStep(taskID, task.StepConfig{Status: task.StatusRunning, Input: tc.Call})
 	if step == nil {
 		return errors.New("failed to create task step")
 	}
@@ -30,19 +28,18 @@ func (h *TaskHook) BeforeTool(ctx context.Context, tc *agentloop.ToolContext) er
 }
 
 func (h *TaskHook) AfterTool(ctx context.Context, tc *agentloop.ToolContext) error {
-	taskID, _ := ctx.Value("task_id").(string)
-	agentID, _ := ctx.Value("agent_id").(string)
+	taskID := task.IDFromContext(ctx)
 	value, ok := h.steps.LoadAndDelete(taskID + ":" + tc.Call.ID)
 	if !ok {
 		return nil
 	}
 	stepID, _ := value.(string)
-	config := task.StepConfig{Status: model.StatusDone, Output: tc.Result}
+	config := task.StepConfig{Status: task.StatusCompleted, Output: tc.Result}
 	if tc.Error != nil {
-		config.Status = model.StatusFailed
+		config.Status = task.StatusFailed
 		config.Error = tc.Error.Error()
 	}
-	task.UpdateStep(agentID, taskID, stepID, config)
+	task.UpdateStep(taskID, stepID, config)
 	return nil
 }
 
