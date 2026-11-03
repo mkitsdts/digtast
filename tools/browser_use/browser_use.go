@@ -6,17 +6,13 @@ import (
 	"log/slog"
 )
 
+// NewBrowserTool builds the browser tool without launching a browser. The
+// browser starts lazily on the first browser_use action.
 func NewBrowserTool() *Tool {
 	ctx := ctxmanager.GetOrCreate("browser_use")
-
-	var err error
-	browserTool, err := NewBrowserUseTool(ctx, &Config{
+	return NewLazyBrowserUseTool(ctx, &Config{
 		Headless: false, // set headless false that container will run a true browser and user can see the browser at the same time
 	})
-	if err != nil {
-		slog.Error("create browseruse tool failed", "err", err)
-	}
-	return browserTool
 }
 
 func init() {

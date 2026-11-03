@@ -122,6 +122,10 @@ type Tool struct {
 	currentTabID    int
 	tabs            []TabInfo
 	cm              chatmodel.ChatModel
+
+	// Lazy tools start the browser on first use instead of at construction.
+	config  *Config
+	initCtx context.Context
 }
 
 func (b *Tool) Definition(context.Context) (chatmodel.ToolDefinition, error) {
@@ -148,6 +152,9 @@ func (b *Tool) Execute(ctx context.Context, arguments json.RawMessage) (*toolpkg
 	if err != nil {
 		return nil, err
 	}
+	if err := b.ensureInitialized(); err != nil {
+		return nil, err
+	}
 	result, err := b.executeAction(param)
 	if err != nil {
 		return nil, err
@@ -160,31 +167,57 @@ func (b *Tool) Execute(ctx context.Context, arguments json.RawMessage) (*toolpkg
 }
 
 func NewBrowserUseTool(ctx context.Context, config *Config) (*Tool, error) {
+	t := newBrowserUseTool(ctx, config)
+	if err := t.initialize(ctx, config); err != nil {
+		return nil, fmt.Errorf("failed to initialize browser: %w", err)
+	}
+	return t, nil
+}
+
+// NewLazyBrowserUseTool returns a tool that starts the browser on first use,
+// so importing the tools package never launches a browser.
+func NewLazyBrowserUseTool(ctx context.Context, config *Config) *Tool {
+	return newBrowserUseTool(ctx, config)
+}
+
+func newBrowserUseTool(ctx context.Context, config *Config) *Tool {
 	if config == nil {
 		config = &Config{}
 	}
-	but := &Tool{
-		tabs: make([]TabInfo, 0),
-		cm:   config.ExtractChatModel,
+	return &Tool{
+		tabs:    make([]TabInfo, 0),
+		cm:      config.ExtractChatModel,
+		config:  config,
+		initCtx: ctx,
 	}
+}
 
-	err := but.initialize(ctx, config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize browser: %w", err)
+func (b *Tool) ensureInitialized() error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.ctx != nil {
+		return nil
 	}
-	return but, nil
+	ctx := b.initCtx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return b.initializeLocked(ctx, b.config)
 }
 
 func (b *Tool) initialize(ctx context.Context, config *Config) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
+	return b.initializeLocked(ctx, config)
+}
 
+func (b *Tool) initializeLocked(ctx context.Context, config *Config) error {
 	if config == nil {
 		return fmt.Errorf("config is required")
 	}
 
 	if b.ctx != nil {
-		b.Cleanup()
+		b.cleanupLocked()
 	}
 
 	opts := []chromedp.ExecAllocatorOption{
@@ -626,7 +659,10 @@ func calculateVisible(ctx context.Context, node *cdp.Node) (bool, error) {
 func (b *Tool) Cleanup() {
 	b.mu.Lock()
 	defer b.mu.Unlock()
+	b.cleanupLocked()
+}
 
+func (b *Tool) cleanupLocked() {
 	if b.allocatorCancel != nil {
 		b.allocatorCancel()
 		b.allocatorCancel = nil
