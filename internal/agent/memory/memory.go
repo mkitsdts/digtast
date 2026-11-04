@@ -2,7 +2,7 @@ package mem
 
 import (
 	"digital-labor/internal/agent/workspace"
-	"digital-labor/pkg/chatmodel"
+	"digital-labor/schema"
 	"fmt"
 	"sync"
 	"time"
@@ -32,7 +32,7 @@ func (s *Store) GetOrCreate() (*Session, error) {
 	if err != nil {
 		return nil, err
 	}
-	messages, ok := res.([]*chatmodel.Message)
+	messages, ok := res.([]*schema.Message)
 	if !ok {
 		return nil, fmt.Errorf("unexpected type from load: %T", res)
 	}
@@ -58,7 +58,7 @@ func (s *Store) Delete() error {
 }
 
 // AppendMessage adds a message to the agent's session.
-func (s *Store) AppendMessage(msg *chatmodel.Message) {
+func (s *Store) AppendMessage(msg *schema.Message) {
 	if msg == nil {
 		return
 	}

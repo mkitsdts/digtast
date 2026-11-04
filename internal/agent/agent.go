@@ -7,6 +7,9 @@ import (
 	"path/filepath"
 	"sync"
 
+	"digital-labor/component/chatmodel"
+	"digital-labor/component/prompt"
+	"digital-labor/component/tool"
 	"digital-labor/config"
 	agentloop "digital-labor/internal/agent/loop"
 	"digital-labor/internal/agent/mcp"
@@ -15,11 +18,9 @@ import (
 	"digital-labor/internal/agent/skill"
 	"digital-labor/internal/agent/state"
 	"digital-labor/internal/agent/workspace"
-	"digital-labor/pkg/chatmodel"
-	"digital-labor/pkg/filesystem"
-	local "digital-labor/pkg/middleware/lbackend"
-	"digital-labor/pkg/sandbox"
-	"digital-labor/pkg/tool"
+	"digital-labor/internal/sandbox"
+	"digital-labor/middleware/lbackend"
+	"digital-labor/tools/filesystem"
 
 	"github.com/google/uuid"
 )
@@ -145,12 +146,12 @@ func (dga *Agent) rebuildLoop() error {
 	if err != nil {
 		return err
 	}
-	promptLoader := agentloop.MultiPromptLoader{
-		agentloop.PromptLoaderFunc(func(context.Context) (string, error) {
+	promptLoader := prompt.MultiLoader{
+		prompt.LoaderFunc(func(context.Context) (string, error) {
 			return "### Agent identity\nName: " + dga.Name + "\nDescription: " + dga.Description, nil
 		}),
 		dga.state,
-		agentloop.PromptLoaderFunc(skillManager.Prompt),
+		prompt.LoaderFunc(skillManager.Prompt),
 	}
 	loop, err := agentloop.New(agentloop.Config{
 		LLM:          dga.cm,

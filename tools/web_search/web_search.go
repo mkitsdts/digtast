@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
+	"digital-labor/component/tool"
 	"digital-labor/internal/agent/registry"
-	"digital-labor/pkg/chatmodel"
-	"digital-labor/pkg/tool"
+	"digital-labor/schema"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -26,8 +26,8 @@ func NewWebSearchTool() tool.Tool {
 	return &WebSearchTool{client: &http.Client{Timeout: 20 * time.Second}, maxResults: 10}
 }
 
-func (t *WebSearchTool) Definition(context.Context) (chatmodel.ToolDefinition, error) {
-	return chatmodel.ToolDefinition{
+func (t *WebSearchTool) Definition(context.Context) (schema.ToolDefinition, error) {
+	return schema.ToolDefinition{
 		Name:        "duckduckgo_search",
 		Description: "Search the web using DuckDuckGo and return result titles, URLs, and snippets.",
 		Parameters: tool.ObjectSchema(map[string]any{

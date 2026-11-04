@@ -4,9 +4,9 @@ import (
 	"errors"
 	"strings"
 
+	"digital-labor/chatmodel/openai"
+	"digital-labor/component/chatmodel"
 	"digital-labor/config"
-	"digital-labor/pkg/chatmodel"
-	"digital-labor/pkg/chatmodel/openai"
 )
 
 func newChatModel(cfg config.ModelConfig, model string) (chatmodel.ChatModel, error) {

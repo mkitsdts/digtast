@@ -2,8 +2,7 @@ package telegram
 
 import (
 	"context"
-	gw "digital-labor/internal/gateway"
-	"digital-labor/pkg/gateway"
+	"digital-labor/component/gateway"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -77,7 +76,7 @@ func (tg *TelegramChannel) Serve(ctx context.Context) error {
 				slog.Info("received message", "text", update.Message.Text)
 				userText := update.Message.Text
 				// 异步处理
-				gw.PushUserMessage(&gw.UserMessage{
+				gateway.PushUserMessage(&gateway.UserMessage{
 					Content:   userText,
 					NotifyWay: "telegram",
 					Params:    map[string]any{"chat_id": update.Message.Chat.ID},

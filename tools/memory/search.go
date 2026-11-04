@@ -1,8 +1,8 @@
 package memory
 
 import (
+	"digital-labor/component/tool"
 	"digital-labor/internal/agent/registry"
-	"digital-labor/pkg/tool"
 	"log/slog"
 )
 

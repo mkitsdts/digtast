@@ -8,7 +8,7 @@ import (
 	"digital-labor/config"
 	_ "digital-labor/gateway"
 	"digital-labor/internal/agent/workspace"
-	_ "digital-labor/prompt"
+	_ "digital-labor/prompts"
 	_ "digital-labor/tools"
 
 	"github.com/spf13/cobra"

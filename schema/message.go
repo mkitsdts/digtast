@@ -1,7 +1,6 @@
-package chatmodel
+package schema
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"time"
@@ -144,20 +143,6 @@ type StreamEvent struct {
 type Stream interface {
 	Recv() (*StreamEvent, error)
 	Close() error
-}
-
-type Status struct {
-	Available bool
-	Model     string
-	Latency   time.Duration
-	CheckedAt time.Time
-}
-
-type ChatModel interface {
-	Chat(ctx context.Context, req *ChatRequest) (*ChatResponse, error)
-	ChatStream(ctx context.Context, req *ChatRequest) (Stream, error)
-	GetUsage() Usage
-	CheckStatus(ctx context.Context) (*Status, error)
 }
 
 type SliceStream struct {

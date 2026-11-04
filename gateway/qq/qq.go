@@ -2,7 +2,7 @@ package qq
 
 import (
 	"context"
-	"digital-labor/pkg/gateway"
+	"digital-labor/component/gateway"
 	"encoding/json"
 	"errors"
 	"fmt"

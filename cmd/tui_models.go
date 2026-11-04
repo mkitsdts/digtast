@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"digital-labor/chatmodel/openai"
 	"digital-labor/config"
 	"digital-labor/internal/agent"
-	"digital-labor/pkg/chatmodel/openai"
 
 	tea "github.com/charmbracelet/bubbletea"
 )

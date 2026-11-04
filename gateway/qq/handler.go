@@ -2,7 +2,7 @@ package qq
 
 import (
 	"bytes"
-	"digital-labor/internal/gateway"
+	"digital-labor/component/gateway"
 	"encoding/json"
 	"fmt"
 	"io"

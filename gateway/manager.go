@@ -1,33 +1,22 @@
 package gateway
 
 import (
-	"digital-labor/config"
-	"digital-labor/pkg/ctxmanager"
 	"fmt"
 	"log/slog"
+	"sync"
+
+	cgw "digital-labor/component/gateway"
+	"digital-labor/config"
+	"digital-labor/pkg/ctxmanager"
 )
 
-var register = make(map[string]func(kind string) MessageChannel)
-var runningChannels = make(map[string]MessageChannel)
+var (
+	runningMu       sync.Mutex
+	runningChannels = make(map[string]cgw.MessageChannel)
+)
 
-func NewChannel(kind string) MessageChannel {
-	if register == nil {
-		slog.Error("register is nil")
-		return nil
-	}
-	if f, ok := register[kind]; ok {
-		slog.Info("found channel", "kind", kind)
-		return f(kind)
-	}
-	slog.Warn("channel not found", "kind", kind)
-	return nil
-}
-
-// 提供通道实现注册
-func RegisterChannel(kind string, f func(kind string) MessageChannel) {
-	register[kind] = f
-	slog.Debug("register channel", "kind", kind)
-}
+// GetAllChannels 返回所有已注册的网关 kind。
+func GetAllChannels() []string { return cgw.GetAllChannels() }
 
 func LoadChannels() {
 	if config.Conf.Channels == nil {
@@ -45,14 +34,6 @@ func LoadChannels() {
 	}
 }
 
-func GetAllChannels() []string {
-	var kinds []string
-	for kind := range register {
-		kinds = append(kinds, kind)
-	}
-	return kinds
-}
-
 func CreateChannel(kind string, params map[string]any) error {
 	return config.SetChannel(kind, params)
 }
@@ -68,27 +49,34 @@ func EnableChannel(kind string) error {
 		return fmt.Errorf("channel config not found: %s", kind)
 	}
 
+	runningMu.Lock()
 	if _, ok := runningChannels[kind]; ok {
+		runningMu.Unlock()
 		return nil // Already running
 	}
+	runningMu.Unlock()
 
-	f, ok := register[kind]
-	if !ok {
+	channel := cgw.NewChannel(kind)
+	if channel == nil {
 		return fmt.Errorf("channel not registered: %s", kind)
 	}
 
-	c := f(kind)
 	ctx := ctxmanager.GetOrCreate(kind)
-	if err := c.Init(params); err != nil {
+	if err := channel.Init(params); err != nil {
 		return err
 	}
-	go c.Serve(ctx)
-	runningChannels[kind] = c
+	go channel.Serve(ctx)
+
+	runningMu.Lock()
+	runningChannels[kind] = channel
+	runningMu.Unlock()
 	slog.Info("channel enabled", "kind", kind)
 	return nil
 }
 
 func DisableChannel(kind string) error {
+	runningMu.Lock()
+	defer runningMu.Unlock()
 	if _, ok := runningChannels[kind]; !ok {
 		return nil // Not running
 	}
@@ -102,6 +90,8 @@ func DisableChannel(kind string) error {
 }
 
 func IsChannelRunning(kind string) bool {
+	runningMu.Lock()
+	defer runningMu.Unlock()
 	_, ok := runningChannels[kind]
 	return ok
 }

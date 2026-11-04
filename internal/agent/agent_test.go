@@ -5,7 +5,7 @@ import (
 
 	"digital-labor/config"
 	"digital-labor/internal/agent/state"
-	"digital-labor/pkg/chatmodel"
+	"digital-labor/schema"
 )
 
 func TestInitializeReturnsSingleton(t *testing.T) {
@@ -44,11 +44,11 @@ func TestInitializeReturnsSingleton(t *testing.T) {
 }
 
 func TestFilterUserAssistant(t *testing.T) {
-	msgs := []*chatmodel.Message{
-		{Role: chatmodel.RoleUser, Content: "hello"},
-		{Role: chatmodel.RoleAssistant, Content: "hi"},
-		{Role: chatmodel.RoleTool, Content: "tool result", Name: "search"},
-		{Role: chatmodel.RoleUser, Content: "thanks"},
+	msgs := []*schema.Message{
+		{Role: schema.RoleUser, Content: "hello"},
+		{Role: schema.RoleAssistant, Content: "hi"},
+		{Role: schema.RoleTool, Content: "tool result", Name: "search"},
+		{Role: schema.RoleUser, Content: "thanks"},
 	}
 
 	filtered := state.FilterUserAssistant(msgs)
@@ -61,10 +61,10 @@ func TestFilterUserAssistant(t *testing.T) {
 }
 
 func TestShardMessages(t *testing.T) {
-	msgs := []*chatmodel.Message{
-		{Role: chatmodel.RoleUser, Content: "hello world"},       // ~3 tokens
-		{Role: chatmodel.RoleAssistant, Content: "hi there"},     // ~2 tokens
-		{Role: chatmodel.RoleUser, Content: "how are you doing"}, // ~4 tokens
+	msgs := []*schema.Message{
+		{Role: schema.RoleUser, Content: "hello world"},       // ~3 tokens
+		{Role: schema.RoleAssistant, Content: "hi there"},     // ~2 tokens
+		{Role: schema.RoleUser, Content: "how are you doing"}, // ~4 tokens
 	}
 
 	shards := state.ShardMessages(msgs, 5)

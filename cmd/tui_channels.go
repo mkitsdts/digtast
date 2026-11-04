@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"digital-labor/config"
-	"digital-labor/pkg/gateway"
+	"digital-labor/gateway"
 
 	tea "github.com/charmbracelet/bubbletea"
 )

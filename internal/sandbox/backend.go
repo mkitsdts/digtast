@@ -3,7 +3,7 @@ package sandbox
 import (
 	"bufio"
 	"context"
-	"digital-labor/pkg/filesystem"
+	"digital-labor/component/middleware"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-// SandboxedBackend implements filesystem.Backend and filesystem.StreamingShell,
+// SandboxedBackend implements middleware.Backend and middleware.StreamingShell,
 // with all operations executed inside a Docker container.
 type SandboxedBackend struct {
 	sandbox *Sandbox
@@ -34,9 +34,9 @@ func WithSandbox(ctx context.Context, hostWorkPath string) (*SandboxedBackend, e
 	return &SandboxedBackend{sandbox: sb}, nil
 }
 
-// --- filesystem.Backend ---
+// --- middleware.Backend ---
 
-func (sb *SandboxedBackend) LsInfo(ctx context.Context, req *filesystem.LsInfoRequest) ([]filesystem.FileInfo, error) {
+func (sb *SandboxedBackend) LsInfo(ctx context.Context, req *middleware.LsInfoRequest) ([]middleware.FileInfo, error) {
 	path := req.Path
 	if path == "" {
 		path = "."
@@ -50,7 +50,7 @@ func (sb *SandboxedBackend) LsInfo(ctx context.Context, req *filesystem.LsInfoRe
 	return parseLsOutput(output), nil
 }
 
-func (sb *SandboxedBackend) Read(ctx context.Context, req *filesystem.ReadRequest) (*filesystem.FileContent, error) {
+func (sb *SandboxedBackend) Read(ctx context.Context, req *middleware.ReadRequest) (*middleware.FileContent, error) {
 	output, err := sb.sandbox.execOutput(ctx, fmt.Sprintf("cat %s", shellEscape(req.FilePath)))
 	if err != nil {
 		return nil, fmt.Errorf("read failed: %w", err)
@@ -79,12 +79,12 @@ func (sb *SandboxedBackend) Read(ctx context.Context, req *filesystem.ReadReques
 		start = len(lines)
 	}
 
-	return &filesystem.FileContent{
+	return &middleware.FileContent{
 		Content: strings.Join(lines[start:end], "\n"),
 	}, nil
 }
 
-func (sb *SandboxedBackend) Write(ctx context.Context, req *filesystem.WriteRequest) error {
+func (sb *SandboxedBackend) Write(ctx context.Context, req *middleware.WriteRequest) error {
 	// mkdir -p parent dir, then write via stdin
 	dir := "."
 	if idx := strings.LastIndex(req.FilePath, "/"); idx > 0 {
@@ -100,7 +100,7 @@ func (sb *SandboxedBackend) Write(ctx context.Context, req *filesystem.WriteRequ
 	return nil
 }
 
-func (sb *SandboxedBackend) Edit(ctx context.Context, req *filesystem.EditRequest) error {
+func (sb *SandboxedBackend) Edit(ctx context.Context, req *middleware.EditRequest) error {
 	if req.OldString == "" {
 		return fmt.Errorf("old string is required")
 	}
@@ -109,7 +109,7 @@ func (sb *SandboxedBackend) Edit(ctx context.Context, req *filesystem.EditReques
 	}
 
 	// Read the file
-	content, err := sb.Read(ctx, &filesystem.ReadRequest{FilePath: req.FilePath, Limit: 999999})
+	content, err := sb.Read(ctx, &middleware.ReadRequest{FilePath: req.FilePath, Limit: 999999})
 	if err != nil {
 		return fmt.Errorf("edit read failed: %w", err)
 	}
@@ -130,13 +130,13 @@ func (sb *SandboxedBackend) Edit(ctx context.Context, req *filesystem.EditReques
 		newText = strings.Replace(text, req.OldString, req.NewString, 1)
 	}
 
-	return sb.Write(ctx, &filesystem.WriteRequest{
+	return sb.Write(ctx, &middleware.WriteRequest{
 		FilePath: req.FilePath,
 		Content:  newText,
 	})
 }
 
-func (sb *SandboxedBackend) GrepRaw(ctx context.Context, req *filesystem.GrepRequest) ([]filesystem.GrepMatch, error) {
+func (sb *SandboxedBackend) GrepRaw(ctx context.Context, req *middleware.GrepRequest) ([]middleware.GrepMatch, error) {
 	if req.Pattern == "" {
 		return nil, fmt.Errorf("pattern is required")
 	}
@@ -168,7 +168,7 @@ func (sb *SandboxedBackend) GrepRaw(ctx context.Context, req *filesystem.GrepReq
 	if err != nil {
 		// rg exits 1 when no matches
 		if strings.Contains(err.Error(), "exited with code 1") {
-			return []filesystem.GrepMatch{}, nil
+			return []middleware.GrepMatch{}, nil
 		}
 		return nil, fmt.Errorf("grep failed: %w", err)
 	}
@@ -176,7 +176,7 @@ func (sb *SandboxedBackend) GrepRaw(ctx context.Context, req *filesystem.GrepReq
 	return parseRgOutput(output), nil
 }
 
-func (sb *SandboxedBackend) GlobInfo(ctx context.Context, req *filesystem.GlobInfoRequest) ([]filesystem.FileInfo, error) {
+func (sb *SandboxedBackend) GlobInfo(ctx context.Context, req *middleware.GlobInfoRequest) ([]middleware.FileInfo, error) {
 	path := req.Path
 	if path == "" {
 		path = "."
@@ -188,7 +188,7 @@ func (sb *SandboxedBackend) GlobInfo(ctx context.Context, req *filesystem.GlobIn
 		return nil, fmt.Errorf("glob failed: %w", err)
 	}
 
-	var files []filesystem.FileInfo
+	var files []middleware.FileInfo
 	scanner := bufio.NewScanner(strings.NewReader(output))
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
@@ -210,7 +210,7 @@ func (sb *SandboxedBackend) GlobInfo(ctx context.Context, req *filesystem.GlobIn
 			continue
 		}
 
-		fi := filesystem.FileInfo{
+		fi := middleware.FileInfo{
 			Path: relPath,
 		}
 
@@ -232,9 +232,9 @@ func (sb *SandboxedBackend) GlobInfo(ctx context.Context, req *filesystem.GlobIn
 	return files, nil
 }
 
-// --- filesystem.StreamingShell ---
+// --- middleware.StreamingShell ---
 
-func (sb *SandboxedBackend) ExecuteStreaming(ctx context.Context, input *filesystem.ExecuteRequest) (*filesystem.StreamReader[*filesystem.ExecuteResponse], error) {
+func (sb *SandboxedBackend) ExecuteStreaming(ctx context.Context, input *middleware.ExecuteRequest) (*middleware.StreamReader[*middleware.ExecuteResponse], error) {
 	return sb.sandbox.Exec(ctx, input.Command)
 }
 
@@ -249,8 +249,8 @@ func shellEscape(s string) string {
 	return "'" + strings.ReplaceAll(s, "'", "'\\''") + "'"
 }
 
-func parseLsOutput(output string) []filesystem.FileInfo {
-	var files []filesystem.FileInfo
+func parseLsOutput(output string) []middleware.FileInfo {
+	var files []middleware.FileInfo
 	scanner := bufio.NewScanner(strings.NewReader(output))
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -268,7 +268,7 @@ func parseLsOutput(output string) []filesystem.FileInfo {
 			continue
 		}
 
-		fi := filesystem.FileInfo{
+		fi := middleware.FileInfo{
 			Path:  name,
 			IsDir: fields[0][0] == 'd',
 		}
@@ -300,8 +300,8 @@ type rgJSON struct {
 	} `json:"data"`
 }
 
-func parseRgOutput(output string) []filesystem.GrepMatch {
-	var matches []filesystem.GrepMatch
+func parseRgOutput(output string) []middleware.GrepMatch {
+	var matches []middleware.GrepMatch
 	lines := strings.Split(strings.TrimSpace(output), "\n")
 	for _, line := range lines {
 		if line == "" {
@@ -312,7 +312,7 @@ func parseRgOutput(output string) []filesystem.GrepMatch {
 			continue
 		}
 		if data.Type == "match" || data.Type == "context" {
-			matches = append(matches, filesystem.GrepMatch{
+			matches = append(matches, middleware.GrepMatch{
 				Path:    data.Data.Path.Text,
 				Line:    data.Data.LineNumber,
 				Content: strings.TrimRight(data.Data.Lines.Text, "\n"),

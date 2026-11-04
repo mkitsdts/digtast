@@ -11,7 +11,7 @@ type Provider struct {
 
 var providers = []Provider{
 	{ID: "openai", Label: "OpenAI", BaseURL: "https://api.openai.com/v1"},
-	{ID: "deepseek", Label: "DeepSeek", BaseURL: "https://api.deepseek.com"},
+	{ID: "deepseek", Label: "DeepSeek", BaseURL: "https://api.deepseek.com/v1"},
 	{ID: "qwen", Label: "通义千问", BaseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1"},
 	{ID: "doubao", Label: "豆包 / 火山方舟", BaseURL: "https://ark.cn-beijing.volces.com/api/v3"},
 	{ID: "custom", Label: "自定义 / 其他", BaseURL: ""},

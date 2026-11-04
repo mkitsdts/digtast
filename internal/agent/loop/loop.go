@@ -6,46 +6,20 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strings"
 	"sync"
 	"time"
 
-	"digital-labor/pkg/chatmodel"
-	"digital-labor/pkg/tool"
+	"digital-labor/component/chatmodel"
+	"digital-labor/component/prompt"
+	"digital-labor/component/tool"
+	"digital-labor/schema"
 )
 
 var ErrMaxSteps = errors.New("agent loop reached maximum steps")
 
-type PromptLoader interface {
-	LoadPrompt(ctx context.Context) (string, error)
-}
-
-type PromptLoaderFunc func(context.Context) (string, error)
-
-func (f PromptLoaderFunc) LoadPrompt(ctx context.Context) (string, error) { return f(ctx) }
-
-type MultiPromptLoader []PromptLoader
-
-func (m MultiPromptLoader) LoadPrompt(ctx context.Context) (string, error) {
-	var parts []string
-	for _, loader := range m {
-		if loader == nil {
-			continue
-		}
-		prompt, err := loader.LoadPrompt(ctx)
-		if err != nil {
-			return "", err
-		}
-		if prompt != "" {
-			parts = append(parts, prompt)
-		}
-	}
-	return strings.Join(parts, "\n\n"), nil
-}
-
 type Config struct {
 	LLM             chatmodel.ChatModel
-	PromptLoader    PromptLoader
+	PromptLoader    prompt.Loader
 	ToolLoaders     []tool.Loader
 	Hooks           []Hook
 	MaxSteps        int
@@ -55,7 +29,7 @@ type Config struct {
 
 type Loop struct {
 	llm             chatmodel.ChatModel
-	promptLoader    PromptLoader
+	promptLoader    prompt.Loader
 	toolLoaders     []tool.Loader
 	hooks           []Hook
 	maxSteps        int
@@ -76,24 +50,24 @@ const (
 type Event struct {
 	Type       EventType
 	Delta      string
-	ToolCall   *chatmodel.ToolCall
+	ToolCall   *schema.ToolCall
 	ToolResult *tool.Result
-	Usage      *chatmodel.Usage
-	Response   *chatmodel.ChatResponse
+	Usage      *schema.Usage
+	Response   *schema.ChatResponse
 }
 
 type Input struct {
-	Messages []chatmodel.Message
+	Messages []schema.Message
 	Stream   bool
 	Emit     func(Event) error
 	Metadata map[string]string
 }
 
 type Result struct {
-	Messages  []chatmodel.Message
-	Generated []chatmodel.Message
-	Response  *chatmodel.ChatResponse
-	Usage     chatmodel.Usage
+	Messages  []schema.Message
+	Generated []schema.Message
+	Response  *schema.ChatResponse
+	Usage     schema.Usage
 	Steps     int
 }
 
@@ -141,22 +115,22 @@ func (l *Loop) Run(ctx context.Context, input Input) (result *Result, runErr err
 	if err != nil {
 		return nil, err
 	}
-	messages := append([]chatmodel.Message(nil), input.Messages...)
+	messages := append([]schema.Message(nil), input.Messages...)
 	if l.promptLoader != nil {
 		prompt, err := l.promptLoader.LoadPrompt(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("load prompt: %w", err)
 		}
 		if prompt != "" {
-			messages = append([]chatmodel.Message{{Role: chatmodel.RoleSystem, Content: prompt}}, messages...)
+			messages = append([]schema.Message{{Role: schema.RoleSystem, Content: prompt}}, messages...)
 		}
 	}
 	result = &Result{Messages: messages}
 
 	for stepIndex := 0; stepIndex < l.maxSteps; stepIndex++ {
-		request := &chatmodel.ChatRequest{Messages: messages, Tools: definitions, Metadata: input.Metadata}
+		request := &schema.ChatRequest{Messages: messages, Tools: definitions, Metadata: input.Metadata}
 		if len(definitions) > 0 {
-			request.ToolChoice = chatmodel.ToolChoiceAuto
+			request.ToolChoice = schema.ToolChoiceAuto
 		}
 		stepContext := &StepContext{Run: runContext, Index: stepIndex, Request: request}
 		if err := before(ctx, l.hooks, func(h Hook) error { return h.BeforeStep(ctx, stepContext) }); err != nil {
@@ -207,14 +181,14 @@ func (l *Loop) Run(ctx context.Context, input Input) (result *Result, runErr err
 	return result, ErrMaxSteps
 }
 
-func (l *Loop) callModel(ctx context.Context, step *StepContext, stream bool, emit func(Event) error) (*chatmodel.ChatResponse, error) {
+func (l *Loop) callModel(ctx context.Context, step *StepContext, stream bool, emit func(Event) error) (*schema.ChatResponse, error) {
 	modelContext := &ModelContext{Step: step, Request: step.Request}
 	if err := before(ctx, l.hooks, func(h Hook) error { return h.BeforeModel(ctx, modelContext) }); err != nil {
 		modelContext.Error = err
 		_ = after(ctx, l.hooks, func(h Hook) error { return h.AfterModel(ctx, modelContext) })
 		return nil, err
 	}
-	var response *chatmodel.ChatResponse
+	var response *schema.ChatResponse
 	var callErr error
 	for attempt := 0; attempt <= l.maxModelRetries; attempt++ {
 		if stream {
@@ -241,7 +215,7 @@ func (l *Loop) callModel(ctx context.Context, step *StepContext, stream bool, em
 	return response, callErr
 }
 
-func (l *Loop) consumeStream(ctx context.Context, request *chatmodel.ChatRequest, emit func(Event) error) (*chatmodel.ChatResponse, error) {
+func (l *Loop) consumeStream(ctx context.Context, request *schema.ChatRequest, emit func(Event) error) (*schema.ChatResponse, error) {
 	stream, err := l.llm.ChatStream(ctx, request)
 	if err != nil {
 		return nil, err
@@ -256,19 +230,19 @@ func (l *Loop) consumeStream(ctx context.Context, request *chatmodel.ChatRequest
 			return nil, err
 		}
 		switch event.Type {
-		case chatmodel.StreamEventTextDelta:
+		case schema.StreamEventTextDelta:
 			if emit != nil {
 				if err := emit(Event{Type: EventTextDelta, Delta: event.Delta}); err != nil {
 					return nil, err
 				}
 			}
-		case chatmodel.StreamEventUsage:
+		case schema.StreamEventUsage:
 			if emit != nil {
 				if err := emit(Event{Type: EventUsage, Usage: event.Usage}); err != nil {
 					return nil, err
 				}
 			}
-		case chatmodel.StreamEventDone:
+		case schema.StreamEventDone:
 			if event.Response == nil {
 				return nil, errors.New("llm stream done event has no response")
 			}
@@ -277,9 +251,9 @@ func (l *Loop) consumeStream(ctx context.Context, request *chatmodel.ChatRequest
 	}
 }
 
-func (l *Loop) executeTools(ctx context.Context, step *StepContext, registry *tool.Registry, calls []chatmodel.ToolCall, emit func(Event) error) ([]chatmodel.Message, error) {
+func (l *Loop) executeTools(ctx context.Context, step *StepContext, registry *tool.Registry, calls []schema.ToolCall, emit func(Event) error) ([]schema.Message, error) {
 	type outcome struct {
-		message chatmodel.Message
+		message schema.Message
 		result  *tool.Result
 		err     error
 	}
@@ -301,7 +275,7 @@ func (l *Loop) executeTools(ctx context.Context, step *StepContext, registry *to
 			t, ok := registry.Get(call.Function.Name)
 			if !ok {
 				content := fmt.Sprintf("[tool error] tool %q is not registered", call.Function.Name)
-				outcomes[index].message = chatmodel.Message{Role: chatmodel.RoleTool, ToolCallID: call.ID, Content: content}
+				outcomes[index].message = schema.Message{Role: schema.RoleTool, ToolCallID: call.ID, Content: content}
 				outcomes[index].result = &tool.Result{Content: content, IsError: true}
 				return
 			}
@@ -334,11 +308,11 @@ func (l *Loop) executeTools(ctx context.Context, step *StepContext, registry *to
 				}
 				content = string(encoded)
 			}
-			outcomes[index].message = chatmodel.Message{Role: chatmodel.RoleTool, ToolCallID: call.ID, Content: content}
+			outcomes[index].message = schema.Message{Role: schema.RoleTool, ToolCallID: call.ID, Content: content}
 		}()
 	}
 	wg.Wait()
-	messages := make([]chatmodel.Message, 0, len(calls))
+	messages := make([]schema.Message, 0, len(calls))
 	for index, outcome := range outcomes {
 		if outcome.err != nil {
 			return nil, outcome.err

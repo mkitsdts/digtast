@@ -8,13 +8,14 @@ import (
 	"io"
 	"strings"
 
-	"digital-labor/pkg/chatmodel"
-	toolpkg "digital-labor/pkg/tool"
+	"digital-labor/component/middleware"
+	toolpkg "digital-labor/component/tool"
+	"digital-labor/schema"
 )
 
 type ToolLoader struct {
-	Backend  Backend
-	Shell    StreamingShell
+	Backend  middleware.Backend
+	Shell    middleware.StreamingShell
 	ReadOnly bool
 }
 
@@ -42,10 +43,10 @@ func (l ToolLoader) LoadTools(context.Context) ([]toolpkg.Tool, error) {
 type backendTool struct {
 	name        string
 	description string
-	backend     Backend
+	backend     middleware.Backend
 }
 
-func (t *backendTool) Definition(context.Context) (chatmodel.ToolDefinition, error) {
+func (t *backendTool) Definition(context.Context) (schema.ToolDefinition, error) {
 	properties := map[string]any{}
 	required := []string{}
 	switch t.name {
@@ -73,7 +74,7 @@ func (t *backendTool) Definition(context.Context) (chatmodel.ToolDefinition, err
 		properties["case_insensitive"] = map[string]any{"type": "boolean"}
 		required = append(required, "pattern")
 	}
-	return chatmodel.ToolDefinition{Name: t.name, Description: t.description, Parameters: toolpkg.ObjectSchema(properties, required...)}, nil
+	return schema.ToolDefinition{Name: t.name, Description: t.description, Parameters: toolpkg.ObjectSchema(properties, required...)}, nil
 }
 
 func (t *backendTool) Execute(ctx context.Context, arguments json.RawMessage) (*toolpkg.Result, error) {
@@ -97,30 +98,30 @@ func (t *backendTool) Execute(ctx context.Context, arguments json.RawMessage) (*
 	}
 	switch t.name {
 	case "list_files":
-		files, err := t.backend.LsInfo(ctx, &LsInfoRequest{Path: input.Path})
+		files, err := t.backend.LsInfo(ctx, &middleware.LsInfoRequest{Path: input.Path})
 		if err != nil {
 			return nil, err
 		}
 		data, err := json.Marshal(files)
 		return &toolpkg.Result{Content: string(data)}, err
 	case "read_file":
-		content, err := t.backend.Read(ctx, &ReadRequest{FilePath: input.Path, Offset: input.Offset, Limit: input.Limit})
+		content, err := t.backend.Read(ctx, &middleware.ReadRequest{FilePath: input.Path, Offset: input.Offset, Limit: input.Limit})
 		if err != nil {
 			return nil, err
 		}
 		return &toolpkg.Result{Content: content.Content}, nil
 	case "write_file":
-		if err := t.backend.Write(ctx, &WriteRequest{FilePath: input.Path, Content: input.Content}); err != nil {
+		if err := t.backend.Write(ctx, &middleware.WriteRequest{FilePath: input.Path, Content: input.Content}); err != nil {
 			return nil, err
 		}
 		return &toolpkg.Result{Content: "file written"}, nil
 	case "edit_file":
-		if err := t.backend.Edit(ctx, &EditRequest{FilePath: input.Path, OldString: input.OldString, NewString: input.NewString, ReplaceAll: input.ReplaceAll}); err != nil {
+		if err := t.backend.Edit(ctx, &middleware.EditRequest{FilePath: input.Path, OldString: input.OldString, NewString: input.NewString, ReplaceAll: input.ReplaceAll}); err != nil {
 			return nil, err
 		}
 		return &toolpkg.Result{Content: "file edited"}, nil
 	case "grep_files":
-		matches, err := t.backend.GrepRaw(ctx, &GrepRequest{Pattern: input.Pattern, Path: input.Path, Glob: input.Glob, CaseInsensitive: input.CaseInsensitive})
+		matches, err := t.backend.GrepRaw(ctx, &middleware.GrepRequest{Pattern: input.Pattern, Path: input.Path, Glob: input.Glob, CaseInsensitive: input.CaseInsensitive})
 		if err != nil {
 			return nil, err
 		}
@@ -131,10 +132,10 @@ func (t *backendTool) Execute(ctx context.Context, arguments json.RawMessage) (*
 	}
 }
 
-type shellTool struct{ shell StreamingShell }
+type shellTool struct{ shell middleware.StreamingShell }
 
-func (t *shellTool) Definition(context.Context) (chatmodel.ToolDefinition, error) {
-	return chatmodel.ToolDefinition{
+func (t *shellTool) Definition(context.Context) (schema.ToolDefinition, error) {
+	return schema.ToolDefinition{
 		Name: "execute", Description: "Execute a shell command in the configured workspace and return combined output.",
 		Parameters: toolpkg.ObjectSchema(map[string]any{
 			"command":    map[string]any{"type": "string"},
@@ -154,7 +155,7 @@ func (t *shellTool) Execute(ctx context.Context, arguments json.RawMessage) (*to
 	if strings.TrimSpace(input.Command) == "" {
 		return nil, errors.New("command is required")
 	}
-	stream, err := t.shell.ExecuteStreaming(ctx, &ExecuteRequest{Command: input.Command, RunInBackendGround: input.Background})
+	stream, err := t.shell.ExecuteStreaming(ctx, &middleware.ExecuteRequest{Command: input.Command, RunInBackendGround: input.Background})
 	if err != nil {
 		return nil, err
 	}

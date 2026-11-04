@@ -6,10 +6,9 @@ import (
 	"strings"
 
 	"digital-labor/config"
+	"digital-labor/gateway"
 	"digital-labor/internal/agent"
-	igw "digital-labor/internal/gateway"
-	"digital-labor/pkg/chatmodel"
-	"digital-labor/pkg/gateway"
+	"digital-labor/schema"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -112,7 +111,7 @@ type uiModel struct {
 func RunTUI(ctx context.Context) error {
 	model := newUIModel(ctx)
 	gateway.LoadChannels()
-	igw.Start()
+	gateway.Start()
 
 	program := tea.NewProgram(model, tea.WithAltScreen(), tea.WithContext(ctx))
 	_, err := program.Run()
@@ -178,9 +177,9 @@ func (m *uiModel) loadHistory(ag *agent.Agent) {
 			continue
 		}
 		switch msg.Role {
-		case chatmodel.RoleUser:
+		case schema.RoleUser:
 			m.entries = append(m.entries, chatEntry{role: "user", text: msg.Content})
-		case chatmodel.RoleAssistant:
+		case schema.RoleAssistant:
 			m.entries = append(m.entries, chatEntry{role: "assistant", text: msg.Content})
 		}
 	}

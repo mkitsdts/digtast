@@ -10,7 +10,7 @@ import (
 	agentloop "digital-labor/internal/agent/loop"
 	"digital-labor/internal/agent/state"
 	"digital-labor/internal/agent/task"
-	"digital-labor/pkg/chatmodel"
+	"digital-labor/schema"
 )
 
 func (dga *Agent) run(ctx context.Context, req ChatRequest) (chan string, error) {
@@ -41,7 +41,7 @@ func (dga *Agent) run(ctx context.Context, req ChatRequest) (chan string, error)
 	dga.setStop(cancel)
 
 	messages := session.GetCompressMessages()
-	inputMessages := make([]chatmodel.Message, 0, len(messages))
+	inputMessages := make([]schema.Message, 0, len(messages))
 	for _, item := range messages {
 		if item != nil {
 			inputMessages = append(inputMessages, *item)
@@ -100,33 +100,33 @@ func (dga *Agent) run(ctx context.Context, req ChatRequest) (chan string, error)
 	return output, nil
 }
 
-func buildUserMessage(req ChatRequest) (chatmodel.Message, error) {
-	message := chatmodel.Message{Role: chatmodel.RoleUser, Content: req.Content}
+func buildUserMessage(req ChatRequest) (schema.Message, error) {
+	message := schema.Message{Role: schema.RoleUser, Content: req.Content}
 	for _, resource := range req.MultiModalResources {
 		part, err := buildContentPart(resource)
 		if err != nil {
-			return chatmodel.Message{}, err
+			return schema.Message{}, err
 		}
 		message.Parts = append(message.Parts, part)
 	}
 	return message, nil
 }
 
-func buildContentPart(resource MultiModalResource) (chatmodel.ContentPart, error) {
-	part := chatmodel.ContentPart{Text: resource.Text, URL: resource.URL, Data: resource.Base64Data, MIMEType: resource.MIMEType, Name: resource.Name, Detail: string(resource.Detail)}
+func buildContentPart(resource MultiModalResource) (schema.ContentPart, error) {
+	part := schema.ContentPart{Text: resource.Text, URL: resource.URL, Data: resource.Base64Data, MIMEType: resource.MIMEType, Name: resource.Name, Detail: string(resource.Detail)}
 	switch resource.Type {
 	case MultiModalResourceTypeText:
-		part.Type = chatmodel.ContentText
+		part.Type = schema.ContentText
 	case MultiModalResourceTypeImage:
-		part.Type = chatmodel.ContentImageURL
+		part.Type = schema.ContentImageURL
 	case MultiModalResourceTypeAudio:
-		part.Type = chatmodel.ContentInputAudio
+		part.Type = schema.ContentInputAudio
 	case MultiModalResourceTypeFile:
-		part.Type = chatmodel.ContentFile
+		part.Type = schema.ContentFile
 	case MultiModalResourceTypeVideo:
-		return chatmodel.ContentPart{}, fmt.Errorf("chat completions does not support video input")
+		return schema.ContentPart{}, fmt.Errorf("chat completions does not support video input")
 	default:
-		return chatmodel.ContentPart{}, fmt.Errorf("unsupported multimodal resource type %q", resource.Type)
+		return schema.ContentPart{}, fmt.Errorf("unsupported multimodal resource type %q", resource.Type)
 	}
 	return part, nil
 }

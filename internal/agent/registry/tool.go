@@ -6,8 +6,8 @@ import (
 	"sort"
 	"sync"
 
+	"digital-labor/component/tool"
 	"digital-labor/internal/agent/loop"
-	"digital-labor/pkg/tool"
 )
 
 var (

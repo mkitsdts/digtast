@@ -1,11 +1,11 @@
-package prompt
+package prompts
 
 import (
-	_ "digital-labor/prompt/root"
-	_ "digital-labor/prompt/rule"
-	_ "digital-labor/prompt/soul"
-	_ "digital-labor/prompt/time"
-	_ "digital-labor/prompt/user"
+	_ "digital-labor/prompts/root"
+	_ "digital-labor/prompts/rule"
+	_ "digital-labor/prompts/soul"
+	_ "digital-labor/prompts/time"
+	_ "digital-labor/prompts/user"
 )
 
 /*

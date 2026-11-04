@@ -6,8 +6,8 @@ import (
 	"errors"
 	"strings"
 
-	"digital-labor/pkg/chatmodel"
-	"digital-labor/pkg/tool"
+	"digital-labor/component/tool"
+	"digital-labor/schema"
 )
 
 type LoadSkillTool struct {
@@ -22,8 +22,8 @@ func NewLoadSkillTool(manager *Manager, authorizer Authorizer) (*LoadSkillTool, 
 	return &LoadSkillTool{manager: manager, authorizer: authorizer}, nil
 }
 
-func (t *LoadSkillTool) Definition(context.Context) (chatmodel.ToolDefinition, error) {
-	return chatmodel.ToolDefinition{
+func (t *LoadSkillTool) Definition(context.Context) (schema.ToolDefinition, error) {
+	return schema.ToolDefinition{
 		Name:        "load_skill",
 		Description: "Load the complete instructions for one enabled skill. Use the exact name from the available-skills section before applying that skill.",
 		Parameters: tool.ObjectSchema(map[string]any{

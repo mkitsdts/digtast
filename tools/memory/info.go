@@ -2,9 +2,9 @@ package memory
 
 import (
 	"context"
+	toolpkg "digital-labor/component/tool"
 	"digital-labor/internal/agent"
-	"digital-labor/pkg/chatmodel"
-	toolpkg "digital-labor/pkg/tool"
+	"digital-labor/schema"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -13,8 +13,8 @@ import (
 type MemorySearchTool struct {
 }
 
-func (t *MemorySearchTool) Definition(context.Context) (chatmodel.ToolDefinition, error) {
-	return chatmodel.ToolDefinition{
+func (t *MemorySearchTool) Definition(context.Context) (schema.ToolDefinition, error) {
+	return schema.ToolDefinition{
 		Name:        "memory_search",
 		Description: "Search the agent's conversation history and compressed memory.",
 		Parameters: toolpkg.ObjectSchema(map[string]any{

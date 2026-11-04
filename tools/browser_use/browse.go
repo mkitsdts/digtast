@@ -18,8 +18,9 @@ package browser_use
 
 import (
 	"context"
-	"digital-labor/pkg/chatmodel"
-	toolpkg "digital-labor/pkg/tool"
+	"digital-labor/component/chatmodel"
+	toolpkg "digital-labor/component/tool"
+	"digital-labor/schema"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -128,8 +129,8 @@ type Tool struct {
 	initCtx context.Context
 }
 
-func (b *Tool) Definition(context.Context) (chatmodel.ToolDefinition, error) {
-	return chatmodel.ToolDefinition{
+func (b *Tool) Definition(context.Context) (schema.ToolDefinition, error) {
+	return schema.ToolDefinition{
 		Name: toolName, Description: toolDescription,
 		Parameters: toolpkg.ObjectSchema(map[string]any{
 			"action": map[string]any{"type": "string", "enum": []string{
@@ -487,7 +488,7 @@ func (b *Tool) executeAction(params *Param) (*ToolResult, error) {
 		} else {
 			prompt := strings.ReplaceAll(extractContentPrompt, "{goal}", *params.Goal)
 			prompt = strings.ReplaceAll(prompt, "{page}", html)
-			extractResult, err := b.cm.Chat(b.ctx, &chatmodel.ChatRequest{Messages: []chatmodel.Message{{Role: chatmodel.RoleUser, Content: prompt}}})
+			extractResult, err := b.cm.Chat(b.ctx, &schema.ChatRequest{Messages: []schema.Message{{Role: schema.RoleUser, Content: prompt}}})
 			if err != nil {
 				return &ToolResult{Error: fmt.Sprintf("generate extract content fail: %v", err)}, nil
 			}

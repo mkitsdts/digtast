@@ -2,23 +2,16 @@ package tool
 
 import (
 	"context"
+	"digital-labor/schema"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
 	"sync"
-
-	"digital-labor/pkg/chatmodel"
 )
 
-type Result struct {
-	Content string         `json:"content"`
-	Data    map[string]any `json:"data,omitempty"`
-	IsError bool           `json:"is_error,omitempty"`
-}
-
 type Tool interface {
-	Definition(ctx context.Context) (chatmodel.ToolDefinition, error)
+	Definition(ctx context.Context) (schema.ToolDefinition, error)
 	Execute(ctx context.Context, arguments json.RawMessage) (*Result, error)
 }
 
@@ -87,7 +80,7 @@ func (r *Registry) Get(name string) (Tool, bool) {
 	return t, ok
 }
 
-func (r *Registry) All(ctx context.Context) ([]Tool, []chatmodel.ToolDefinition, error) {
+func (r *Registry) All(ctx context.Context) ([]Tool, []schema.ToolDefinition, error) {
 	r.mu.RLock()
 	items := make(map[string]Tool, len(r.tools))
 	for name, t := range r.tools {
@@ -101,7 +94,7 @@ func (r *Registry) All(ctx context.Context) ([]Tool, []chatmodel.ToolDefinition,
 	}
 	sort.Strings(names)
 	tools := make([]Tool, 0, len(names))
-	definitions := make([]chatmodel.ToolDefinition, 0, len(names))
+	definitions := make([]schema.ToolDefinition, 0, len(names))
 	for _, name := range names {
 		definition, err := items[name].Definition(ctx)
 		if err != nil {

@@ -6,18 +6,18 @@ import (
 
 	"digital-labor/config"
 	"digital-labor/internal/agent/workspace"
-	"digital-labor/pkg/chatmodel"
+	"digital-labor/schema"
 )
 
 func newTestSession(t *testing.T) *Session {
 	t.Helper()
 	config.Conf.WorkSpaceDir = t.TempDir()
-	return &Session{CreatedAt: time.Now(), messages: make([]*chatmodel.Message, 0)}
+	return &Session{CreatedAt: time.Now(), messages: make([]*schema.Message, 0)}
 }
 
 func TestSessionAppendPersistsAndSnapshots(t *testing.T) {
 	session := newTestSession(t)
-	if err := session.Append(&chatmodel.Message{Role: chatmodel.RoleUser, Content: "hello"}); err != nil {
+	if err := session.Append(&schema.Message{Role: schema.RoleUser, Content: "hello"}); err != nil {
 		t.Fatal(err)
 	}
 	messages := session.GetMessages()
@@ -29,7 +29,7 @@ func TestSessionAppendPersistsAndSnapshots(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := loaded.([]*chatmodel.Message)[0].Content; got != "hello" {
+	if got := loaded.([]*schema.Message)[0].Content; got != "hello" {
 		t.Fatalf("unexpected persisted content: %q", got)
 	}
 }
@@ -39,7 +39,7 @@ func TestSessionTitle(t *testing.T) {
 	if got := session.Title(); got != "New Session" {
 		t.Fatalf("unexpected empty title: %q", got)
 	}
-	if err := session.Append(&chatmodel.Message{Role: chatmodel.RoleUser, Content: "first message"}); err != nil {
+	if err := session.Append(&schema.Message{Role: schema.RoleUser, Content: "first message"}); err != nil {
 		t.Fatal(err)
 	}
 	if got := session.Title(); got != "first message" {

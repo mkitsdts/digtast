@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	"digital-labor/pkg/chatmodel"
-	toolpkg "digital-labor/pkg/tool"
+	toolpkg "digital-labor/component/tool"
+	"digital-labor/schema"
 
 	"github.com/mark3labs/mcp-go/client"
 	mcpsdk "github.com/mark3labs/mcp-go/mcp"
@@ -75,20 +75,20 @@ type SDKTool struct {
 	definition mcpsdk.Tool
 }
 
-func (t *SDKTool) Definition(context.Context) (chatmodel.ToolDefinition, error) {
+func (t *SDKTool) Definition(context.Context) (schema.ToolDefinition, error) {
 	parameters := make(map[string]any)
 	data := t.definition.RawInputSchema
 	if len(data) == 0 {
 		var err error
 		data, err = json.Marshal(t.definition.InputSchema)
 		if err != nil {
-			return chatmodel.ToolDefinition{}, err
+			return schema.ToolDefinition{}, err
 		}
 	}
 	if err := json.Unmarshal(data, &parameters); err != nil {
-		return chatmodel.ToolDefinition{}, fmt.Errorf("decode schema for mcp tool %q: %w", t.definition.Name, err)
+		return schema.ToolDefinition{}, fmt.Errorf("decode schema for mcp tool %q: %w", t.definition.Name, err)
 	}
-	return chatmodel.ToolDefinition{Name: t.definition.Name, Description: t.definition.Description, Parameters: parameters}, nil
+	return schema.ToolDefinition{Name: t.definition.Name, Description: t.definition.Description, Parameters: parameters}, nil
 }
 
 func (t *SDKTool) Execute(ctx context.Context, arguments json.RawMessage) (*toolpkg.Result, error) {

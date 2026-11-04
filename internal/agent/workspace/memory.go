@@ -5,7 +5,7 @@ import (
 	"bufio"
 	"compress/gzip"
 	"digital-labor/config"
-	"digital-labor/pkg/chatmodel"
+	"digital-labor/schema"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -29,11 +29,11 @@ const (
 // CompressionRecord describes one compressed summary segment and the original
 // JSONL line range it summarizes. Line numbers are 1-based over LoadSession order.
 type CompressionRecord struct {
-	ID              string               `json:"id"`
-	SourceStartLine int                  `json:"source_start_line"`
-	SourceEndLine   int                  `json:"source_end_line"`
-	Messages        []*chatmodel.Message `json:"messages"`
-	Created         time.Time            `json:"created"`
+	ID              string            `json:"id"`
+	SourceStartLine int               `json:"source_start_line"`
+	SourceEndLine   int               `json:"source_end_line"`
+	Messages        []*schema.Message `json:"messages"`
+	Created         time.Time         `json:"created"`
 }
 
 var (
@@ -122,7 +122,7 @@ func Save(typ MemoryType, data any) error {
 
 	switch typ {
 	case MemTypeChunk:
-		msg, ok := data.(*chatmodel.Message)
+		msg, ok := data.(*schema.Message)
 		if !ok {
 			return fmt.Errorf("invalid data type for %s: %T", typ, data)
 		}
@@ -157,7 +157,7 @@ func Load(typ MemoryType) (any, error) {
 	if len(paths) == 0 {
 		switch typ {
 		case MemTypeChunk:
-			return ([]*chatmodel.Message)(nil), nil
+			return ([]*schema.Message)(nil), nil
 		case MemTypeCompress:
 			return ([]CompressionRecord)(nil), nil
 		case MemTypeLongTerm:
@@ -168,9 +168,9 @@ func Load(typ MemoryType) (any, error) {
 
 	switch typ {
 	case MemTypeChunk:
-		var messages []*chatmodel.Message
+		var messages []*schema.Message
 		for _, p := range paths {
-			msgs, err := loadJSONL[*chatmodel.Message](p)
+			msgs, err := loadJSONL[*schema.Message](p)
 			if err != nil {
 				return nil, err
 			}

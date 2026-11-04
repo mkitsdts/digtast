@@ -2,7 +2,7 @@ package sandbox
 
 import (
 	"context"
-	"digital-labor/pkg/filesystem"
+	"digital-labor/component/middleware"
 	"fmt"
 	"io"
 	"log/slog"
@@ -102,7 +102,7 @@ func (s *Sandbox) installRipgrep(ctx context.Context) error {
 	return err
 }
 
-func (s *Sandbox) Exec(ctx context.Context, cmd string) (*filesystem.StreamReader[*filesystem.ExecuteResponse], error) {
+func (s *Sandbox) Exec(ctx context.Context, cmd string) (*middleware.StreamReader[*middleware.ExecuteResponse], error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -123,7 +123,7 @@ func (s *Sandbox) Exec(ctx context.Context, cmd string) (*filesystem.StreamReade
 		return nil, fmt.Errorf("failed to attach exec: %w", err)
 	}
 
-	sr, w := filesystem.Pipe[*filesystem.ExecuteResponse](100)
+	sr, w := middleware.Pipe[*middleware.ExecuteResponse](100)
 
 	go func() {
 		defer func() {
@@ -141,7 +141,7 @@ func (s *Sandbox) Exec(ctx context.Context, cmd string) (*filesystem.StreamReade
 
 			n, err := attachResp.Reader.Read(buf)
 			if n > 0 {
-				w.Send(&filesystem.ExecuteResponse{
+				w.Send(&middleware.ExecuteResponse{
 					Output: string(buf[:n]),
 				}, nil)
 			}
@@ -151,7 +151,7 @@ func (s *Sandbox) Exec(ctx context.Context, cmd string) (*filesystem.StreamReade
 					inspectResp, inspectErr := s.cli.ContainerExecInspect(ctx, execIDResp.ID)
 					if inspectErr == nil {
 						exitCode := inspectResp.ExitCode
-						w.Send(&filesystem.ExecuteResponse{
+						w.Send(&middleware.ExecuteResponse{
 							ExitCode: &exitCode,
 						}, nil)
 					}
