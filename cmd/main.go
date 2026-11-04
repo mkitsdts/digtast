@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	_ "digital-labor/chatmodel"
 	"digital-labor/config"
 	_ "digital-labor/gateway"
 	"digital-labor/internal/agent/workspace"

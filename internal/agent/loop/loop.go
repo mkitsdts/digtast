@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"sync"
 	"time"
 
@@ -40,11 +39,12 @@ type Loop struct {
 type EventType string
 
 const (
-	EventTextDelta  EventType = "text_delta"
-	EventToolCall   EventType = "tool_call"
-	EventToolResult EventType = "tool_result"
-	EventUsage      EventType = "usage"
-	EventDone       EventType = "done"
+	EventTextDelta      EventType = "text_delta"
+	EventReasoningDelta EventType = "reasoning_delta"
+	EventToolCall       EventType = "tool_call"
+	EventToolResult     EventType = "tool_result"
+	EventUsage          EventType = "usage"
+	EventDone           EventType = "done"
 )
 
 type Event struct {
@@ -215,24 +215,30 @@ func (l *Loop) callModel(ctx context.Context, step *StepContext, stream bool, em
 	return response, callErr
 }
 
+// consumeStream 以迭代器方式消费流式响应；后端未实现流式协议时退化为
+// 非流式调用。
 func (l *Loop) consumeStream(ctx context.Context, request *schema.ChatRequest, emit func(Event) error) (*schema.ChatResponse, error) {
-	stream, err := l.llm.ChatStream(ctx, request)
-	if err != nil {
-		return nil, err
+	streamer, ok := l.llm.(chatmodel.StreamChatModel)
+	if !ok {
+		return l.llm.Chat(ctx, request)
 	}
-	defer stream.Close()
-	for {
-		event, err := stream.Recv()
-		if errors.Is(err, io.EOF) {
-			return nil, errors.New("llm stream ended without a done event")
-		}
+	for event, err := range streamer.ChatStream(ctx, request) {
 		if err != nil {
 			return nil, err
+		}
+		if event == nil {
+			continue
 		}
 		switch event.Type {
 		case schema.StreamEventTextDelta:
 			if emit != nil {
 				if err := emit(Event{Type: EventTextDelta, Delta: event.Delta}); err != nil {
+					return nil, err
+				}
+			}
+		case schema.StreamEventReasoningDelta:
+			if emit != nil {
+				if err := emit(Event{Type: EventReasoningDelta, Delta: event.Delta}); err != nil {
 					return nil, err
 				}
 			}
@@ -249,6 +255,7 @@ func (l *Loop) consumeStream(ctx context.Context, request *schema.ChatRequest, e
 			return event.Response, nil
 		}
 	}
+	return nil, errors.New("llm stream ended without a done event")
 }
 
 func (l *Loop) executeTools(ctx context.Context, step *StepContext, registry *tool.Registry, calls []schema.ToolCall, emit func(Event) error) ([]schema.Message, error) {

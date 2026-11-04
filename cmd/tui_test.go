@@ -3,7 +3,55 @@ package main
 import (
 	"reflect"
 	"testing"
+
+	"digital-labor/component/chatmodel"
+	"digital-labor/config"
 )
+
+func TestProviderViewListsRegisteredProviders(t *testing.T) {
+	view := newProviderView()
+	if len(view.providers) == 0 {
+		t.Fatal("expected registered providers in the provider view")
+	}
+	for i := 1; i < len(view.providers); i++ {
+		if view.providers[i-1].ID > view.providers[i].ID {
+			t.Fatalf("providers are not sorted: %#v", view.providers)
+		}
+	}
+	if _, ok := view.current(); !ok {
+		t.Fatal("expected a current selection")
+	}
+}
+
+func TestProviderStatusMarksCurrent(t *testing.T) {
+	previous := config.Conf
+	t.Cleanup(func() { config.Conf = previous })
+	config.Conf.Agent = nil
+
+	provider, ok := chatmodel.FindProvider("deepseek")
+	if !ok {
+		t.Skip("deepseek provider is not registered in this test binary")
+	}
+	if isCurrentProvider(provider) {
+		t.Fatal("no selected provider should not be current")
+	}
+	config.Conf.Agent = &config.AgentConfig{Provider: "deepseek", Model: "deepseek-chat"}
+	if !isCurrentProvider(provider) {
+		t.Fatal("selected provider should be current")
+	}
+	if !isCurrentModel("deepseek", "deepseek-chat") || isCurrentModel("deepseek", "deepseek-reasoner") {
+		t.Fatal("unexpected current model check")
+	}
+}
+
+func TestModelLabel(t *testing.T) {
+	if got := modelLabel("deepseek", "deepseek-chat"); got != "DeepSeek · deepseek-chat" {
+		t.Fatalf("unexpected label %q", got)
+	}
+	if got := modelLabel("unknown", "m"); got != "m" {
+		t.Fatalf("unexpected fallback label %q", got)
+	}
+}
 
 func TestPickerFiltersAndSelects(t *testing.T) {
 	picker := newPickerView("models")

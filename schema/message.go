@@ -2,7 +2,6 @@ package schema
 
 import (
 	"encoding/json"
-	"io"
 	"time"
 )
 
@@ -49,6 +48,7 @@ type ToolCall struct {
 type Message struct {
 	Role       Role          `json:"role"`
 	Content    string        `json:"content,omitempty"`
+	Reasoning  string        `json:"reasoning,omitempty"` // 推理模型的思维链，仅供本地展示，回传请求时由适配器丢弃
 	Parts      []ContentPart `json:"parts,omitempty"`
 	Name       string        `json:"name,omitempty"`
 	ToolCallID string        `json:"tool_call_id,omitempty"`
@@ -69,6 +69,7 @@ const (
 	ToolChoiceRequired ToolChoice = "required"
 )
 
+// ChatRequest 是非流式对话请求。
 type ChatRequest struct {
 	Model             string
 	Messages          []Message
@@ -106,6 +107,7 @@ func (u *Usage) Add(other Usage) {
 	u.ReasoningTokens += other.ReasoningTokens
 }
 
+// ChatResponse 是非流式对话响应。
 type ChatResponse struct {
 	ID           string
 	Model        string
@@ -114,49 +116,3 @@ type ChatResponse struct {
 	Usage        Usage
 	CreatedAt    time.Time
 }
-
-type StreamEventType string
-
-const (
-	StreamEventTextDelta     StreamEventType = "text_delta"
-	StreamEventToolCallDelta StreamEventType = "tool_call_delta"
-	StreamEventUsage         StreamEventType = "usage"
-	StreamEventDone          StreamEventType = "done"
-)
-
-type ToolCallDelta struct {
-	Index     int
-	ID        string
-	Type      string
-	Name      string
-	Arguments string
-}
-
-type StreamEvent struct {
-	Type     StreamEventType
-	Delta    string
-	ToolCall *ToolCallDelta
-	Usage    *Usage
-	Response *ChatResponse
-}
-
-type Stream interface {
-	Recv() (*StreamEvent, error)
-	Close() error
-}
-
-type SliceStream struct {
-	Events []*StreamEvent
-	index  int
-}
-
-func (s *SliceStream) Recv() (*StreamEvent, error) {
-	if s.index >= len(s.Events) {
-		return nil, io.EOF
-	}
-	event := s.Events[s.index]
-	s.index++
-	return event, nil
-}
-
-func (s *SliceStream) Close() error { return nil }

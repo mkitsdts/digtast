@@ -1,142 +1,66 @@
 package openai
 
 import (
-	"bufio"
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
-	"path"
-	"strings"
-	"sync"
-	"time"
 
 	"digital-labor/component/chatmodel"
+	"digital-labor/component/chatmodel/oai"
 	"digital-labor/schema"
 )
 
-const defaultBaseURL = "https://api.openai.com/v1"
+// DefaultBaseURL 是 OpenAI 官方 API 地址，可被 Config.BaseURL 替换。
+const DefaultBaseURL = "https://api.openai.com/v1"
 
-type Config struct {
-	APIKey     string
-	BaseURL    string
-	Model      string
-	HTTPClient *http.Client
-	Headers    http.Header
-}
+// Config 与 oai.Config 一致，New 时补充 OpenAI 默认基础配置。
+type Config = oai.Config
 
 type Client struct {
-	apiKey  string
-	baseURL string
-	model   string
-	http    *http.Client
-	headers http.Header
-
-	usageMu sync.RWMutex
-	usage   schema.Usage
+	base *oai.Base
 }
 
 func New(cfg Config) (*Client, error) {
-	if strings.TrimSpace(cfg.APIKey) == "" {
-		return nil, errors.New("openai api key is required")
-	}
-	if strings.TrimSpace(cfg.Model) == "" {
-		return nil, errors.New("openai model is required")
-	}
-	baseURL, err := resolveBaseURL(cfg.BaseURL)
+	base, err := oai.NewBase(cfg, DefaultBaseURL)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("openai: %w", err)
 	}
-	httpClient := cfg.HTTPClient
-	if httpClient == nil {
-		httpClient = &http.Client{Timeout: 2 * time.Minute}
-	}
-	return &Client{
-		apiKey:  cfg.APIKey,
-		baseURL: baseURL,
-		model:   cfg.Model,
-		http:    httpClient,
-		headers: cfg.Headers.Clone(),
-	}, nil
+	return &Client{base: base}, nil
 }
 
 func (c *Client) Chat(ctx context.Context, req *schema.ChatRequest) (*schema.ChatResponse, error) {
-	body, err := c.requestBody(req, false)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := c.do(ctx, http.MethodPost, c.endpoint("chat/completions"), body)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if err := checkResponse(resp); err != nil {
-		return nil, err
-	}
-
-	var raw chatCompletion
-	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
-		return nil, fmt.Errorf("decode openai response: %w", err)
-	}
-	result, err := raw.toResponse()
-	if err != nil {
-		return nil, err
-	}
-	c.addUsage(result.Usage)
-	return result, nil
+	return oai.Chat(ctx, c.base, func() ([]byte, error) { return c.requestBody(req, false) })
 }
 
-func (c *Client) ChatStream(ctx context.Context, req *schema.ChatRequest) (schema.Stream, error) {
-	body, err := c.requestBody(req, true)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := c.do(ctx, http.MethodPost, c.endpoint("chat/completions"), body)
-	if err != nil {
-		return nil, err
-	}
-	if err := checkResponse(resp); err != nil {
-		resp.Body.Close()
-		return nil, err
-	}
-	return newStream(resp.Body, c.addUsage), nil
+func (c *Client) ChatStream(ctx context.Context, req *schema.ChatRequest) schema.Stream {
+	return oai.ChatStream(ctx, c.base,
+		func() ([]byte, error) { return c.requestBody(req, true) },
+		func(data []byte) (oai.DeltaChunk, error) {
+			var chunk oai.Chunk
+			if err := json.Unmarshal(data, &chunk); err != nil {
+				return oai.DeltaChunk{}, err
+			}
+			return chunk.ToDeltaChunk(), nil
+		})
 }
 
-func (c *Client) GetUsage() schema.Usage {
-	c.usageMu.RLock()
-	defer c.usageMu.RUnlock()
-	return c.usage
-}
+func (c *Client) GetUsage() schema.Usage { return c.base.GetUsage() }
 
 func (c *Client) CheckStatus(ctx context.Context) (*chatmodel.Status, error) {
-	started := time.Now()
-	checkedAt := time.Now().UTC()
-	modelURL := c.endpoint("models/" + url.PathEscape(c.model))
-	resp, err := c.do(ctx, http.MethodGet, modelURL, nil)
-	if err == nil {
-		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-			resp.Body.Close()
-			return &chatmodel.Status{Available: true, Model: c.model, Latency: time.Since(started), CheckedAt: checkedAt}, nil
-		}
-		resp.Body.Close()
-	}
+	return oai.CheckStatus(ctx, c.base)
+}
 
-	resp, listErr := c.do(ctx, http.MethodGet, c.endpoint("models"), nil)
-	if listErr != nil {
-		if err != nil {
-			return nil, fmt.Errorf("check openai model status: %w", err)
-		}
-		return nil, fmt.Errorf("check openai models status: %w", listErr)
-	}
-	defer resp.Body.Close()
-	if statusErr := checkResponse(resp); statusErr != nil {
-		return nil, statusErr
-	}
-	return &chatmodel.Status{Available: true, Model: c.model, Latency: time.Since(started), CheckedAt: checkedAt}, nil
+type chatRequest struct {
+	Model               string             `json:"model"`
+	Messages            []oai.Message      `json:"messages"`
+	Tools               []oai.Tool         `json:"tools,omitempty"`
+	ToolChoice          string             `json:"tool_choice,omitempty"`
+	Stream              bool               `json:"stream,omitempty"`
+	StreamOptions       *oai.StreamOptions `json:"stream_options,omitempty"`
+	Temperature         *float64           `json:"temperature,omitempty"`
+	MaxCompletionTokens int                `json:"max_completion_tokens,omitempty"`
+	ParallelToolCalls   *bool              `json:"parallel_tool_calls,omitempty"`
 }
 
 func (c *Client) requestBody(req *schema.ChatRequest, stream bool) ([]byte, error) {
@@ -145,32 +69,26 @@ func (c *Client) requestBody(req *schema.ChatRequest, stream bool) ([]byte, erro
 	}
 	model := req.Model
 	if model == "" {
-		model = c.model
+		model = c.base.Model()
 	}
 	if len(req.Messages) == 0 {
 		return nil, errors.New("chat messages are required")
 	}
+	messages, err := oai.ToWireMessages(req.Messages, nil)
+	if err != nil {
+		return nil, err
+	}
 	payload := chatRequest{
-		Model:             model,
-		Messages:          make([]chatMessage, 0, len(req.Messages)),
-		Stream:            stream,
-		Temperature:       req.Temperature,
-		ParallelToolCalls: req.ParallelToolCalls,
+		Model: model, Messages: messages, Stream: stream,
+		Temperature: req.Temperature, ParallelToolCalls: req.ParallelToolCalls,
 	}
 	if req.MaxOutputTokens > 0 {
 		payload.MaxCompletionTokens = req.MaxOutputTokens
 	}
-	for _, message := range req.Messages {
-		converted, err := toChatMessage(message)
-		if err != nil {
-			return nil, err
-		}
-		payload.Messages = append(payload.Messages, converted)
-	}
 	for _, definition := range req.Tools {
-		payload.Tools = append(payload.Tools, chatTool{
+		payload.Tools = append(payload.Tools, oai.Tool{
 			Type: "function",
-			Function: chatFunctionDefinition{
+			Function: oai.FunctionDefinition{
 				Name: definition.Name, Description: definition.Description, Parameters: definition.Parameters,
 			},
 		})
@@ -179,191 +97,7 @@ func (c *Client) requestBody(req *schema.ChatRequest, stream bool) ([]byte, erro
 		payload.ToolChoice = string(req.ToolChoice)
 	}
 	if stream {
-		payload.StreamOptions = &streamOptions{IncludeUsage: true}
+		payload.StreamOptions = &oai.StreamOptions{IncludeUsage: true}
 	}
 	return json.Marshal(payload)
 }
-
-func (c *Client) endpoint(resource string) string {
-	base, _ := url.Parse(c.baseURL)
-	trimmed := strings.TrimPrefix(resource, "/")
-	base.Path = path.Join(base.Path, trimmed)
-	return base.String()
-}
-
-func (c *Client) do(ctx context.Context, method, endpoint string, body []byte) (*http.Response, error) {
-	var reader io.Reader
-	if body != nil {
-		reader = bytes.NewReader(body)
-	}
-	req, err := http.NewRequestWithContext(ctx, method, endpoint, reader)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Authorization", "Bearer "+c.apiKey)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	for key, values := range c.headers {
-		for _, value := range values {
-			req.Header.Add(key, value)
-		}
-	}
-	return c.http.Do(req)
-}
-
-func (c *Client) addUsage(usage schema.Usage) {
-	c.usageMu.Lock()
-	c.usage.Add(usage)
-	c.usageMu.Unlock()
-}
-
-type apiError struct {
-	Error struct {
-		Message string `json:"message"`
-		Type    string `json:"type"`
-		Code    any    `json:"code"`
-	} `json:"error"`
-}
-
-func checkResponse(resp *http.Response) error {
-	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		return nil
-	}
-	data, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
-	var apiErr apiError
-	if json.Unmarshal(data, &apiErr) == nil && apiErr.Error.Message != "" {
-		return fmt.Errorf("openai api returned %s: %s", resp.Status, apiErr.Error.Message)
-	}
-	return fmt.Errorf("openai api returned %s: %s", resp.Status, strings.TrimSpace(string(data)))
-}
-
-type stream struct {
-	body       io.ReadCloser
-	scanner    *bufio.Scanner
-	queue      []*schema.StreamEvent
-	response   schema.ChatResponse
-	toolCalls  map[int]*toolCallBuilder
-	addUsage   func(schema.Usage)
-	usageAdded bool
-	done       bool
-}
-
-type toolCallBuilder struct {
-	id        string
-	typ       string
-	name      string
-	arguments strings.Builder
-}
-
-func newStream(body io.ReadCloser, addUsage func(schema.Usage)) *stream {
-	scanner := bufio.NewScanner(body)
-	scanner.Buffer(make([]byte, 64*1024), 4*1024*1024)
-	return &stream{body: body, scanner: scanner, toolCalls: make(map[int]*toolCallBuilder), addUsage: addUsage}
-}
-
-func (s *stream) Recv() (*schema.StreamEvent, error) {
-	if len(s.queue) > 0 {
-		event := s.queue[0]
-		s.queue = s.queue[1:]
-		return event, nil
-	}
-	if s.done {
-		return nil, io.EOF
-	}
-	for s.scanner.Scan() {
-		line := strings.TrimSpace(s.scanner.Text())
-		if line == "" || strings.HasPrefix(line, ":") || !strings.HasPrefix(line, "data:") {
-			continue
-		}
-		data := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
-		if data == "[DONE]" {
-			s.finish()
-			return s.Recv()
-		}
-		var chunk chatChunk
-		if err := json.Unmarshal([]byte(data), &chunk); err != nil {
-			return nil, fmt.Errorf("decode openai stream chunk: %w", err)
-		}
-		s.consume(chunk)
-		if len(s.queue) > 0 {
-			return s.Recv()
-		}
-	}
-	if err := s.scanner.Err(); err != nil {
-		return nil, fmt.Errorf("read openai stream: %w", err)
-	}
-	s.finish()
-	return s.Recv()
-}
-
-func (s *stream) consume(chunk chatChunk) {
-	if s.response.ID == "" {
-		s.response.ID = chunk.ID
-		s.response.Model = chunk.Model
-		if chunk.Created > 0 {
-			s.response.CreatedAt = time.Unix(chunk.Created, 0).UTC()
-		}
-		s.response.Message.Role = schema.RoleAssistant
-	}
-	if chunk.Usage != nil {
-		usage := chunk.Usage.toUsage()
-		s.response.Usage = usage
-		s.queue = append(s.queue, &schema.StreamEvent{Type: schema.StreamEventUsage, Usage: &usage})
-	}
-	for _, choice := range chunk.Choices {
-		if choice.Delta.Content != "" {
-			s.response.Message.Content += choice.Delta.Content
-			s.queue = append(s.queue, &schema.StreamEvent{Type: schema.StreamEventTextDelta, Delta: choice.Delta.Content})
-		}
-		for _, delta := range choice.Delta.ToolCalls {
-			builder := s.toolCalls[delta.Index]
-			if builder == nil {
-				builder = &toolCallBuilder{}
-				s.toolCalls[delta.Index] = builder
-			}
-			if delta.ID != "" {
-				builder.id = delta.ID
-			}
-			if delta.Type != "" {
-				builder.typ = delta.Type
-			}
-			if delta.Function.Name != "" {
-				builder.name += delta.Function.Name
-			}
-			builder.arguments.WriteString(delta.Function.Arguments)
-			s.queue = append(s.queue, &schema.StreamEvent{Type: schema.StreamEventToolCallDelta, ToolCall: &schema.ToolCallDelta{
-				Index: delta.Index, ID: delta.ID, Type: delta.Type, Name: delta.Function.Name, Arguments: delta.Function.Arguments,
-			}})
-		}
-		if choice.FinishReason != "" {
-			s.response.FinishReason = schema.FinishReason(choice.FinishReason)
-		}
-	}
-}
-
-func (s *stream) finish() {
-	if s.done {
-		return
-	}
-	s.done = true
-	for index := 0; index < len(s.toolCalls); index++ {
-		builder := s.toolCalls[index]
-		if builder == nil {
-			continue
-		}
-		arguments := json.RawMessage(builder.arguments.String())
-		if len(arguments) == 0 {
-			arguments = json.RawMessage(`{}`)
-		}
-		s.response.Message.ToolCalls = append(s.response.Message.ToolCalls, schema.ToolCall{
-			ID: builder.id, Type: builder.typ, Function: schema.FunctionCall{Name: builder.name, Arguments: arguments},
-		})
-	}
-	if !s.usageAdded {
-		s.addUsage(s.response.Usage)
-		s.usageAdded = true
-	}
-	s.queue = append(s.queue, &schema.StreamEvent{Type: schema.StreamEventDone, Response: &s.response})
-}
-
-func (s *stream) Close() error { return s.body.Close() }

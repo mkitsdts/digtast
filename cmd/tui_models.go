@@ -1,217 +1,151 @@
 package main
 
 import (
-	"context"
 	"errors"
-	"fmt"
-	"sort"
 	"strings"
-	"time"
 
-	"digital-labor/chatmodel/openai"
+	"digital-labor/component/chatmodel"
 	"digital-labor/config"
 	"digital-labor/internal/agent"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type modelChoice struct {
-	id       string
-	provider string
-	kind     string
+// 模型页配置的是厂商（chatmodel 注册表中的 Provider）：先填 API Key，再决定
+// 是否替换默认 Base URL，然后从 /models 拉取模型列表选择启用哪些；日常切换
+// 只在厂商的启用模型中挑选。凭据与启用列表按 Provider 保存在 config 中。
+
+type providerView struct {
+	providers []chatmodel.Provider
+	cursor    int
 }
 
-func (c modelChoice) label() string {
-	label := openai.ProviderLabel(c.provider)
-	if c.kind != "" {
-		label += " · " + c.kind
-	}
-	return label
+func newProviderView() *providerView {
+	return &providerView{providers: chatmodel.Providers()}
 }
 
-type modelView struct {
-	choices       []modelChoice
-	cursor        int
-	confirmDelete bool
+func (v *providerView) current() (chatmodel.Provider, bool) {
+	if len(v.providers) == 0 || v.cursor >= len(v.providers) {
+		return chatmodel.Provider{}, false
+	}
+	return v.providers[v.cursor], true
 }
 
-func newModelView() *modelView {
-	v := &modelView{}
-	v.reload()
-	return v
+// modelListView 展示某个厂商已启用的模型，供日常切换。
+type modelListView struct {
+	provider chatmodel.Provider
+	models   []string
+	cursor   int
 }
 
-func (v *modelView) reload() {
-	v.choices = v.choices[:0]
-	ids := make([]string, 0, len(config.Conf.Models))
-	for id := range config.Conf.Models {
-		ids = append(ids, id)
+func (v *modelListView) current() (string, bool) {
+	if len(v.models) == 0 || v.cursor >= len(v.models) {
+		return "", false
 	}
-	sort.Strings(ids)
-	for _, id := range ids {
-		mc := config.Conf.Models[id]
-		if len(mc.ModelNames) == 0 {
-			v.choices = append(v.choices, modelChoice{id: id, provider: mc.Provider})
-			continue
-		}
-		for _, kind := range mc.ModelNames {
-			v.choices = append(v.choices, modelChoice{id: id, provider: mc.Provider, kind: kind})
-		}
-	}
-	sort.SliceStable(v.choices, func(i, j int) bool {
-		return v.choices[i].label() < v.choices[j].label()
-	})
-	if v.cursor >= len(v.choices) {
-		v.cursor = len(v.choices) - 1
-	}
-	if v.cursor < 0 {
-		v.cursor = 0
-	}
+	return v.models[v.cursor], true
 }
 
-func (v *modelView) current() (modelChoice, bool) {
-	if len(v.choices) == 0 {
-		return modelChoice{}, false
-	}
-	return v.choices[v.cursor], true
-}
-
-func (m *uiModel) openModels() {
+func (m *uiModel) openProviders() {
 	if _, err := agent.Instance(); err != nil {
-		m.setStatus(false, "还没有可用模型，按 a 添加")
+		m.setStatus(false, "选择一个厂商开始使用")
 	}
-	m.models = newModelView()
-	m.screen = screenModels
+	m.providers = newProviderView()
+	m.screen = screenProviders
 }
 
-func (m *uiModel) updateModels(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	v := m.models
-	key := msg.String()
-	if v.confirmDelete && key != "d" {
-		v.confirmDelete = false
+func (m *uiModel) updateProviders(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	v := m.providers
+	if v == nil {
+		m.openProviders()
+		return m, nil
 	}
-	switch key {
+	switch msg.String() {
 	case "esc":
 		if _, err := agent.Instance(); err != nil {
-			m.setStatus(true, "请先选择一个模型")
+			m.setStatus(true, "请先配置厂商并启用模型")
 			return m, nil
 		}
 		m.screen = screenChat
 		m.input.Focus()
-		return m, nil
 	case "up", "k":
 		if v.cursor > 0 {
 			v.cursor--
 		}
 	case "down", "j":
-		if v.cursor < len(v.choices)-1 {
+		if v.cursor < len(v.providers)-1 {
 			v.cursor++
 		}
-	case "a":
-		m.startModelWizard("")
-	case "e":
-		if c, ok := v.current(); ok {
-			m.startModelWizard(c.id)
-		}
-	case "d":
-		m.deleteModel()
 	case "enter":
-		if c, ok := v.current(); ok {
-			m.applyModel(c.id, c.kind)
+		if provider, ok := v.current(); ok {
+			if config.ModelCredentials(provider.ID).Key == "" {
+				m.startProviderSetup(provider)
+			} else {
+				m.openProviderModels(provider)
+			}
 		}
 	}
 	return m, nil
 }
 
-func (m *uiModel) deleteModel() {
-	v := m.models
-	c, ok := v.current()
-	if !ok {
-		return
-	}
-	if !v.confirmDelete {
-		v.confirmDelete = true
-		return
-	}
-	v.confirmDelete = false
-	if err := config.RemoveModel(c.id); err != nil {
-		m.setStatus(true, "删除失败: %v", err)
-		return
-	}
-	if config.Conf.Agent != nil && config.Conf.Agent.Model == c.id {
-		config.Conf.Agent = nil
-		_ = config.SaveConfig()
-		m.setStatus(true, "当前模型已删除，请重新选择模型")
-	} else {
-		m.setStatus(false, "已删除模型 %s", c.label())
-	}
-	v.reload()
-	if len(v.choices) == 0 {
-		m.setStatus(true, "还没有模型配置，按 a 添加")
-	}
-}
-
-func (m *uiModel) applyModel(id, kind string) {
-	cfg := config.AgentConfig{Model: id, ModelKind: kind}
-	if config.Conf.Agent != nil {
-		cfg.Name = config.Conf.Agent.Name
-	}
-	ag, err := agent.Reconfigure(&cfg)
-	if err != nil {
-		m.setStatus(true, "切换模型失败: %v", err)
-		return
-	}
-	saved := config.AgentConfig{Name: ag.Name, Model: id, ModelKind: kind}
-	if err := config.SetAgent(saved); err != nil {
-		m.setStatus(true, "模型已生效，但保存配置失败: %v", err)
-	} else {
-		m.setStatus(false, "已切换模型 %s", agentLabel(id, kind))
-	}
-	m.modelName = agentLabel(id, kind)
-	m.screen = screenChat
-	m.input.Focus()
-	m.refreshChat(false)
-}
-
-// startModelWizard walks the user through provider -> credentials -> model
-// selection. Model names are always fetched from the provider.
-func (m *uiModel) startModelWizard(id string) {
+// startProviderSetup 启动厂商配置向导：API Key → 是否替换 Base URL → 拉取
+// 模型列表 → 选择启用的模型。
+func (m *uiModel) startProviderSetup(provider chatmodel.Provider) {
 	m.status = ""
-	m.editingModel = id
-	m.draft = config.ModelConfig{}
-	if id != "" {
-		m.draft = config.Conf.Models[id]
-	}
-	m.openProviderPicker()
+	m.setupProv = provider
+	m.setupKey = ""
+	m.setupURL = ""
+	m.setupForm = newFormView("配置 "+provider.Label, []formFieldSpec{
+		{Label: "API Key", Placeholder: "sk-...", Secret: true},
+	}, func(values []string) (string, error) {
+		key := strings.TrimSpace(values[0])
+		if key == "" {
+			return "", errors.New("API Key 不能为空")
+		}
+		m.setupKey = key
+		return "", nil
+	})
+	m.setupForm.setWidth(m.width)
+	m.screen = screenProviderKey
 }
 
-func (m *uiModel) openProviderPicker() {
-	current := strings.ToLower(strings.TrimSpace(m.draft.Provider))
-	if current == "ark" {
-		current = "doubao"
+func (m *uiModel) updateProviderKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	form := m.setupForm
+	if form == nil {
+		m.openProviders()
+		return m, nil
 	}
-	picker := newPickerView("选择 Provider")
-	cursor := 0
-	for i, provider := range openai.Providers() {
-		label := provider.Label
-		if _, ok := config.FindModelByProvider(provider.ID); ok {
-			label += "  (已配置)"
+	switch msg.String() {
+	case "esc":
+		m.setupForm = nil
+		m.openProviders()
+		return m, nil
+	case "enter":
+		if err := form.submit(); err != nil {
+			return m, nil
 		}
-		picker.items = append(picker.items, pickerItem{label: label, value: provider.ID})
-		if provider.ID == current {
-			cursor = i
-		}
+		m.setupForm = nil
+		m.openBaseURLPick()
+		return m, nil
 	}
-	picker.cursor = cursor
+	return m, form.update(msg)
+}
+
+// openBaseURLPick 询问是否需要修改默认 Base URL。
+func (m *uiModel) openBaseURLPick() {
+	picker := newPickerView("是否修改 Base URL？")
+	picker.items = []pickerItem{
+		{label: "使用默认地址 " + m.setupProv.BaseURL, value: ""},
+		{label: "自定义地址…", value: "custom"},
+	}
 	picker.width = m.width
-	m.providerPick = picker
-	m.screen = screenProvider
+	m.urlPick = picker
+	m.screen = screenProviderURL
 }
 
-func (m *uiModel) updateProviderPicker(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	picker := m.providerPick
+func (m *uiModel) updateBaseURLPick(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	picker := m.urlPick
 	if picker == nil {
-		m.openModels()
+		m.openProviders()
 		return m, nil
 	}
 	if picker.handleKey(msg) {
@@ -219,107 +153,90 @@ func (m *uiModel) updateProviderPicker(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 	switch msg.String() {
 	case "esc":
-		m.providerPick = nil
-		m.openModels()
+		m.urlPick = nil
+		m.openProviders()
 	case "enter":
 		item, ok := picker.current()
 		if !ok {
 			return m, nil
 		}
-		previous := strings.ToLower(strings.TrimSpace(m.draft.Provider))
-		if previous == "ark" {
-			previous = "doubao"
+		m.urlPick = nil
+		if item.value == "custom" {
+			m.openURLForm()
+			return m, nil
 		}
-		m.draft.Provider = item.value
-		if previous != item.value || m.draft.URL == "" {
-			m.draft.URL = openai.ProviderBaseURL(item.value)
-		}
-		if previous != item.value {
-			m.draft.ModelNames = nil
-		}
-		if m.editingModel == "" && m.draft.Key == "" {
-			if existing, ok := config.FindModelByProvider(item.value); ok {
-				m.draft.Key = existing.Key
-				if existing.URL != "" {
-					m.draft.URL = existing.URL
-				}
-			}
-		}
-		m.openCredsForm()
+		m.setupURL = ""
+		return m, m.fetchProviderModels()
 	}
 	return m, nil
 }
 
-func (m *uiModel) openCredsForm() {
-	title := "配置 " + openai.ProviderLabel(m.draft.Provider)
-	specs := []formFieldSpec{
-		{Label: "API Key", Value: m.draft.Key, Placeholder: "sk-...", Secret: true},
-		{Label: "Base URL", Value: m.draft.URL, Placeholder: "https://.../v1", Help: "留空使用 Provider 默认地址；自定义 Provider 必填"},
-	}
-	m.credsForm = newFormView(title, specs, func(values []string) (string, error) {
-		key := strings.TrimSpace(values[0])
-		baseURL := strings.TrimSpace(values[1])
-		if key == "" {
-			return "", errors.New("API Key 不能为空")
+func (m *uiModel) openURLForm() {
+	m.setupForm = newFormView("自定义 Base URL", []formFieldSpec{
+		{Label: "Base URL", Placeholder: "https://...", Help: "替换 " + m.setupProv.Label + " 的默认地址"},
+	}, func(values []string) (string, error) {
+		url := strings.TrimSpace(values[0])
+		if !strings.HasPrefix(url, "https://") && !strings.HasPrefix(url, "http://") {
+			return "", errors.New("Base URL 必须以 http:// 或 https:// 开头")
 		}
-		if openai.IsCustomProvider(m.draft.Provider) && baseURL == "" {
-			return "", errors.New("自定义 Provider 需要填写 Base URL")
-		}
-		m.draft.Key = key
-		m.draft.URL = baseURL
+		m.setupURL = url
 		return "", nil
 	})
-	m.credsForm.setWidth(m.width)
-	m.screen = screenModelCreds
+	m.setupForm.setWidth(m.width)
+	m.screen = screenProviderURLForm
 }
 
-func (m *uiModel) updateModelCreds(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	form := m.credsForm
+func (m *uiModel) updateURLForm(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	form := m.setupForm
 	if form == nil {
-		m.openProviderPicker()
+		m.openBaseURLPick()
 		return m, nil
 	}
 	switch msg.String() {
 	case "esc":
-		m.credsForm = nil
-		m.openProviderPicker()
+		m.setupForm = nil
+		m.openBaseURLPick()
 		return m, nil
 	case "enter":
 		if err := form.submit(); err != nil {
 			return m, nil
 		}
-		if form.done {
-			m.credsForm = nil
-			return m, m.fetchModels()
-		}
-		return m, nil
+		m.setupForm = nil
+		return m, m.fetchProviderModels()
 	}
 	return m, form.update(msg)
 }
 
-func (m *uiModel) fetchModels() tea.Cmd {
+// fetchProviderModels 用配置中的凭据拉取 /models 列表。
+func (m *uiModel) fetchProviderModels() tea.Cmd {
 	m.fetchGen++
 	gen := m.fetchGen
-	picker := newPickerView("选择模型")
+	provider := m.setupProv
+	if provider.ID == "" {
+		return nil
+	}
+	key, url := m.setupKey, m.setupURL
+	if key == "" {
+		creds := config.ModelCredentials(provider.ID)
+		key, url = creds.Key, creds.URL
+	}
+	picker := newPickerView("选择启用的模型 · " + provider.Label)
 	picker.multi = true
 	picker.loading = true
 	picker.width = m.width
 	m.modelPick = picker
-	m.screen = screenModelPick
+	m.screen = screenProviderModels
 
-	draft := m.draft
 	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(m.ctx, 30*time.Second)
-		defer cancel()
-		names, err := openai.ListModels(ctx, openai.Config{APIKey: draft.Key, BaseURL: draft.URL})
+		names, err := provider.ListModels(m.ctx, chatmodel.ClientOptions{APIKey: key, BaseURL: url})
 		return modelsFetchedMsg{gen: gen, names: names, err: err}
 	}
 }
 
-func (m *uiModel) updateModelPick(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m *uiModel) updateProviderModels(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	picker := m.modelPick
 	if picker == nil {
-		m.openModels()
+		m.openProviders()
 		return m, nil
 	}
 	if picker.handleKey(msg) {
@@ -328,10 +245,10 @@ func (m *uiModel) updateModelPick(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "esc":
 		m.modelPick = nil
-		m.openCredsForm()
+		m.openProviders()
 	case "ctrl+r":
 		if !picker.loading {
-			return m, m.fetchModels()
+			return m, m.fetchProviderModels()
 		}
 	case " ":
 		if !picker.loading && picker.err == "" {
@@ -345,61 +262,175 @@ func (m *uiModel) updateModelPick(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if !ok {
 			return m, nil
 		}
-		names := picker.selectedValues()
-		if len(names) == 0 {
-			names = []string{item.value}
-		}
-		m.saveModelSelection(picker, item.value, names)
+		m.confirmModelSelection(item.value)
 	}
 	return m, nil
 }
 
-func (m *uiModel) saveModelSelection(picker *pickerView, active string, names []string) {
-	cfg := config.ModelConfig{
-		Provider:   m.draft.Provider,
-		URL:        m.draft.URL,
-		Key:        m.draft.Key,
-		ModelNames: names,
+// confirmModelSelection 保存凭据与启用列表，并激活一个启用的模型：优先保留
+// 当前正在使用的模型，否则取列表第一个。
+func (m *uiModel) confirmModelSelection(active string) {
+	provider := m.setupProv
+	enabled := m.modelPick.selectedValues()
+	if len(enabled) == 0 {
+		enabled = []string{active}
 	}
-	id := m.editingModel
-	if id != "" {
-		if err := config.UpdateModel(id, cfg); err != nil {
-			picker.err = err.Error()
-			return
-		}
-	} else {
-		newID, err := config.AddModel(cfg)
-		if err != nil {
-			picker.err = err.Error()
-			return
-		}
-		id = newID
+	creds := config.ModelCredentials(provider.ID)
+	if m.setupKey != "" {
+		creds.Key = m.setupKey
 	}
-
+	creds.URL = m.setupURL
+	creds.Models = enabled
+	if err := config.SaveModelCredentials(provider.ID, creds); err != nil {
+		m.setStatus(true, "保存配置失败: %v", err)
+		return
+	}
+	target := enabled[0]
+	if current := config.Conf.Agent; current != nil && current.Provider == provider.ID {
+		for _, model := range enabled {
+			if model == current.Model {
+				target = model
+				break
+			}
+		}
+	}
 	m.modelPick = nil
-	m.credsForm = nil
-	m.providerPick = nil
-	m.editingModel = ""
-	m.draft = config.ModelConfig{}
-	m.applyModel(id, active)
-	m.setStatus(false, "已保存并使用 %s", agentLabel(id, active))
+	m.setupProv = chatmodel.Provider{}
+	m.setupKey = ""
+	m.setupURL = ""
+	m.activateModel(provider, target)
 }
 
-func (m *uiModel) viewModels() string {
+// openProviderModels 打开已配置厂商的启用模型列表。
+func (m *uiModel) openProviderModels(provider chatmodel.Provider) {
+	m.status = ""
+	models := config.ModelCredentials(provider.ID).Models
+	view := &modelListView{provider: provider, models: models}
+	// 当前使用的模型排在光标处。
+	if active := config.Conf.Agent; active != nil && active.Provider == provider.ID {
+		for index, model := range models {
+			if model == active.Model {
+				view.cursor = index
+			}
+		}
+	}
+	m.provModels = view
+	m.screen = screenProviderEnabled
+}
+
+func (m *uiModel) updateProviderEnabled(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	v := m.provModels
+	if v == nil {
+		m.openProviders()
+		return m, nil
+	}
+	switch msg.String() {
+	case "esc":
+		m.provModels = nil
+		m.openProviders()
+	case "up", "k":
+		if v.cursor > 0 {
+			v.cursor--
+		}
+	case "down", "j":
+		if v.cursor < len(v.models)-1 {
+			v.cursor++
+		}
+	case "a":
+		// 重新拉取 /models 更新启用列表（沿用已保存的凭据）。
+		m.setupProv = v.provider
+		m.setupKey = ""
+		m.setupURL = config.ModelCredentials(v.provider.ID).URL
+		return m, m.fetchProviderModels()
+	case "enter":
+		if model, ok := v.current(); ok {
+			m.activateModel(v.provider, model)
+		}
+	}
+	return m, nil
+}
+
+// activateModel 切换当前使用的模型。
+func (m *uiModel) activateModel(provider chatmodel.Provider, model string) {
+	cfg := config.AgentConfig{Provider: provider.ID, Model: model}
+	if current := config.Conf.Agent; current != nil {
+		cfg.Name = current.Name
+		cfg.Description = current.Description
+	}
+	ag, err := agent.Reconfigure(&cfg)
+	if err != nil {
+		m.setStatus(true, "切换模型失败: %v", err)
+		return
+	}
+	saved := config.AgentConfig{Name: ag.Name, Provider: provider.ID, Model: model, Description: cfg.Description}
+	if err := config.SetAgent(saved); err != nil {
+		m.setStatus(true, "模型已生效，但保存配置失败: %v", err)
+	} else {
+		m.setStatus(false, "已切换模型 %s", modelLabel(provider.ID, model))
+	}
+	m.modelName = modelLabel(provider.ID, model)
+	m.provModels = nil
+	m.modelPick = nil
+	m.screen = screenChat
+	m.input.Focus()
+	m.refreshChat(false)
+}
+
+func (m *uiModel) handleModelsFetched(msg modelsFetchedMsg) {
+	picker := m.modelPick
+	if picker == nil || msg.gen != m.fetchGen {
+		return
+	}
+	picker.loading = false
+	if msg.err != nil {
+		picker.err = msg.err.Error()
+		return
+	}
+	picker.err = ""
+	enabled := config.ModelCredentials(m.setupProv.ID).Models
+	picker.items = make([]pickerItem, 0, len(msg.names))
+	firstSelected := -1
+	for _, name := range msg.names {
+		selected := false
+		for _, existing := range enabled {
+			if existing == name {
+				selected = true
+				break
+			}
+		}
+		if selected && firstSelected < 0 {
+			firstSelected = len(picker.items)
+		}
+		picker.items = append(picker.items, pickerItem{label: name, value: name, selected: selected})
+	}
+	picker.filter = ""
+	picker.cursor = 0
+	if firstSelected >= 0 {
+		picker.cursor = firstSelected
+	}
+}
+
+func (m *uiModel) viewProviders() string {
 	var b strings.Builder
-	b.WriteString(styleTitle.Render("模型"))
+	b.WriteString(styleTitle.Render("模型厂商"))
 	b.WriteString("\n\n")
 
-	if len(m.models.choices) == 0 {
-		b.WriteString(styleMuted.Render("还没有模型配置，按 a 添加。"))
+	if len(m.providers.providers) == 0 {
+		b.WriteString(styleMuted.Render("没有注册的厂商。"))
 		b.WriteString("\n")
 	}
-	for i, c := range m.models.choices {
-		line := "  " + c.label()
-		if isCurrentModel(c) {
+	for i, provider := range m.providers.providers {
+		line := "  " + provider.Label
+		creds := config.ModelCredentials(provider.ID)
+		switch {
+		case isCurrentProvider(provider):
 			line += styleOK.Render("  ● 使用中")
+		case creds.Key != "":
+			line += styleMuted.Render("  已配置")
+		default:
+			line += styleMuted.Render("  未配置")
 		}
-		if i == m.models.cursor {
+		if i == m.providers.cursor {
 			b.WriteString(styleSelected.Render(line))
 		} else {
 			b.WriteString(styleBody.Render(line))
@@ -408,27 +439,41 @@ func (m *uiModel) viewModels() string {
 	}
 
 	b.WriteString("\n")
-	if m.models.confirmDelete {
-		if c, ok := m.models.current(); ok {
-			b.WriteString(styleError.Render(fmt.Sprintf("删除 %s？再次按 d 确认，Esc 取消。", c.label())))
-		}
-	} else {
-		b.WriteString(styleMuted.Render("Enter 使用 · a 添加 · e 编辑 · d 删除 · Esc 返回"))
-	}
+	b.WriteString(styleMuted.Render("↑/↓ 选择 · Enter 配置/切换 · Esc 返回"))
 	b.WriteString("\n\n")
 	if line := m.statusLine(); line != "" {
 		b.WriteString(line)
 		b.WriteString("\n")
 	}
-	b.WriteString(styleFooter.Render("配置保存在 ~/.digtast/config.json"))
+	b.WriteString(styleFooter.Render("厂商在代码中注册；凭据与启用模型保存在 ~/.digtast/config.json"))
 	return b.String()
 }
 
-func (m *uiModel) viewProviderPicker() string {
+func (m *uiModel) viewProviderEnabled() string {
 	var b strings.Builder
-	b.WriteString(m.providerPick.view(m.pickerRows(), m.spinner.View()))
+	v := m.provModels
+	b.WriteString(styleTitle.Render(v.provider.Label + " · 启用的模型"))
+	b.WriteString("\n\n")
+
+	if len(v.models) == 0 {
+		b.WriteString(styleMuted.Render("还没有启用的模型，按 a 从模型列表添加。"))
+		b.WriteString("\n")
+	}
+	for i, model := range v.models {
+		line := "  " + model
+		if isCurrentModel(v.provider.ID, model) {
+			line += styleOK.Render("  ● 使用中")
+		}
+		if i == v.cursor {
+			b.WriteString(styleSelected.Render(line))
+		} else {
+			b.WriteString(styleBody.Render(line))
+		}
+		b.WriteString("\n")
+	}
+
 	b.WriteString("\n")
-	b.WriteString(styleMuted.Render("Enter 选择 · 输入过滤 · Esc 返回"))
+	b.WriteString(styleMuted.Render("Enter 使用 · a 重新获取模型列表 · Esc 返回"))
 	b.WriteString("\n\n")
 	if line := m.statusLine(); line != "" {
 		b.WriteString(line)
@@ -437,21 +482,38 @@ func (m *uiModel) viewProviderPicker() string {
 	return b.String()
 }
 
-func (m *uiModel) viewModelCreds() string {
-	return m.viewForm(m.credsForm, "Tab 切换字段 · Enter 获取模型列表 · Esc 返回")
+func (m *uiModel) viewProviderKey() string {
+	return m.viewForm(m.setupForm, "Tab 切换字段 · Enter 下一步 · Esc 取消")
 }
 
-func (m *uiModel) viewModelPick() string {
+func (m *uiModel) viewBaseURLPick() string {
+	var b strings.Builder
+	b.WriteString(m.urlPick.view(m.pickerRows(), m.spinner.View()))
+	b.WriteString("\n")
+	b.WriteString(styleMuted.Render("Enter 选择 · Esc 取消"))
+	b.WriteString("\n\n")
+	if line := m.statusLine(); line != "" {
+		b.WriteString(line)
+		b.WriteString("\n")
+	}
+	return b.String()
+}
+
+func (m *uiModel) viewURLForm() string {
+	return m.viewForm(m.setupForm, "Enter 获取模型列表 · Esc 返回")
+}
+
+func (m *uiModel) viewProviderModels() string {
 	var b strings.Builder
 	b.WriteString(m.modelPick.view(m.pickerRows(), m.spinner.View()))
 	b.WriteString("\n")
 	switch {
 	case m.modelPick.loading:
-		b.WriteString(styleMuted.Render("Esc 返回"))
+		b.WriteString(styleMuted.Render("Esc 取消"))
 	case m.modelPick.err != "":
-		b.WriteString(styleMuted.Render("Ctrl+R 重试 · Esc 返回"))
+		b.WriteString(styleMuted.Render("Ctrl+R 重试 · Esc 取消"))
 	default:
-		b.WriteString(styleMuted.Render("Space 多选 · Enter 确认 · 输入过滤 · Ctrl+R 重新获取 · Esc 返回"))
+		b.WriteString(styleMuted.Render("Space 启用/取消 · Enter 确认 · 输入过滤 · Ctrl+R 重新获取 · Esc 取消"))
 	}
 	b.WriteString("\n\n")
 	if line := m.statusLine(); line != "" {
@@ -469,60 +531,20 @@ func (m *uiModel) pickerRows() int {
 	return rows
 }
 
-func isCurrentModel(c modelChoice) bool {
+func isCurrentProvider(provider chatmodel.Provider) bool {
 	cfg := config.Conf.Agent
-	if cfg == nil {
-		return false
-	}
-	if cfg.Model != c.id {
-		return false
-	}
-	return cfg.ModelKind == "" || cfg.ModelKind == c.kind
+	return cfg != nil && cfg.Provider == provider.ID
 }
 
-func agentLabel(id, kind string) string {
-	mc, ok := config.Conf.Models[id]
-	if !ok {
-		return kind
-	}
-	label := openai.ProviderLabel(mc.Provider)
-	if kind != "" {
-		label += " · " + kind
-	}
-	return label
+func isCurrentModel(provider, model string) bool {
+	cfg := config.Conf.Agent
+	return cfg != nil && cfg.Provider == provider && cfg.Model == model
 }
 
-func (m *uiModel) handleModelsFetched(msg modelsFetchedMsg) {
-	picker := m.modelPick
-	if picker == nil || msg.gen != m.fetchGen {
-		return
+// modelLabel 返回「厂商 · 模型」展示名。
+func modelLabel(provider, model string) string {
+	if info, ok := chatmodel.FindProvider(provider); ok {
+		return info.Label + " · " + model
 	}
-	picker.loading = false
-	if msg.err != nil {
-		picker.err = msg.err.Error()
-		return
-	}
-	picker.err = ""
-	picker.items = make([]pickerItem, 0, len(msg.names))
-	firstSelected := -1
-	for _, name := range msg.names {
-		selected := false
-		if m.editingModel != "" {
-			for _, existing := range m.draft.ModelNames {
-				if existing == name {
-					selected = true
-					break
-				}
-			}
-		}
-		if selected && firstSelected < 0 {
-			firstSelected = len(picker.items)
-		}
-		picker.items = append(picker.items, pickerItem{label: name, value: name, selected: selected})
-	}
-	picker.filter = ""
-	picker.cursor = 0
-	if firstSelected >= 0 {
-		picker.cursor = firstSelected
-	}
+	return model
 }

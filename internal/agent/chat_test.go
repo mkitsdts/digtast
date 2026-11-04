@@ -2,9 +2,11 @@ package agent
 
 import (
 	"context"
-	"digital-labor/config"
 	"os"
 	"testing"
+
+	_ "digital-labor/chatmodel/deepseek"
+	"digital-labor/config"
 )
 
 func TestChat(t *testing.T) {
@@ -12,17 +14,12 @@ func TestChat(t *testing.T) {
 		t.Skip("set TEST_INTEGRATION=1 to run")
 	}
 	config.Conf.Models = map[string]config.ModelConfig{
-		"doubao": {
-			Provider:   "doubao",
-			Key:        "ark-api-key",
-			URL:        "https://ark.cn-beijing.volces.com/api/v3",
-			ModelNames: []string{"doubao-seed-2-0-lite-260215"},
-		},
+		"deepseek": {Key: os.Getenv("DEEPSEEK_API_KEY")},
 	}
 
 	agent, err := newAgent(&config.AgentConfig{
 		Name:        "test-agent",
-		Model:       "doubao",
+		Model:       "deepseek-chat",
 		Description: "test agent",
 	})
 	if err != nil {

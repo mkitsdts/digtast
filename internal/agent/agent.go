@@ -102,8 +102,16 @@ func newAgent(cfg *config.AgentConfig) (*Agent, error) {
 	if cfg.Name == "" {
 		cfg.Name = uuid.NewString()
 	}
+	if cfg.Provider == "" {
+		return nil, errors.New("model provider is required")
+	}
 	if cfg.Model == "" {
-		return nil, errors.New("agent model is required")
+		// 未指定模型时使用该厂商启用的第一个模型。
+		models := config.ModelCredentials(cfg.Provider).Models
+		if len(models) == 0 {
+			return nil, fmt.Errorf("provider %s has no enabled models", cfg.Provider)
+		}
+		cfg.Model = models[0]
 	}
 	if cfg.Description == "" {
 		cfg.Description = defaultModelDescription
@@ -112,17 +120,7 @@ func newAgent(cfg *config.AgentConfig) (*Agent, error) {
 	if err != nil {
 		return nil, fmt.Errorf("create memory store: %w", err)
 	}
-	mCfg, ok := config.FindModelConfig(cfg.Model)
-	if !ok {
-		return nil, fmt.Errorf("model config not found for: %s", cfg.Model)
-	}
-	if cfg.ModelKind == "" || cfg.ModelKind == "default" {
-		if len(mCfg.ModelNames) == 0 {
-			return nil, fmt.Errorf("model config %q contains no model names", cfg.Model)
-		}
-		cfg.ModelKind = mCfg.ModelNames[0]
-	}
-	cm, err := newChatModel(mCfg, cfg.ModelKind)
+	cm, err := newChatModel(cfg.Provider, cfg.Model)
 	if err != nil {
 		return nil, err
 	}

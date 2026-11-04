@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"digital-labor/component/chatmodel"
 	"digital-labor/config"
 	"digital-labor/gateway"
 	"digital-labor/internal/agent"
@@ -20,10 +21,12 @@ type screenID int
 
 const (
 	screenChat screenID = iota
-	screenModels
-	screenProvider
-	screenModelCreds
-	screenModelPick
+	screenProviders
+	screenProviderKey
+	screenProviderURL
+	screenProviderURLForm
+	screenProviderModels
+	screenProviderEnabled
 	screenChannels
 	screenChannelForm
 	screenHelp
@@ -40,7 +43,7 @@ type command struct {
 }
 
 var chatCommands = []command{
-	{name: "model", desc: "选择、添加、编辑、删除模型（自动获取模型列表）"},
+	{name: "model", desc: "配置厂商（API Key、Base URL）并启用模型"},
 	{name: "channel", desc: "配置消息渠道，启用或停用"},
 	{name: "new", desc: "清空历史，开始新会话"},
 	{name: "help", desc: "查看快捷键和命令"},
@@ -95,16 +98,19 @@ type uiModel struct {
 	statusErr bool
 	modelName string
 
-	models       *modelView
-	providerPick *pickerView
-	modelPick    *pickerView
-	credsForm    *formView
-	channels     *channelView
-	channelForm  *formView
+	providers  *providerView
+	provModels *modelListView
+	modelPick  *pickerView
+	urlPick    *pickerView
 
-	draft        config.ModelConfig
-	editingModel string
-	fetchGen     int
+	setupProv chatmodel.Provider
+	setupKey  string
+	setupURL  string
+	setupForm *formView
+	fetchGen  int
+
+	channels    *channelView
+	channelForm *formView
 }
 
 // RunTUI starts the full-screen terminal UI.
@@ -143,10 +149,12 @@ func newUIModel(ctx context.Context) *uiModel {
 
 func (m *uiModel) bootstrap() {
 	if cfg := config.Conf.Agent; cfg != nil {
-		if _, ok := config.FindModelConfig(cfg.Model); !ok {
+		_, registered := chatmodel.FindProvider(cfg.Provider)
+		creds := config.ModelCredentials(cfg.Provider)
+		if cfg.Provider == "" || cfg.Model == "" || !registered || creds.Key == "" {
 			config.Conf.Agent = nil
 			_ = config.SaveConfig()
-			m.setStatus(true, "已保存的模型配置不存在，请重新选择模型")
+			m.setStatus(true, "已保存的模型配置不可用，请重新配置厂商")
 		} else if ag, err := agent.Initialize(cfg); err != nil {
 			config.Conf.Agent = nil
 			_ = config.SaveConfig()
@@ -155,16 +163,13 @@ func (m *uiModel) bootstrap() {
 			if err := config.SetAgent(*cfg); err != nil {
 				m.setStatus(true, "保存配置失败: %v", err)
 			}
-			m.modelName = agentLabel(cfg.Model, cfg.ModelKind)
+			m.modelName = modelLabel(cfg.Provider, cfg.Model)
 			m.loadHistory(ag)
 			m.screen = screenChat
 			return
 		}
 	}
-	m.openModels()
-	if m.models != nil && len(m.models.choices) == 0 {
-		m.startModelWizard("")
-	}
+	m.openProviders()
 }
 
 func (m *uiModel) loadHistory(ag *agent.Agent) {
@@ -193,8 +198,8 @@ func (m *uiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
-		if m.credsForm != nil {
-			m.credsForm.setWidth(m.width)
+		if m.setupForm != nil {
+			m.setupForm.setWidth(m.width)
 		}
 		if m.channelForm != nil {
 			m.channelForm.setWidth(m.width)
@@ -214,14 +219,18 @@ func (m *uiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch m.screen {
 		case screenChat:
 			return m.updateChat(msg)
-		case screenModels:
-			return m.updateModels(msg)
-		case screenProvider:
-			return m.updateProviderPicker(msg)
-		case screenModelCreds:
-			return m.updateModelCreds(msg)
-		case screenModelPick:
-			return m.updateModelPick(msg)
+		case screenProviders:
+			return m.updateProviders(msg)
+		case screenProviderKey:
+			return m.updateProviderKey(msg)
+		case screenProviderURL:
+			return m.updateBaseURLPick(msg)
+		case screenProviderURLForm:
+			return m.updateURLForm(msg)
+		case screenProviderModels:
+			return m.updateProviderModels(msg)
+		case screenProviderEnabled:
+			return m.updateProviderEnabled(msg)
 		case screenChannels:
 			return m.updateChannels(msg)
 		case screenChannelForm:
@@ -275,9 +284,9 @@ func (m *uiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch m.screen {
 	case screenChat:
 		m.input, cmd = m.input.Update(msg)
-	case screenModelCreds:
-		if m.credsForm != nil {
-			cmd = m.credsForm.update(msg)
+	case screenProviderKey, screenProviderURLForm:
+		if m.setupForm != nil {
+			cmd = m.setupForm.update(msg)
 		}
 	case screenChannelForm:
 		if m.channelForm != nil {
@@ -363,7 +372,7 @@ func (m *uiModel) runCommand(name string) tea.Cmd {
 	}
 	switch name {
 	case "model", "models":
-		m.openModels()
+		m.openProviders()
 	case "channel", "channels":
 		m.openChannels()
 	case "new", "reset":
@@ -383,8 +392,8 @@ func (m *uiModel) runCommand(name string) tea.Cmd {
 func (m *uiModel) newSession() {
 	ag, err := agent.Instance()
 	if err != nil {
-		m.setStatus(true, "还没有可用模型，请先选择模型")
-		m.openModels()
+		m.setStatus(true, "还没有可用模型，请先配置厂商")
+		m.openProviders()
 		return
 	}
 	if err := ag.ClearHistory(); err != nil {
@@ -403,8 +412,8 @@ func (m *uiModel) send(text string) tea.Cmd {
 	}
 	ag, err := agent.Instance()
 	if err != nil {
-		m.setStatus(true, "还没有可用模型，请先选择模型")
-		m.openModels()
+		m.setStatus(true, "还没有可用模型，请先配置厂商")
+		m.openProviders()
 		return nil
 	}
 
@@ -613,29 +622,41 @@ func (m *uiModel) viewPalette() string {
 
 func (m *uiModel) View() string {
 	switch m.screen {
-	case screenModels:
-		if m.models == nil {
-			m.models = newModelView()
+	case screenProviders:
+		if m.providers == nil {
+			m.providers = newProviderView()
 		}
-		return m.viewModels()
-	case screenProvider:
-		if m.providerPick == nil {
+		return m.viewProviders()
+	case screenProviderKey:
+		if m.setupForm == nil {
 			m.screen = screenChat
 			return m.viewChat()
 		}
-		return m.viewProviderPicker()
-	case screenModelCreds:
-		if m.credsForm == nil {
+		return m.viewProviderKey()
+	case screenProviderURL:
+		if m.urlPick == nil {
 			m.screen = screenChat
 			return m.viewChat()
 		}
-		return m.viewModelCreds()
-	case screenModelPick:
+		return m.viewBaseURLPick()
+	case screenProviderURLForm:
+		if m.setupForm == nil {
+			m.screen = screenChat
+			return m.viewChat()
+		}
+		return m.viewURLForm()
+	case screenProviderModels:
 		if m.modelPick == nil {
 			m.screen = screenChat
 			return m.viewChat()
 		}
-		return m.viewModelPick()
+		return m.viewProviderModels()
+	case screenProviderEnabled:
+		if m.provModels == nil {
+			m.screen = screenChat
+			return m.viewChat()
+		}
+		return m.viewProviderEnabled()
 	case screenChannels:
 		if m.channels == nil {
 			m.channels = newChannelView()
@@ -715,7 +736,7 @@ func (m *uiModel) viewHelp() string {
 		"  Ctrl+C     取消回复；空闲时退出",
 		"",
 		styleFocus.Render("命令"),
-		"  /model     选择、添加、编辑、删除模型（自动获取模型列表）",
+		"  /model     配置厂商（API Key、Base URL）并启用模型",
 		"  /channel   配置消息渠道，启用或停用",
 		"  /new       清空历史，开始新会话",
 		"  /help      查看本帮助",

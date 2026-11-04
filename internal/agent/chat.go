@@ -58,7 +58,11 @@ func (dga *Agent) run(ctx context.Context, req ChatRequest) (chan string, error)
 			Messages: inputMessages,
 			Stream:   req.IsStream,
 			Emit: func(event agentloop.Event) error {
-				if event.Type == agentloop.EventTextDelta && event.Delta != "" {
+				switch event.Type {
+				case agentloop.EventTextDelta, agentloop.EventReasoningDelta:
+					if event.Delta == "" {
+						return nil
+					}
 					select {
 					case output <- event.Delta:
 					case <-runCtx.Done():

@@ -8,8 +8,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-
-	"github.com/google/uuid"
 )
 
 type Config struct {
@@ -27,8 +25,8 @@ type BrowserConfig struct {
 
 type AgentConfig struct {
 	Name        string `json:"name"`
+	Provider    string `json:"provider"`
 	Model       string `json:"model"`
-	ModelKind   string `json:"model_kind,omitempty"`
 	Description string `json:"description,omitempty"`
 }
 
@@ -39,75 +37,26 @@ type MemoryConfig struct {
 	CleanInterval   int   `json:"clean_interval"`    // memory.md 清理间隔（轮次）
 }
 
+// ModelConfig 保存某个厂商（Provider）的接入配置，Models 的键为 Provider 名
+// （与模型注册表一致）。URL 非空时替换厂商的默认基础地址，Models 为启用列表。
 type ModelConfig struct {
-	ModelNames []string `json:"model_names"` // 具体的模型名称列表，如 ["gpt-3.5-turbo", "gpt-4"]
-	Provider   string   `json:"provider"`
-	URL        string   `json:"url"`
-	Key        string   `json:"key"`
+	Key    string   `json:"key"`
+	URL    string   `json:"url,omitempty"`
+	Models []string `json:"models,omitempty"`
 }
 
-func FindModelConfig(modelName string) (ModelConfig, bool) {
-	if mCfg, ok := Conf.Models[modelName]; ok {
-		return mCfg, true
-	}
-
-	for _, mCfg := range Conf.Models {
-		for _, name := range mCfg.ModelNames {
-			if name == modelName {
-				return mCfg, true
-			}
-		}
-	}
-	return ModelConfig{}, false
+// ModelCredentials 返回某个 Provider 的凭据配置，未配置时返回零值。
+func ModelCredentials(provider string) ModelConfig {
+	return Conf.Models[provider]
 }
 
-// AddModel stores a new model configuration under a generated identifier and
-// returns that identifier.
-func AddModel(model ModelConfig) (string, error) {
+// SaveModelCredentials 保存某个 Provider 的凭据并落盘。
+func SaveModelCredentials(provider string, cfg ModelConfig) error {
 	if Conf.Models == nil {
 		Conf.Models = make(map[string]ModelConfig)
 	}
-	id := uuid.NewString()
-	Conf.Models[id] = model
-	return id, SaveConfig()
-}
-
-func UpdateModel(id string, model ModelConfig) error {
-	if _, ok := Conf.Models[id]; !ok {
-		return fmt.Errorf("model config not found: %s", id)
-	}
-	Conf.Models[id] = model
+	Conf.Models[provider] = cfg
 	return SaveConfig()
-}
-
-func RemoveModel(id string) error {
-	delete(Conf.Models, id)
-	return SaveConfig()
-}
-
-// FindModelByProvider returns a stored model config for a provider, preferring
-// the lexicographically smallest key so the result is deterministic.
-func FindModelByProvider(provider string) (ModelConfig, bool) {
-	ids := make([]string, 0, len(Conf.Models))
-	for id := range Conf.Models {
-		ids = append(ids, id)
-	}
-	sort.Strings(ids)
-	for _, id := range ids {
-		cfg := Conf.Models[id]
-		if normalizeProvider(cfg.Provider) == normalizeProvider(provider) {
-			return cfg, true
-		}
-	}
-	return ModelConfig{}, false
-}
-
-func normalizeProvider(provider string) string {
-	provider = strings.ToLower(strings.TrimSpace(provider))
-	if provider == "ark" {
-		return "doubao"
-	}
-	return provider
 }
 
 // SetAgent stores the selected model as the singleton agent configuration.
@@ -174,6 +123,109 @@ func init() {
 	Conf.WorkSpaceDir = filepath.Join(homedir, ".digtast")
 }
 
+// storedConfig 同时兼容新旧两种落盘格式。旧格式的模型以 uuid 为键并内嵌
+// provider/model_names，Agent 记录 model 而非 provider；新格式的模型直接以
+// Provider 为键，Agent 记录 provider + model。
+type storedConfig struct {
+	WorkSpaceDir string                    `json:"workspace_dir"`
+	Memory       MemoryConfig              `json:"memory"`
+	Channels     map[string]map[string]any `json:"channels"`
+	Browser      BrowserConfig             `json:"browser"`
+	Models       map[string]storedModel    `json:"model"`
+	Agent        *storedAgent              `json:"agent"`
+}
+
+// storedModel 兼容新旧字段：新格式用 models（启用列表），旧格式用 provider +
+// model_names，以 provider 是否非空区分。
+type storedModel struct {
+	Key        string   `json:"key"`
+	URL        string   `json:"url,omitempty"`
+	Models     []string `json:"models,omitempty"`
+	Provider   string   `json:"provider,omitempty"`
+	ModelNames []string `json:"model_names,omitempty"`
+}
+
+// storedAgent 兼容新旧字段：旧格式的 model 指向模型配置的 uuid 键，真实模型
+// 名在 model_kind；新格式直接是 provider + model。
+type storedAgent struct {
+	Name        string `json:"name"`
+	Provider    string `json:"provider,omitempty"`
+	Model       string `json:"model"`
+	ModelKind   string `json:"model_kind,omitempty"`
+	Description string `json:"description"`
+}
+
+// toConfig 把落盘配置归一为新结构，返回配置是否来自旧格式（需要回写）。
+func (s storedConfig) toConfig() (Config, bool) {
+	conf := Config{
+		WorkSpaceDir: s.WorkSpaceDir, Memory: s.Memory, Channels: s.Channels, Browser: s.Browser,
+		Models: make(map[string]ModelConfig, len(s.Models)),
+	}
+	legacy := false
+	legacyProviderOf := map[string]string{} // 旧格式 uuid 键 → provider，供 Agent 迁移
+
+	// 排序保证同一 Provider 出现多条旧配置时迁移结果确定。
+	keys := make([]string, 0, len(s.Models))
+	for key := range s.Models {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		model := s.Models[key]
+		provider := strings.ToLower(strings.TrimSpace(model.Provider))
+		if provider == "" {
+			conf.Models[key] = ModelConfig{Key: model.Key, URL: model.URL, Models: model.Models}
+			continue
+		}
+		// 旧格式：按 provider 归并凭据与启用列表。
+		legacy = true
+		legacyProviderOf[key] = provider
+		entry := conf.Models[provider]
+		if model.Key != "" && entry.Key == "" {
+			entry.Key, entry.URL = model.Key, model.URL
+		}
+		entry.Models = mergeUnique(entry.Models, model.ModelNames)
+		conf.Models[provider] = entry
+	}
+	if s.Agent != nil {
+		agent := AgentConfig{
+			Name: s.Agent.Name, Provider: s.Agent.Provider, Model: s.Agent.Model, Description: s.Agent.Description,
+		}
+		if s.Agent.ModelKind != "" && s.Agent.ModelKind != "default" {
+			// 旧格式中 model_kind 才是真实的模型名。
+			agent.Model = s.Agent.ModelKind
+			legacy = true
+		}
+		if agent.Provider == "" && s.Agent.Model != "" {
+			if provider, ok := legacyProviderOf[s.Agent.Model]; ok {
+				agent.Provider = provider
+				legacy = true
+			} else if len(conf.Models) == 1 {
+				// 只配置过一个厂商时可以唯一确定。
+				for provider := range conf.Models {
+					agent.Provider = provider
+				}
+			}
+		}
+		conf.Agent = &agent
+	}
+	return conf, legacy
+}
+
+// mergeUnique 合并两个列表，保序去重。
+func mergeUnique(base, extra []string) []string {
+	seen := make(map[string]struct{}, len(base)+len(extra))
+	merged := make([]string, 0, len(base)+len(extra))
+	for _, item := range append(append([]string(nil), base...), extra...) {
+		if _, ok := seen[item]; ok {
+			continue
+		}
+		seen[item] = struct{}{}
+		merged = append(merged, item)
+	}
+	return merged
+}
+
 func LoadConfig() error {
 	path := filepath.Join(Conf.WorkSpaceDir, "config.json")
 	data, err := os.ReadFile(path)
@@ -186,10 +238,18 @@ func LoadConfig() error {
 		return err
 	}
 
-	err = json.Unmarshal(data, &Conf)
-	if err != nil {
+	var stored storedConfig
+	if err := json.Unmarshal(data, &stored); err != nil {
 		slog.Info("Config file parse failed, using default config", "name", path)
 		Conf = DefaultConfig()
+		return SaveConfig()
+	}
+	conf, legacy := stored.toConfig()
+	if conf.WorkSpaceDir == "" {
+		conf.WorkSpaceDir = Conf.WorkSpaceDir
+	}
+	Conf = conf
+	if legacy {
 		return SaveConfig()
 	}
 	slog.Debug("config loaded", "path", path)
