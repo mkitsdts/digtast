@@ -27,6 +27,7 @@ const (
 	screenProviderURLForm
 	screenProviderModels
 	screenProviderEnabled
+	screenSkills
 	screenChannels
 	screenChannelForm
 	screenHelp
@@ -44,6 +45,7 @@ type command struct {
 
 var chatCommands = []command{
 	{name: "model", desc: "配置厂商（API Key、Base URL）并启用模型"},
+	{name: "skills", desc: "查看扫描到的 skills，启用或停用"},
 	{name: "channel", desc: "配置消息渠道，启用或停用"},
 	{name: "new", desc: "清空历史，开始新会话"},
 	{name: "help", desc: "查看快捷键和命令"},
@@ -102,6 +104,7 @@ type uiModel struct {
 	provModels *modelListView
 	modelPick  *pickerView
 	urlPick    *pickerView
+	skillsView *skillView
 
 	setupProv chatmodel.Provider
 	setupKey  string
@@ -231,6 +234,8 @@ func (m *uiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.updateProviderModels(msg)
 		case screenProviderEnabled:
 			return m.updateProviderEnabled(msg)
+		case screenSkills:
+			return m.updateSkills(msg)
 		case screenChannels:
 			return m.updateChannels(msg)
 		case screenChannelForm:
@@ -373,6 +378,8 @@ func (m *uiModel) runCommand(name string) tea.Cmd {
 	switch name {
 	case "model", "models":
 		m.openProviders()
+	case "skills", "skill":
+		m.openSkills()
 	case "channel", "channels":
 		m.openChannels()
 	case "new", "reset":
@@ -657,6 +664,12 @@ func (m *uiModel) View() string {
 			return m.viewChat()
 		}
 		return m.viewProviderEnabled()
+	case screenSkills:
+		if m.skillsView == nil {
+			m.screen = screenChat
+			return m.viewChat()
+		}
+		return m.viewSkills()
 	case screenChannels:
 		if m.channels == nil {
 			m.channels = newChannelView()
@@ -737,6 +750,7 @@ func (m *uiModel) viewHelp() string {
 		"",
 		styleFocus.Render("命令"),
 		"  /model     配置厂商（API Key、Base URL）并启用模型",
+		"  /skills    查看扫描到的 skills，启用或停用",
 		"  /channel   配置消息渠道，启用或停用",
 		"  /new       清空历史，开始新会话",
 		"  /help      查看本帮助",

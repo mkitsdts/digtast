@@ -2,6 +2,7 @@ package skill
 
 import (
 	"context"
+	"digital-labor/config"
 	"digital-labor/internal/agent/workspace"
 	"errors"
 	"fmt"
@@ -26,7 +27,32 @@ type Manager struct {
 }
 
 func NewManager() *Manager {
-	return &Manager{baseDir: workspace.SkillsDir()}
+	manager := &Manager{baseDir: workspace.SkillsDir()}
+	manager.migrateDisabledMarkers()
+	return manager
+}
+
+// migrateDisabledMarkers 把旧版 .disabled 标记文件迁移到配置文件并删除标记，
+// skill 的启用状态统一记录在 config.Conf.Skills 中。
+func (m *Manager) migrateDisabledMarkers() {
+	entries, err := os.ReadDir(m.baseDir)
+	if err != nil {
+		return
+	}
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		marker := filepath.Join(m.baseDir, name, ".disabled")
+		if _, err := os.Stat(marker); err != nil {
+			continue
+		}
+		if !config.IsSkillDisabled(name) {
+			_ = config.SetSkillEnabled(name, false)
+		}
+		_ = os.Remove(marker)
+	}
 }
 
 func (m *Manager) GetAllSkills() ([]SkillInfo, error) {
@@ -42,17 +68,11 @@ func (m *Manager) GetAllSkills() ([]SkillInfo, error) {
 	for _, entry := range entries {
 		if entry.IsDir() {
 			name := entry.Name()
-			enabled := true
-			// Check if a .disabled file exists in the directory
-			if _, err := os.Stat(filepath.Join(m.baseDir, name, ".disabled")); err == nil {
-				enabled = false
-			}
-
 			description, _ := m.description(name)
 			skills = append(skills, SkillInfo{
 				Name:        name,
 				Description: description,
-				Enabled:     enabled,
+				Enabled:     !config.IsSkillDisabled(name),
 			})
 		}
 	}
@@ -71,10 +91,8 @@ func (m *Manager) LoadSkill(ctx context.Context, name string, authorize Authoriz
 		}
 		return "", fmt.Errorf("skill %q not found: %w", name, err)
 	}
-	if _, err := os.Stat(filepath.Join(path, ".disabled")); err == nil {
+	if config.IsSkillDisabled(name) {
 		return "", fmt.Errorf("skill %q is disabled", name)
-	} else if !errors.Is(err, os.ErrNotExist) {
-		return "", fmt.Errorf("check skill %q state: %w", name, err)
 	}
 	description, _ := m.description(name)
 	info := SkillInfo{Name: name, Description: description, Enabled: true}
@@ -141,6 +159,7 @@ func (m *Manager) description(name string) (string, error) {
 	return strings.TrimSpace(metadata.Description), nil
 }
 
+// DisableSkill 停用 skill：不注入提示词，也不允许 load_skill 加载。
 func (m *Manager) DisableSkill(name string) error {
 	if err := validateSkillName(name); err != nil {
 		return err
@@ -149,18 +168,15 @@ func (m *Manager) DisableSkill(name string) error {
 	if _, err := os.Stat(path); err != nil {
 		return err
 	}
-	return os.WriteFile(filepath.Join(path, ".disabled"), []byte(""), 0644)
+	return config.SetSkillEnabled(name, false)
 }
 
+// EnableSkill 启用 skill。
 func (m *Manager) EnableSkill(name string) error {
 	if err := validateSkillName(name); err != nil {
 		return err
 	}
-	err := os.Remove(filepath.Join(m.baseDir, name, ".disabled"))
-	if errors.Is(err, os.ErrNotExist) {
-		return nil
-	}
-	return err
+	return config.SetSkillEnabled(name, true)
 }
 
 func (m *Manager) AddSkill(name string, description string) error {

@@ -110,6 +110,55 @@ func TestLoadConfigKeepsNewFormat(t *testing.T) {
 	}
 }
 
+func TestSkillEnabledState(t *testing.T) {
+	previous := Conf
+	t.Cleanup(func() { Conf = previous })
+	Conf = DefaultConfig()
+	Conf.WorkSpaceDir = t.TempDir()
+
+	if IsSkillDisabled("review") {
+		t.Fatal("skills should be enabled by default")
+	}
+	if err := SetSkillEnabled("review", false); err != nil {
+		t.Fatal(err)
+	}
+	if !IsSkillDisabled("review") {
+		t.Fatal("review should be disabled")
+	}
+	if err := SetSkillEnabled("review", true); err != nil {
+		t.Fatal(err)
+	}
+	if IsSkillDisabled("review") {
+		t.Fatal("review should be re-enabled")
+	}
+	if err := SetSkillEnabled("  ", false); err == nil {
+		t.Fatal("expected an error for an empty skill name")
+	}
+}
+
+func TestLoadConfigKeepsSkillsState(t *testing.T) {
+	previous := Conf
+	t.Cleanup(func() { Conf = previous })
+	Conf = DefaultConfig()
+	Conf.WorkSpaceDir = t.TempDir()
+
+	content := `{
+  "agent": null,
+  "model": {},
+  "skills": {"disabled": ["review"]},
+  "memory": {}, "channels": {}, "browser": {}
+}`
+	if err := os.WriteFile(filepath.Join(Conf.WorkSpaceDir, "config.json"), []byte(content), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := LoadConfig(); err != nil {
+		t.Fatal(err)
+	}
+	if !IsSkillDisabled("review") {
+		t.Fatal("skills state was lost on reload")
+	}
+}
+
 func TestLoadConfigInfersProviderFromSingleEntry(t *testing.T) {
 	previous := Conf
 	t.Cleanup(func() { Conf = previous })

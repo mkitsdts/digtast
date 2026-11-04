@@ -2,10 +2,12 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -15,8 +17,39 @@ type Config struct {
 	Agent        *AgentConfig              `json:"agent,omitempty"`
 	Memory       MemoryConfig              `json:"memory"`
 	Models       map[string]ModelConfig    `json:"model"`
+	Skills       SkillsConfig              `json:"skills"`
 	Channels     map[string]map[string]any `json:"channels"`
 	Browser      BrowserConfig             `json:"browser"`
+}
+
+// SkillsConfig 记录扫描到的 skill 的启用状态；Disabled 中的 skill 不会注入
+// 提示词，也不允许通过 load_skill 加载。
+type SkillsConfig struct {
+	Disabled []string `json:"disabled,omitempty"`
+}
+
+// IsSkillDisabled 报告某个 skill 是否处于停用状态。
+func IsSkillDisabled(name string) bool {
+	return slices.Contains(Conf.Skills.Disabled, name)
+}
+
+// SetSkillEnabled 更新 skill 的启用状态并落盘。
+func SetSkillEnabled(name string, enabled bool) error {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return errors.New("skill name is empty")
+	}
+	disabled := make([]string, 0, len(Conf.Skills.Disabled))
+	for _, item := range Conf.Skills.Disabled {
+		if item != name {
+			disabled = append(disabled, item)
+		}
+	}
+	if !enabled {
+		disabled = append(disabled, name)
+	}
+	Conf.Skills.Disabled = disabled
+	return SaveConfig()
 }
 
 type BrowserConfig struct {
@@ -129,6 +162,7 @@ func init() {
 type storedConfig struct {
 	WorkSpaceDir string                    `json:"workspace_dir"`
 	Memory       MemoryConfig              `json:"memory"`
+	Skills       SkillsConfig              `json:"skills"`
 	Channels     map[string]map[string]any `json:"channels"`
 	Browser      BrowserConfig             `json:"browser"`
 	Models       map[string]storedModel    `json:"model"`
@@ -158,7 +192,8 @@ type storedAgent struct {
 // toConfig 把落盘配置归一为新结构，返回配置是否来自旧格式（需要回写）。
 func (s storedConfig) toConfig() (Config, bool) {
 	conf := Config{
-		WorkSpaceDir: s.WorkSpaceDir, Memory: s.Memory, Channels: s.Channels, Browser: s.Browser,
+		WorkSpaceDir: s.WorkSpaceDir, Memory: s.Memory, Skills: s.Skills,
+		Channels: s.Channels, Browser: s.Browser,
 		Models: make(map[string]ModelConfig, len(s.Models)),
 	}
 	legacy := false

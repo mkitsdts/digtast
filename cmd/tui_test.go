@@ -6,6 +6,7 @@ import (
 
 	"digital-labor/component/chatmodel"
 	"digital-labor/config"
+	"digital-labor/internal/agent/skill"
 )
 
 func TestProviderViewListsRegisteredProviders(t *testing.T) {
@@ -50,6 +51,33 @@ func TestModelLabel(t *testing.T) {
 	}
 	if got := modelLabel("unknown", "m"); got != "m" {
 		t.Fatalf("unexpected fallback label %q", got)
+	}
+}
+
+func TestSkillViewToggle(t *testing.T) {
+	previous := config.Conf
+	t.Cleanup(func() { config.Conf = previous })
+	config.Conf = config.DefaultConfig()
+	config.Conf.WorkSpaceDir = t.TempDir()
+
+	manager := skill.NewManager()
+	if err := manager.AddSkill("review", "Review code carefully"); err != nil {
+		t.Fatal(err)
+	}
+	view := &skillView{skills: []skill.SkillInfo{
+		{Name: "review", Description: "Review code carefully", Enabled: true},
+	}}
+	m := &uiModel{skillsView: view}
+	m.toggleSkill()
+	if !config.IsSkillDisabled("review") {
+		t.Fatal("expected review to be disabled after toggle")
+	}
+	if view.skills[0].Enabled {
+		t.Fatal("expected the view state to flip")
+	}
+	m.toggleSkill()
+	if config.IsSkillDisabled("review") {
+		t.Fatal("expected review to be re-enabled")
 	}
 }
 
